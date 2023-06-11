@@ -1,0 +1,44 @@
+LIBRARY   SETS
+EXETYPE   WINDOWS
+CODE      PRELOAD MOVEABLE DISCARDABLE
+DATA      PRELOAD MOVEABLE SINGLE
+HEAPSIZE  1024
+EXPORTS
+          WEP PRIVATE
+; To implement your own Windows Exit Procedure add the following
+; function to your application (referring to it in the .def file is
+; not required.)  The extern "C" is only required if module is C++.
+; extern "C" int FAR PASCAL _WEP(int)
+; {
+;       /* Your WEP functionality goes here */
+;  return 1;
+; }
+??0SetRelation@@REC@EHIEHI@Z						@1
+?delink@SetRelation@@RECHPEVDbObject@@@Z			@2
+?getNext@SetRelation@@RECHAEVObjHandle@@@Z			@3
+?getPrior@SetRelation@@RECHAEVObjHandle@@@Z			@4
+?getLast@SetRelation@@RECHPEVDbObject@@AEVObjHandle@@@Z		@5
+?insertAfter@SetRelation@@RECHPEVDbObject@@0@Z				@6
+?insertBefore@SetRelation@@RECHPEVDbObject@@0@Z				@7
+?getOwner@SetRelation@@RECHPEVDbObject@@AEVObjHandle@@@Z	@8
+?isOwner@SetRelation@@RECHPEVDbObject@@@Z					@9
+?empty@SetRelation@@RECHPEVDbObject@@@Z						@10
+?removeSet@SetRelation@@RECHPEVDbObject@@@Z					@11
+?move@SetRelation@@RECHPEVDbObject@@0@Z						@12
+?commit@SetRelation@@RECHPEVDbObject@@@Z					@13
+?getOwner@SetOperations@@NECHPEVDbObject@@AEVObjHandle@@PEVSetRelation@@@Z  @14
+?getOwner@SetSllOwner@@FECHPEVDbObject@@AEVObjHandle@@PEVSetRelation@@@Z	@15
+?getOwnerPtr@SetOperations@@NECJXZ								@16
+?getPrior@SetOperations@@NECHPEPEVDbObject@@PEVSetRelation@@@Z	@17
+?getPrior@SetSllOwner@@FECHPEPEVDbObject@@PEVSetRelation@@@Z	@18
+?setOwnerPtr@SetOperations@@NECXJ@Z								@19
+?setPrevPtr@SetOperations@@NECXJ@Z								@20
+?setPrevPtr@SetDllMember@@NECXJ@Z								@21
+?getPrior@SetDllOwner@@NECHPEPEVDbObject@@PEVSetRelation@@@Z	@22
+?getPrior@SetDllMember@@NECHPEPEVDbObject@@PEVSetRelation@@@Z	@23
+;?description@SetSllMemberOP@@2IE							@14
+;?description@SetDllMemberOP@@2IE							@15
+;?description@SetSllOwner@@2IE								@16
+;?description@SetSllMember@@2IE								@17
+;?description@SetDllOwner@@2IE								@18
+;?description@SetDllMember@@2IE								@19

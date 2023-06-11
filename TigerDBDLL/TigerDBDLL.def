@@ -1,0 +1,8 @@
+; TigerDBDLL.def : Declares the module parameters for the DLL.
+
+LIBRARY
+
+EXPORTS
+    ; Explicit exports can go here
+    ?POLY_EDGE@@3VSetRelation@@A                  @1 NONAME
+    ?EDGE_POLY@@3VSetRelation@@A                  @2 NONAME
