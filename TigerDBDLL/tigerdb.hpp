@@ -10,6 +10,7 @@
 
 #include <tchar.h>
 #include "geodb.hpp"
+//#include "dac.hpp"
 
 const DbObject::ClassCode DB_TIGER_LINE = 5;
 const DbObject::ClassCode DB_TIGER_POLY = 6;
@@ -145,7 +146,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				char /*TCHAR*/ suffix[3];
 		};
 
-		class __declspec(dllexport) Chain : public GeoDB::Line
+		class __declspec(dllexport) Chain : public GeoDB::Line, public DbHashAccess
 		{
 			public :
 				Chain( void );
@@ -158,6 +159,9 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				long GetTLID(void) const;
 
 				void SetName( Name lineNames[], int );
+
+				int is_equal(DbObject*);
+				long int hashKey(int nBits);
 
 				SetSllOwner epl_poly;
 

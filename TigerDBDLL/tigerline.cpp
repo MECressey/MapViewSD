@@ -6,6 +6,7 @@
 #include "tgrtypes.h"
 #include "distname.h"
 #include "tstring.h"
+#include "HASHTABL.HPP"
 
 void TigerDB::Chain::GetName( TigerDB::Name *out, int index ) const
 {
@@ -183,6 +184,17 @@ void TigerDB::Chain::SetName( TigerDB::Name lineNames[], int count )
 		names[ i ].suffixCode = 0;
 	}
 }
+
+int TigerDB::Chain::is_equal(DbObject *dbo)
+{
+	return this->dbAddress() == dbo->dbAddress();
+}
+
+long int TigerDB::Chain::hashKey(int nBits)
+{
+	return HashTable::HashDK(nBits, GetTLID());
+}
+
 #ifdef SAVE_FOR_NOW
 
 void TigerDB::Chain::SetName( Name names[], int count )
