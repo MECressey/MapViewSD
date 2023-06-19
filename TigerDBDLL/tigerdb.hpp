@@ -5,8 +5,7 @@
 //	Copyright (c) 1992-1996, Object-Based Technologies, Topsham, ME, USA.
 //	All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
-#if ! defined( TIGERDB_HPP )
-#define TIGERDB_HPP
+#pragma once
 
 #include <tchar.h>
 #include "geodb.hpp"
@@ -316,6 +315,3 @@ inline void TigerDB::EdgePolyLink::SetDir(unsigned char dir)
 
 inline double TigerDB::Polygon::GetArea(void) const { return this->area;  }
 inline void TigerDB::Polygon::SetArea(double a) { this->area = a; }
-
-#endif
-
