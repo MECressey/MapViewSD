@@ -83,7 +83,7 @@ void TigerDB::Polygon::Decompress(void* obj, int size)
 
 int TigerDB::Polygon::Level(int* maxl)
 {
-	*maxl = 13;
+	*maxl = 10;
 	return(1);
 }
 

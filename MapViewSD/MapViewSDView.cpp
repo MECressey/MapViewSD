@@ -377,7 +377,7 @@ void CMapViewSDView::OnInitialUpdate()
 #endif
 
 	if (this->pts == 0)
-		this->pts = new XY_t/*GeoPoint*/[10000];
+		this->pts = new XY_t/*GeoPoint*/[15000];
 	ASSERT(this->pts != 0);
 
 	CRect region;
