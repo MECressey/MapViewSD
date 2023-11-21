@@ -52,11 +52,11 @@ void TigerDB::Chain::GetName( TigerDB::Name *out, int index ) const
 	}
 }
 
-TigerDB::Chain::Chain( void ) : GeoDB::Line( DB_TIGER_LINE )
+TigerDB::Chain::Chain( void ) : GeoDB::Line( /*DB_TIGER_LINE*/)
 {
   this->code = 0;
   this->nNames = 0;
-	this->tlid = 0;
+	//this->tlid = 0;
 	this->epl_poly.init();
 }
 
@@ -91,8 +91,8 @@ void TigerDB::Chain::Compress( void *obj )
 	  ::memcpy(to, buffer, 5 );
 	  to += 5;
 	}
-	::memcpy(to, &this->tlid, sizeof(long));	// TLID
-	to += sizeof(long);
+	/*::memcpy(to, &this->tlid, sizeof(long));	// TLID
+	to += sizeof(long);*/
 	to = this->epl_poly.store(to);
 }
 
@@ -123,8 +123,8 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 
 		size -= 5;
 	}
-	this->tlid = *(long*)from;  // TLID
-	from += sizeof(long);
+	/*this->tlid = *(long*)from;  // TLID
+	from += sizeof(long);*/
 	from = this->epl_poly.fetch(from);
 }
 
@@ -133,7 +133,7 @@ unsigned TigerDB::Chain::DiskSize( void )
   unsigned size = this->Line::DiskSize();
 
 	size += 2 + ( this->nNames * 5 );
-	size += sizeof(long); // TLID
+	//size += sizeof(long); // TLID
 
 	size += this->epl_poly.size();
 
@@ -192,7 +192,7 @@ int TigerDB::Chain::is_equal(DbObject *dbo)
 
 long int TigerDB::Chain::hashKey(int nBits)
 {
-	return HashTable::HashDK(nBits, GetTLID());
+	return HashTable::HashDK(nBits, this->userId/*GetTLID()*/);
 }
 
 #ifdef SAVE_FOR_NOW

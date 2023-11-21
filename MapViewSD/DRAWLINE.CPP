@@ -3,6 +3,8 @@
 #include "drawline.hpp"
 #include "atltypes.h"
 
+#include "gdiplusgraphics.h"
+
 static CPoint cpts[ 10000 ];
 
 void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts )
@@ -38,6 +40,8 @@ void DrawPolygon(const Transform& transform, CDC* dc, XY_t pts[], int nPts)
 {
   XY_t pt;
   CPoint cPt;
+
+  //Graphics* pGraphics = FromHDC(dc);
 
   for (int i = 0; i < nPts; i++)
   {

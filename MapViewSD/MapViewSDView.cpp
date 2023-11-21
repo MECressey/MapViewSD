@@ -293,7 +293,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
-	this->sDist = 10.0;
+	this->sDist = 1.0;
 	this->tDist = 0.0;
 	this->pts = 0;
 	this->doWindow = FALSE;
@@ -712,7 +712,13 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 #else
 		ObjHandle dbo;
 		GeoDB::Search ss;
-
+		int nLines = 0;
+/*
+		int err = pDoc->db->Read(45700, dbo);
+		GeoDB::SpatialObj* so = (GeoDB::SpatialObj*)dbo.Lock();
+  	TigerDB::Chain * line = (TigerDB::Chain*)so;
+		dbo.Unlock();
+*/
 //		pDoc->db->CheckTree();
 
 		pDoc->db->Init(range, &ss);
@@ -728,8 +734,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			{
 				case GeoDB::AREA:
 				{
-					int nPts = TigerDB::Polygon::GetPts(dbo, this->pts);
-					TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
+					int nPts = /*TigerDB::Polygon*/GeoDB::Poly::GetPts(dbo, this->pts);
+					GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
 					CBrush* brush;
 					if ((brush = this->GetBrush(poly->GetCode())) != 0)
 					{
@@ -741,6 +747,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 				case GeoDB::LINE:
 				{
+					nLines++;
 					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
 					ASSERT(line != 0);
 					CPen* pen;
@@ -893,6 +900,8 @@ void CMapViewSDView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (this->mapWin != 0)
 	{
 		this->doPick = TRUE;
+		this->pt = point;
+		this->rect.SetRectEmpty();
 
 		if (this->doTest)
 		{
@@ -938,9 +947,17 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 	}
 	else if (this->doPick)
 	{
+		Range2D range;
+
+		pt0.x = (double)this->pt.x;
+		pt0.y = (double)this->pt.y;
+		this->mapWin->Reverse(&pt0, pt0);
+		range.Add(pt0);
+
 		pt0.x = (double)point.x;
 		pt0.y = (double)point.y;
 		this->mapWin->Reverse(&pt0, pt0);
+		range.Add(pt0);
 
 		ASSERT(doc->db != 0);
 		//	if( doc->isOpen )
@@ -950,13 +967,21 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 #if defined( DO_TIGER )
 #else
-			DbSearchByPt so(*doc->db);
+			ObjHandle dbo;
+			GeoDB::Search ss;
+
+			doc->db->Init(range, &ss);
+			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
+			/**///DbSearchByPt so(*doc->db);
+			DbSearchByRange so(*doc->db);
 			DbSearch::Found fo;
 
-			so.Init(pt0, this->sDist);
-			if (so.FindBest(&fo) == 0)
+			so.Init(range);
+			//so.Init(pt0, this->sDist);
+			if (so.FindBest(&fo) == 0)/**/
 			{
 				TigerDB::Chain* line = (TigerDB::Chain*)fo.handle.Lock();
+				//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
 				ASSERT(line != 0);
 				CPen* pen;
 				int code = line->GetCode();
@@ -978,7 +1003,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					{
 						TCHAR buffer[80];
 						TigerDB::Name name;
-						_stprintf_s(buffer, _T("%ld (%ld)"), line->GetTLID(), line->dbAddress());
+						_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
 						this->lineDlg->m_id = buffer;
 						int nNames = line->GetNumNames();
 
@@ -1078,8 +1103,10 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					dc->SelectObject(oldPen);
 					dc->SetROP2(old_rop2);
 				}
+				//fo.handle.Unlock();
+				//this->pickObj = fo.handle;
+				//dbo.Unlock();
 				fo.handle.Unlock();
-				this->pickObj = fo.handle;
 			}
 #endif
 			SetCursor(cursor);
@@ -1094,7 +1121,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 void CMapViewSDView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
-	if (doWindow)
+	if (doWindow || doPick)
 	{
 		CDC* dc = GetDC();
 

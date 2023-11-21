@@ -14,7 +14,7 @@
 
 const int MAX_TIGER_LINES		= 700;
 
-TigerDB::TigerDB(CDatabase *rDB) : GeoDB( 0 )
+TigerDB::TigerDB(CDatabase *rDB) : GeoDB(600, 800, 0, 500)
 {
 	this->nLines = 0;
   this->lines = new Chain[ MAX_TIGER_LINES ];
@@ -47,13 +47,13 @@ TigerDB::TigerDB(CDatabase *rDB) : GeoDB( 0 )
 
 TigerDB::~TigerDB()
 {
-  if( this->lines != 0 )
-    delete [] this->lines;
-
-	if( this->IsOpen() )
+	if (this->IsOpen())
 	{
 		this->Close();
 	}
+
+	if( this->lines != 0 )
+    delete [] this->lines;
 
 	assert( this->names != 0 );
 	delete this->names;
@@ -99,7 +99,7 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 		  return( this->GeoDB::CreateDbObject( code ) );
       break;
 
-
+		case DB_GEO_LINE:
     case DB_TIGER_LINE :    	
       if( this->nLines < MAX_TIGER_LINES )
 		  {

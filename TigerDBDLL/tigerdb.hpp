@@ -9,11 +9,12 @@
 
 #include <tchar.h>
 #include "geodb.hpp"
+#include <vector>
 //#include "dac.hpp"
 
-const DbObject::ClassCode DB_TIGER_LINE = 5;
-const DbObject::ClassCode DB_TIGER_POLY = 6;
-const DbObject::ClassCode DB_TIGER_EdgePolyLink = 7;
+const DbObject::ClassCode DB_TIGER_LINE = 10;
+const DbObject::ClassCode DB_TIGER_POLY = 11;
+const DbObject::ClassCode DB_TIGER_EdgePolyLink = 12;
 
 class CDatabase;
 class DistNames;
@@ -154,8 +155,8 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				void GetName( Name *, int ) const;
 				int GetCode( void ) const;
 				void SetCode( int code );
-				void SetTLID(long tlid);
-				long GetTLID(void) const;
+				//void SetTLID(long tlid);
+				//long GetTLID(void) const;
 
 				void SetName( Name lineNames[], int );
 
@@ -182,7 +183,13 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				unsigned char nNames;
 				TName names[ 5 ];
 				unsigned char code;
-				long tlid;	// Tiger LineID
+				//long tlid;	// Tiger LineID
+		};
+
+		struct DirLineId
+		{
+			long tlid;
+			signed char dir;
 		};
 
 		class __declspec(dllexport) Polygon : public GeoDB::SpatialObj
@@ -199,6 +206,8 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 			static int GetPts(ObjHandle &, XY_t[]);
 
 			int AddEdge(ObjHandle& eh, unsigned char dir);
+
+			int matchPoly(ObjHandle&, std::vector<DirLineId>& polyLines, int start, int end);
 
 			SetSllOwner poly_epl;
 
@@ -272,7 +281,7 @@ inline void TigerDB::Chain::SetCode( int Code )
 {
 	this->code = Code;
 }
-
+/*
 inline void TigerDB::Chain::SetTLID(long tlid)
 {
 	this->tlid = tlid;
@@ -282,7 +291,7 @@ inline long TigerDB::Chain::GetTLID(void) const
 {
 	return(this->tlid);
 }
-
+*/
 inline int TigerDB::Polygon::GetCode(void) const
 {
 	return(this->code);

@@ -122,8 +122,9 @@ int TigerDB::Polygon::GetPts(ObjHandle &poly, XY_t pts[])
 		unsigned char dir = edgePolyLink->GetDir();
 		epl.Unlock();
 
-		ObjHandle eo = epl;
-		err = EDGE_POLY.getNext(eo);
+		ObjHandle eo/* = epl*/;
+		//err = EDGE_POLY.getNext(eo);
+		err = EDGE_POLY.getOwner(epl, eo);
 		Chain *edge = (Chain*)eo.Lock();
 		int nPts = edge->GetNumPts();
 		XY_t sPt, ePt;
@@ -169,6 +170,39 @@ int TigerDB::Polygon::GetPts(ObjHandle &poly, XY_t pts[])
 */
 	}
 	return ++count;
+}
+
+int TigerDB::Polygon::matchPoly(ObjHandle &poly, std::vector<TigerDB::DirLineId>& polyLines, int start, int end)
+{
+	int err;
+	ObjHandle epl = poly;
+	int total = 0,
+		nFound = 0;
+	while ((err = POLY_EDGE.getNext(epl)) == 0)
+	{
+		ObjHandle eo;
+		err = EDGE_POLY.getOwner(epl, eo);
+		TigerDB::Chain* edge = (TigerDB::Chain*)eo.Lock();
+		long tlid = edge->userId/*GetTLID()*/;
+		eo.Unlock();
+
+		for (int i = end; --i >= start; )
+		{
+			DirLineId& lineId = polyLines[i];
+			if (tlid == lineId.tlid)
+			{
+				nFound++;
+				break;
+			}
+		}
+		total++;
+	}
+	if (nFound == 0)
+		return 0;
+	double percent = (double)nFound / total;
+
+	return (int)(percent * 100 + 0.5);
+	//	return false;
 }
 
 TigerDB::EdgePolyLink::EdgePolyLink(void) : DbObject(DB_TIGER_EdgePolyLink)
