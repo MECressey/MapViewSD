@@ -88,6 +88,8 @@
 #define IDS_FIND_TAB                    302
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
+#define IDD_DIALOG2                     312
+#define IDD_SEARCH_USERID               312
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
 #define IDC_PRIMARD_RDS                 1002
@@ -103,12 +105,12 @@
 #define IDC_NO_PROJ                     1011
 #define IDC_LINES                       1011
 #define IDC_EQUI_CYCL                   1012
-#define IDC_LINES2                      1012
 #define IDC_AREA                        1012
 #define IDC_CHECK1                      1013
 #define IDC_LAKE_POND                   1013
 #define IDC_EDIT1                       1014
 #define IDC_TRANS_MERC                  1016
+#define IDC_EDIT_USERID                 1017
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -119,14 +121,15 @@
 #define ID_MAP_PROJECTION               32778
 #define ID_MAP_THINING                  32779
 #define ID_ZOOM_UP                      32780
+#define ID_SEARCH_USERID                32781
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        312
-#define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1017
+#define _APS_NEXT_RESOURCE_VALUE        314
+#define _APS_NEXT_COMMAND_VALUE         32782
+#define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

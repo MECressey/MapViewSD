@@ -54,7 +54,7 @@ void TigerDB::Chain::GetName( TigerDB::Name *out, int index ) const
 
 TigerDB::Chain::Chain( void ) : GeoDB::Line( /*DB_TIGER_LINE*/)
 {
-  this->code = 0;
+  //this->code = 0;
   this->nNames = 0;
 	//this->tlid = 0;
 	this->epl_poly.init();
@@ -72,11 +72,11 @@ void TigerDB::Chain::Compress( void *obj )
 	this->Line::Compress( to );
 	to += this->Line::DiskSize();
 
-	buffer[ 0 ] = this->code;
-	buffer[ 1 ] = this->nNames;
-
-  ::memcpy(to, buffer, 2);
-  to += 2;
+	//buffer[ 0 ] = this->code;
+	//buffer[ 1 ] = this->nNames;
+	*to = this->nNames;
+  //::memcpy(to, buffer, 2);
+  to += 1;
 
 	for( int i = 0; i < this->nNames;  i++ )
 	{
@@ -103,9 +103,9 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 	this->Line::Decompress( from, size );
 	from += this->Line::DiskSize();
 
-	this->code = *from++;
+	//this->code = *from++;
 	this->nNames = *from++;
-  size -= 2;
+  size -= 1/*2*/;
 
 	for( int i = 0; i < this->nNames;  i++ )
 	{

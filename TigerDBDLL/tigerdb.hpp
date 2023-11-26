@@ -153,8 +153,8 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				~Chain( void );
 				unsigned GetNumNames( void ) const;
 				void GetName( Name *, int ) const;
-				int GetCode( void ) const;
-				void SetCode( int code );
+				//int GetCode( void ) const;
+				//void SetCode( int code );
 				//void SetTLID(long tlid);
 				//long GetTLID(void) const;
 
@@ -182,7 +182,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 		//	Used only for getting/setting the records
 				unsigned char nNames;
 				TName names[ 5 ];
-				unsigned char code;
+				//unsigned char code;
 				//long tlid;	// Tiger LineID
 		};
 
@@ -271,7 +271,7 @@ inline unsigned TigerDB::Chain::GetNumNames( void ) const
 {
 	return( this->nNames );
 }
-
+/*
 inline int TigerDB::Chain::GetCode( void ) const
 {
 	return( this->code );
@@ -281,6 +281,7 @@ inline void TigerDB::Chain::SetCode( int Code )
 {
 	this->code = Code;
 }
+*/
 /*
 inline void TigerDB::Chain::SetTLID(long tlid)
 {

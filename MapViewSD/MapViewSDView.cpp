@@ -3,6 +3,7 @@
 //
 
 #include "pch.h"
+#include "stdlib.h"
 #include "framework.h"
 // SHARED_HANDLERS can be defined in an ATL project implementing preview, thumbnail
 // and search filter handlers and allows sharing of document code with that project.
@@ -21,6 +22,8 @@
 #include "mappdial.h"
 #include "thindlg.h"
 #include "trendlin.h"
+#include "SearchUserID.h"
+#include "HASHTABL.HPP"
 
 #include "TString.h"
 
@@ -57,6 +60,7 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_LINEINFO, OnUpdateLineInfo)
 	ON_COMMAND(ID_MAP_PROJECTION, OnMapProj)
 	ON_COMMAND(ID_MAP_THINING, OnThinPts)
+	ON_COMMAND(ID_SEARCH_USERID, OnSearchUserid)
 END_MESSAGE_MAP()
 
 static const char* LineStr(int code)
@@ -301,7 +305,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->doInfo = FALSE;
 
 	this->pen.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
-	this->hPen.CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+	this->hPen.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
 
 	this->mapProj = 0;
 	this->lineDlg = 0;
@@ -751,7 +755,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
 					ASSERT(line != 0);
 					CPen* pen;
-					if ((pen = this->GetPen(line->GetCode())) != 0)
+					if ((pen = this->GetPen(line->userCode/*GetCode()*/)) != 0)
 					{
 						int nPts = (int)line->GetNumPts();
 						line->Get(this->pts);
@@ -984,7 +988,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
 				ASSERT(line != 0);
 				CPen* pen;
-				int code = line->GetCode();
+				int code = line->userCode/*GetCode()*/;
 
 				if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
 				{
@@ -999,50 +1003,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						nPts = TrendLine(this->pts, nPts, this->tDist);
 					DrawLine(*this->mapWin, dc, this->pts, nPts);
 					//	      this->mapWin->Draw( dc, this->pts, nPts );
-/**/				if (this->doInfo)
-					{
-						TCHAR buffer[80];
-						TigerDB::Name name;
-						_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
-						this->lineDlg->m_id = buffer;
-						int nNames = line->GetNumNames();
-
-						buffer[0] = _T('\0');
-						if (nNames > 0)
-						{
-							for (int i = 0; i < nNames; i++)
-							{
-								line->GetName(&name, i);
-								if (i > 0)
-									_tcscat_s(buffer, _T("|"));
-
-								if (::strlen(name.prefix) > 0)
-								{
-									_tcscat_s(buffer, TString(name.prefix));
-									_tcscat_s(buffer, _T(" "));
-								}
-
-								if (::strlen(name.name) > 0)
-								{
-									_tcscat_s(buffer, TString(name.name));
-								}
-								if (::strlen(name.type) > 0)
-								{
-									_tcscat_s(buffer, _T(" "));
-									_tcscat_s(buffer, TString(name.type));
-								}
-								if (::strlen(name.suffix) > 0)
-								{
-									_tcscat_s(buffer, _T(" "));
-									_tcscat_s(buffer, TString(name.suffix));
-								}
-							}
-						}
-						
-						this->lineDlg->m_name = buffer;
-						this->lineDlg->m_type = LineStr(code);
-						this->lineDlg->UpdateData(FALSE);
-					}
+					DisplayInfo(line);
 				/**/
 #ifdef DO_LATER		  
 					if (this->doShortPath)
@@ -1152,6 +1113,54 @@ void CMapViewSDView::OnMouseMove(UINT nFlags, CPoint point)
 	CView::OnMouseMove(nFlags, point);
 }
 
+void CMapViewSDView::DisplayInfo(TigerDB::Chain* line)
+{
+	if (this->doInfo)
+	{
+		TCHAR buffer[80];
+		TigerDB::Name name;
+		_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
+		this->lineDlg->m_id = buffer;
+		int nNames = line->GetNumNames();
+
+		buffer[0] = _T('\0');
+		if (nNames > 0)
+		{
+			for (int i = 0; i < nNames; i++)
+			{
+				line->GetName(&name, i);
+				if (i > 0)
+					_tcscat_s(buffer, _T("|"));
+
+				if (::strlen(name.prefix) > 0)
+				{
+					_tcscat_s(buffer, TString(name.prefix));
+					_tcscat_s(buffer, _T(" "));
+				}
+
+				if (::strlen(name.name) > 0)
+				{
+					_tcscat_s(buffer, TString(name.name));
+				}
+				if (::strlen(name.type) > 0)
+				{
+					_tcscat_s(buffer, _T(" "));
+					_tcscat_s(buffer, TString(name.type));
+				}
+				if (::strlen(name.suffix) > 0)
+				{
+					_tcscat_s(buffer, _T(" "));
+					_tcscat_s(buffer, TString(name.suffix));
+				}
+			}
+		}
+
+		this->lineDlg->m_name = buffer;
+		this->lineDlg->m_type = LineStr(line->userCode);
+		this->lineDlg->UpdateData(FALSE);
+	}
+
+}
 // CMapViewSDView printing
 
 
@@ -1317,4 +1326,39 @@ void CMapViewSDView::OnThinPts()
 		if (doInvalid)
 			this->Invalidate();
 	}
+}
+
+class DbHash : public DbHashAccess {
+public:
+	long tlid;
+	int is_equal(DbObject* dbo) { return this->tlid == ((TigerDB::Chain*)dbo)->userId/*GetTLID()*/; }
+	long int hashKey(int nBits) { return HashTable::HashDK(nBits, tlid); }
+};
+
+void CMapViewSDView::OnSearchUserid()
+{
+	SearchUserID searchDlg;
+	INT_PTR retVal = searchDlg.DoModal();
+	if (retVal == IDOK)
+	{
+		CString id = searchDlg.m_UserIDStr;
+		DbObject::Id key = atoi(TString(id));
+		CMapViewSDDoc* pDoc = GetDocument();
+
+		DbHash dbHash;
+		dbHash.tlid = key;
+		ObjHandle oh;
+		int err = pDoc->db->dacSearch(DB_GEO_LINE, &dbHash, oh);
+		if (err == 0)
+		{
+			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
+			DisplayInfo(line);
+			const Range2D &range = line->GetMBR();
+			oh.Unlock();
+			this->mapWin->Set(range);
+			this->Invalidate();
+		}
+	}
+
+	bool test = true;
 }

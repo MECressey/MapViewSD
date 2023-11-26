@@ -77,6 +77,7 @@ protected:
 	double startDist;
 
 	void DoPan(double horizontal, double vertical);
+	void DisplayInfo(TigerDB::Chain* line);
 
 	CPen* GetPen(int code);
 	CBrush* GetBrush(int code);
@@ -103,6 +104,7 @@ protected:
 	afx_msg void OnUpdateLineInfo(CCmdUI* pCmdUI);
 	afx_msg void OnMapProj();
 	afx_msg void OnThinPts();
+	afx_msg void OnSearchUserid();
 	DECLARE_MESSAGE_MAP()
 };
 

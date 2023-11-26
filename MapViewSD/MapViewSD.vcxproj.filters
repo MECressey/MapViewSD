@@ -69,6 +69,9 @@
     <ClInclude Include="thindlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SearchUserID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapViewSD.cpp">
@@ -114,6 +117,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="thindlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SearchUserID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
