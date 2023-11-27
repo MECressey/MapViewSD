@@ -10,18 +10,19 @@
 #include <tchar.h>
 #include "geodb.hpp"
 #include <vector>
+#include <string>
 //#include "dac.hpp"
 
-const DbObject::ClassCode DB_TIGER_LINE = 10;
-const DbObject::ClassCode DB_TIGER_POLY = 11;
-const DbObject::ClassCode DB_TIGER_EdgePolyLink = 12;
+//const DbObject::ClassCode DB_TIGER_LINE = 10;
+//const DbObject::ClassCode DB_TIGER_POLY = 11;
+//const DbObject::ClassCode DB_TIGER_EdgePolyLink = 12;
 
 class CDatabase;
 class DistNames;
 
-extern /*__declspec(dllexport)*/ SetRelation POLY_EDGE;
+//extern /*__declspec(dllexport)*/ SetRelation POLY_EDGE;
 
-extern /*__declspec(dllexport)*/ SetRelation EDGE_POLY;
+//extern /*__declspec(dllexport)*/ SetRelation EDGE_POLY;
 
 class  __declspec(dllexport) TigerDB : public GeoDB
 {
@@ -163,7 +164,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				int is_equal(DbObject*);
 				long int hashKey(int nBits);
 
-				SetSllOwner epl_poly;
+				//SetSllOwner epl_poly;
 
 			protected :
 		    virtual void Compress( void * );
@@ -186,30 +187,28 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				//long tlid;	// Tiger LineID
 		};
 
-		struct DirLineId
-		{
-			long tlid;
-			signed char dir;
-		};
-
-		class __declspec(dllexport) Polygon : public GeoDB::SpatialObj
+		class __declspec(dllexport) Polygon : public GeoDB::Poly
 		{
 		public:
 			Polygon(void);
 			~Polygon(void);
-			int GetCode(void) const;
-			void SetCode(int code);
-			double GetArea(void) const;
-			void SetArea(double);
-			int Level(int*);
 
-			static int GetPts(ObjHandle &, XY_t[]);
+			void SetName(std::string);
+			std::string GetName(void) const;
 
-			int AddEdge(ObjHandle& eh, unsigned char dir);
+			//int GetCode(void) const;
+			//void SetCode(int code);
+			//double GetArea(void) const;
+			//void SetArea(double);
+			//int Level(int*);
 
-			int matchPoly(ObjHandle&, std::vector<DirLineId>& polyLines, int start, int end);
+			//static int GetPts(ObjHandle &, XY_t[]);
 
-			SetSllOwner poly_epl;
+			//int AddEdge(ObjHandle& eh, unsigned char dir);
+
+			//int matchPoly(ObjHandle&, std::vector<DirLineId>& polyLines, int start, int end);
+
+			//SetSllOwner poly_epl;
 
 			//static SetRelation POLY_EDGE;
 
@@ -219,10 +218,11 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 			virtual unsigned DiskSize(void);
 
 		private:
-			unsigned char code;
-			double area;
+			char name[31];
+		//	unsigned char code;
+		//	double area;
 		};
-
+		/*
 		class __declspec(dllexport) EdgePolyLink : public DbObject
 		{
 		public:
@@ -245,7 +245,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 			unsigned char dir;
 			unsigned char code;
 		};
-
+		*/
 		TigerDB( CDatabase * );
 		~TigerDB( void );
 		int Close( void );
@@ -293,6 +293,7 @@ inline long TigerDB::Chain::GetTLID(void) const
 	return(this->tlid);
 }
 */
+/*
 inline int TigerDB::Polygon::GetCode(void) const
 {
 	return(this->code);
@@ -325,3 +326,4 @@ inline void TigerDB::EdgePolyLink::SetDir(unsigned char dir)
 
 inline double TigerDB::Polygon::GetArea(void) const { return this->area;  }
 inline void TigerDB::Polygon::SetArea(double a) { this->area = a; }
+*/

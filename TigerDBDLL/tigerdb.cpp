@@ -100,7 +100,7 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
       break;
 
 		case DB_GEO_LINE:
-    case DB_TIGER_LINE :    	
+    //case DB_TIGER_LINE :    	
       if( this->nLines < MAX_TIGER_LINES )
 		  {
 	    	object = (DbObject *)&this->lines[ this->nLines ];
@@ -109,15 +109,17 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
       }
       break;
 
-		case DB_TIGER_POLY:
+		//case DB_TIGER_POLY:
+		case GeoDB::DB_POLY:
 			object = new TigerDB::Polygon;
 			return object;
 			break;
-
+			/*
 		case DB_TIGER_EdgePolyLink:
 			object = new TigerDB::EdgePolyLink;
 			return object;
 			break;
+			*/
   }
 
   return( 0 );
@@ -133,7 +135,8 @@ void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
 		  this->GeoDB::DeleteDbObject( code, dbo );
       break;
 
-    case DB_TIGER_LINE :    	
+		  case DB_GEO_LINE : 
+    //case DB_TIGER_LINE :    	
       assert( this->nLines > 0 );
       if( this->nLines > 0 )
 		  {

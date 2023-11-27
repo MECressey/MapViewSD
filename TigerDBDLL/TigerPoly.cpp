@@ -3,12 +3,13 @@
 
 #include "tigerdb.hpp"
 
-TigerDB::Polygon::Polygon(void) : GeoDB::SpatialObj(DB_TIGER_POLY, AREA)
+TigerDB::Polygon::Polygon(void) : GeoDB::Poly/*SpatialObj*/(/*DB_TIGER_POLY, AREA*/)
 {
-	this->code = 0;
-	this->area = 0.0;
-	this->poly_epl.init();
-	this->SpatialObj::Init();
+	//this->code = 0;
+	//this->area = 0.0;
+	//this->poly_epl.init();
+	this->GeoDB::Poly::Init();
+	memset(this->name, '\0', sizeof(this->name));
 }
 
 TigerDB::Polygon::~Polygon(void)
@@ -17,12 +18,14 @@ TigerDB::Polygon::~Polygon(void)
 
 unsigned TigerDB::Polygon::DiskSize(void)
 {
-	unsigned size = this->SpatialObj::DiskSize();
-
+	unsigned size = this->GeoDB::Poly::DiskSize();
+	/*
 	size += sizeof(this->code);
 	size += sizeof(this->area);
 	size += this->poly_epl.size();
 	size += sizeof(Iv2);  // Need to store MBR because it is expensive to calculate it
+	*/
+	size += sizeof(this->name);
 
 	return(size);
 }
@@ -32,11 +35,12 @@ void TigerDB::Polygon::Compress(void* obj)
 	char* to = (char*)obj;
 	//unsigned char buffer[40];
 
-	this->SpatialObj::Compress(to);
-	to += this->SpatialObj::DiskSize();
+	this->GeoDB::Poly::Compress(to);
+	to += this->GeoDB::Poly::DiskSize();
 
+	memcpy(to, this->name, sizeof(this->name));
 	//buffer[0] = this->code;
-
+	/*
 	::memcpy(to, &this->code, 1);
 	to += 1;
 
@@ -53,15 +57,18 @@ void TigerDB::Polygon::Compress(void* obj)
 	to += sizeof(this->mbr.y.low);
 	memcpy(to, &this->mbr.y.high, sizeof(this->mbr.y.high));
 	to += sizeof(this->mbr.y.high);
+	*/
 }
 
 void TigerDB::Polygon::Decompress(void* obj, int size)
 {
 	char* from = (char*)obj;
 
-	this->SpatialObj::Decompress(from, size);
-	from += this->SpatialObj::DiskSize();
+	this->GeoDB::Poly::Decompress(from, size);
+	from += this->GeoDB::Poly::DiskSize();
 
+	memcpy(this->name, from, sizeof(this->name));
+/*
 	this->code = *from++;
 	this->area = *(double *)from;
 	from += sizeof(this->area);
@@ -78,9 +85,29 @@ void TigerDB::Polygon::Decompress(void* obj, int size)
 	from += sizeof(this->mbr.y.low);
 	memcpy(&this->mbr.y.high, from, sizeof(this->mbr.y.high));
 	from += sizeof(this->mbr.y.high);
+	*/
 }
 
+void TigerDB::Polygon::SetName(std::string name)
+{
+	size_t len = name.length();
 
+	if (len > sizeof(this->name))
+		len = sizeof(this->name) - 1;
+
+	::strncpy_s(this->name, name.c_str(), len);
+	this->name[len] = '\0';
+
+}
+
+std::string TigerDB::Polygon::GetName() const
+{
+	std::string str(this->name);
+
+	return str;
+}
+
+/*
 int TigerDB::Polygon::Level(int* maxl)
 {
 	*maxl = 10;
@@ -93,7 +120,7 @@ int TigerDB::Polygon::AddEdge(ObjHandle& eh, unsigned char dir)
 	int err;
 
 	ObjHandle epl;
-	if ((err = db->NewObject(DB_TIGER_EdgePolyLink, epl/*, id*/)) != 0)
+	if ((err = db->NewObject(DB_TIGER_EdgePolyLink, epl)) != 0)
 		return err;
 
 	EdgePolyLink* edgePolyLink = (EdgePolyLink*)epl.Lock();
@@ -110,7 +137,8 @@ int TigerDB::Polygon::AddEdge(ObjHandle& eh, unsigned char dir)
 
 	return 0;
 }
-
+*/
+#ifdef SAVE_FOR_NOW
 int TigerDB::Polygon::GetPts(ObjHandle &poly, XY_t pts[])
 {
 	ObjHandle epl = poly;
@@ -204,7 +232,8 @@ int TigerDB::Polygon::matchPoly(ObjHandle &poly, std::vector<TigerDB::DirLineId>
 	return (int)(percent * 100 + 0.5);
 	//	return false;
 }
-
+#endif
+/*
 TigerDB::EdgePolyLink::EdgePolyLink(void) : DbObject(DB_TIGER_EdgePolyLink)
 {
 	this->code = 0;
@@ -270,3 +299,4 @@ SetRelation EDGE_POLY(
 	SetSllOwner::description,
 	DB_TIGER_EdgePolyLink, offsetof(TigerDB::EdgePolyLink, edge_poly),
 	SetSllMember::description);
+	*/

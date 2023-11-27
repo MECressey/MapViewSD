@@ -4,5 +4,5 @@ LIBRARY
 
 EXPORTS
     ; Explicit exports can go here
-    ?POLY_EDGE@@3VSetRelation@@A                  @1 NONAME
-    ?EDGE_POLY@@3VSetRelation@@A                  @2 NONAME
+   ; ?POLY_EDGE@@3VSetRelation@@A                  @1 NONAME
+    ;?EDGE_POLY@@3VSetRelation@@A                  @2 NONAME

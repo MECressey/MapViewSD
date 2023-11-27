@@ -500,7 +500,8 @@ CPen* CMapViewSDView::GetPen(int code)
 	case TigerDB::MGT_Pipeline:
 	case TigerDB::MGT_PowerLine:
 	case TigerDB::MGT_SpecialCharacteristics:
-		pen = 0;
+		pen = &this->pens[DASH_DOT_PEN];
+		//pen = 0;
 		break;
 
 	case TigerDB::LM_Airport:
@@ -984,85 +985,100 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			//so.Init(pt0, this->sDist);
 			if (so.FindBest(&fo) == 0)/**/
 			{
-				TigerDB::Chain* line = (TigerDB::Chain*)fo.handle.Lock();
-				//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
-				ASSERT(line != 0);
-				CPen* pen;
-				int code = line->userCode/*GetCode()*/;
-
-				if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
+				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+				GeoDB::SpatialClass sc = sObj->IsA();
+				switch (sc)
 				{
-					//pen = &this->hPen;
-					int nPts = (int)line->GetNumPts();
-					line->Get(this->pts);
+				case GeoDB::AREA:
+				{
+					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+					DisplayInfo(poly);
+					break;
+				}
+				case GeoDB::LINE:
+				{
+					TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+					//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
+					ASSERT(line != 0);
+					CPen* pen;
+					int code = line->userCode/*GetCode()*/;
 
-					CPen* oldPen = dc->SelectObject(pen);
-					int old_rop2 = dc->SetROP2(R2_XORPEN);
-
-					if (this->doThining)
-						nPts = TrendLine(this->pts, nPts, this->tDist);
-					DrawLine(*this->mapWin, dc, this->pts, nPts);
-					//	      this->mapWin->Draw( dc, this->pts, nPts );
-					DisplayInfo(line);
-				/**/
-#ifdef DO_LATER		  
-					if (this->doShortPath)
+					if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
 					{
-						double distSq;
-						XY_t tempPt;
-						int dir;
+						//pen = &this->hPen;
+						int nPts = (int)line->GetNumPts();
+						line->Get(this->pts);
 
-						distSq = fo.pt.DistSqr(this->pts[0]);
-						if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
-						{
-							tempPt = this->pts[0];
-							dir = -1;
-						}
-						else
-						{
-							tempPt = this->pts[nPts - 1];
-							dir = 1;
-						}
+						CPen* oldPen = dc->SelectObject(pen);
+						int old_rop2 = dc->SetROP2(R2_XORPEN);
 
-						if (++this->pickCount == 1)
+						if (this->doThining)
+							nPts = TrendLine(this->pts, nPts, this->tDist);
+						DrawLine(*this->mapWin, dc, this->pts, nPts);
+						//	      this->mapWin->Draw( dc, this->pts, nPts );
+						DisplayInfo(line);
+						/**/
+#ifdef DO_LATER		  
+						if (this->doShortPath)
 						{
-							this->startId = line->dbAddress();
-							this->startPt = tempPt;
-							this->startDir = dir;
-							this->startDist = line->Length();
-						}
-						else if (this->pickCount == 2)
-						{
-							ShortPath sPath;
-							CArray<long, long> lineIds;
-							ObjHandle handle;
-							double dist;
-							int nIds;
+							double distSq;
+							XY_t tempPt;
+							int dir;
 
-							doc->db->Read(this->startId, handle);
-							line = (TigerDB::Chain*)handle.Lock();
-							sPath.Init(tempPt, *line);
-							handle.Unlock();
-							//							sPath.Init( this->startId, line, 0, tempPt );
-							if (nIds = sPath.Find(doc->db, 0, 0, &lineIds, &dist))
+							distSq = fo.pt.DistSqr(this->pts[0]);
+							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
 							{
-								while (--nIds >= 0)
-								{
-									doc->db->Read(lineIds[nIds], handle);
-									line = (TigerDB::Chain*)handle.Lock();
-									nPts = (int)line->GetNumPts();
-									line->Get(this->pts);
-									DrawLine(*this->mapWin, dc, this->pts, nPts);
-									handle.Unlock();
-								}
+								tempPt = this->pts[0];
+								dir = -1;
+							}
+							else
+							{
+								tempPt = this->pts[nPts - 1];
+								dir = 1;
 							}
 
-							this->pickCount = 0;
+							if (++this->pickCount == 1)
+							{
+								this->startId = line->dbAddress();
+								this->startPt = tempPt;
+								this->startDir = dir;
+								this->startDist = line->Length();
+							}
+							else if (this->pickCount == 2)
+							{
+								ShortPath sPath;
+								CArray<long, long> lineIds;
+								ObjHandle handle;
+								double dist;
+								int nIds;
+
+								doc->db->Read(this->startId, handle);
+								line = (TigerDB::Chain*)handle.Lock();
+								sPath.Init(tempPt, *line);
+								handle.Unlock();
+								//							sPath.Init( this->startId, line, 0, tempPt );
+								if (nIds = sPath.Find(doc->db, 0, 0, &lineIds, &dist))
+								{
+									while (--nIds >= 0)
+									{
+										doc->db->Read(lineIds[nIds], handle);
+										line = (TigerDB::Chain*)handle.Lock();
+										nPts = (int)line->GetNumPts();
+										line->Get(this->pts);
+										DrawLine(*this->mapWin, dc, this->pts, nPts);
+										handle.Unlock();
+									}
+								}
+
+								this->pickCount = 0;
+							}
 						}
-					}
 #endif
-					dc->SelectObject(oldPen);
-					dc->SetROP2(old_rop2);
+						dc->SelectObject(oldPen);
+						dc->SetROP2(old_rop2);
+					}
+					break;
+					}
 				}
 				//fo.handle.Unlock();
 				//this->pickObj = fo.handle;
@@ -1156,10 +1172,28 @@ void CMapViewSDView::DisplayInfo(TigerDB::Chain* line)
 		}
 
 		this->lineDlg->m_name = buffer;
-		this->lineDlg->m_type = LineStr(line->userCode);
+		this->lineDlg->m_type = "LINE: ";
+		this->lineDlg->m_type += LineStr(line->userCode);
 		this->lineDlg->UpdateData(FALSE);
 	}
+}
 
+
+void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
+{
+	if (!this->doInfo)
+		return;
+
+		char /*TCHAR*/ buffer[80];
+		sprintf/*_stprintf_s*/(buffer, "%ld", poly->dbAddress());
+		this->lineDlg->m_id = buffer;
+
+		std::string &name = poly->GetName();
+		this->lineDlg->m_name = name.c_str();
+		const char* code = LineStr(poly->GetCode());
+		sprintf/*_stprintf_s*/(buffer, "POLY: %s", code);
+		this->lineDlg->m_type = buffer;
+		this->lineDlg->UpdateData(FALSE);
 }
 // CMapViewSDView printing
 
