@@ -12,7 +12,7 @@
 #endif
 #include "mapviewSD.h"
 #include "MainFrm.h"
-
+//#include "GEODB.HPP"
 #include "MapViewSDDoc.h"
 #include "MapViewSDView.h"
 
@@ -324,6 +324,34 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->startId = 0;
 	this->startDir = 0;
 	this->startDist = 0.0;
+
+/* This didn't seem to work?!?!
+	LOGFONT lf;
+	memset(&lf, 0, sizeof(LOGFONT));
+	// request a 12-pixel-height font
+	lf.lfHeight = 16;
+	// request a face name "Arial"
+	_tcsncpy_s(lf.lfFaceName, LF_FACESIZE, _T("Arial"), 7);
+	// create the font
+	HFONT hfont = ::CreateFontIndirect(&lf);
+
+	this->font = CFont::FromHandle(hfont);
+	*/
+	VERIFY(font.CreateFont(
+		16,                       // nHeight
+		0,                        // nWidth
+		0,                        // nEscapement
+		0,                        // nOrientation
+		FW_NORMAL,                // nWeight
+		FALSE,                    // bItalic
+		FALSE,                    // bUnderline
+		0,                        // cStrikeOut
+		ANSI_CHARSET,             // nCharSet
+		OUT_DEFAULT_PRECIS,       // nOutPrecision
+		CLIP_DEFAULT_PRECIS,      // nClipPrecision
+		DEFAULT_QUALITY,          // nQuality
+		DEFAULT_PITCH | FF_SWISS, // nPitchAndFamily
+		_T("Arial")));
 }
 
 CMapViewSDView::~CMapViewSDView()
@@ -732,11 +760,32 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			/*if (frame->OnAbort())
 				break;*/
 			GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)dbo.Lock();
-//			DbObject::ClassCode code = so->getClassCode();
+			DbObject::ClassCode code = spatialObj->getClassCode();
 //			if (code == DB_TIGER_POLY)
 			GeoDB::SpatialClass sc = spatialObj->IsA();
 			switch (sc)
 			{
+				case GeoDB::POINT:
+				{
+					if (code == GeoDB::DB_POINT)  // Only display Points for now
+					{
+						TigerDB::GNISFeature* point = (TigerDB::GNISFeature*)spatialObj;
+						XY_t pt;
+						CPoint cPt;
+
+						this->mapWin->Forward(&pt, point->GetPt());
+						cPt.x = (int)pt.x;
+						cPt.y = (int)pt.y;
+						std::string name = point->GetName();
+						CString str(name.c_str());
+						CFont *def_font = pDC->SelectObject(&this->font);
+						pDC->TextOut(cPt.x, cPt.y, str);
+						pDC->SelectObject(def_font);
+						BOOL b = pDC->Ellipse(cPt.x-2, cPt.y-2, cPt.x + 2, cPt.y + 2);
+					}
+					break;
+				}
+
 				case GeoDB::AREA:
 				{
 					int nPts = /*TigerDB::Polygon*/GeoDB::Poly::GetPts(dbo, this->pts);

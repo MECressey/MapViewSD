@@ -43,6 +43,7 @@ public:
 protected:
 	CPen pens[12];
 	CBrush polyBrush;
+	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
 	MapProjection* mapProjs[1];

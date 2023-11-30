@@ -57,11 +57,17 @@ TigerDB::Chain::Chain( void ) : GeoDB::Line( /*DB_TIGER_LINE*/)
   //this->code = 0;
   this->nNames = 0;
 	//this->tlid = 0;
-	this->epl_poly.init();
+	//this->epl_poly.init();
 }
 
 TigerDB::Chain::~Chain( void )
 {
+}
+
+void TigerDB::Chain::Init(void)
+{
+	this->GeoDB::Line::Init();
+	this->nNames = 0;
 }
 
 void TigerDB::Chain::Compress( void *obj )

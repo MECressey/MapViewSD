@@ -16,6 +16,12 @@ TigerDB::Polygon::~Polygon(void)
 {
 }
 
+void TigerDB::Polygon::Init(void)
+{
+	this->GeoDB::Poly::Init();
+	memset(this->name, '\0', sizeof(this->name));
+}
+
 unsigned TigerDB::Polygon::DiskSize(void)
 {
 	unsigned size = this->GeoDB::Poly::DiskSize();

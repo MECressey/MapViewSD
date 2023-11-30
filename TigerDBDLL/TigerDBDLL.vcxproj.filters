@@ -33,6 +33,12 @@
     <ClCompile Include="TigerPoly.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GNISFeature.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GNISName.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="TigerDBDLL.def">
@@ -62,6 +68,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tigerdb.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GNISName.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

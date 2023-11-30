@@ -13,12 +13,9 @@
 #include <string>
 //#include "dac.hpp"
 
-//const DbObject::ClassCode DB_TIGER_LINE = 10;
-//const DbObject::ClassCode DB_TIGER_POLY = 11;
-//const DbObject::ClassCode DB_TIGER_EdgePolyLink = 12;
-
 class CDatabase;
 class DistNames;
+class GNISName;
 
 //extern /*__declspec(dllexport)*/ SetRelation POLY_EDGE;
 
@@ -26,7 +23,7 @@ class DistNames;
 
 class  __declspec(dllexport) TigerDB : public GeoDB
 {
-	public :
+	public:
 		enum Classification
 		{
 			NotClassified,
@@ -137,6 +134,54 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 			HYDRO_BraidedStream,
 			NVF_CensusWaterCenterLine
 		};
+
+		enum GNISFeatures
+		{
+			GNIS_Arch,
+			GNIS_Area,
+			GNIS_Arroyo,
+			GNIS_Bar,
+			GNIS_Basin,
+			GNIS_Bay,
+			GNIS_Beach,
+			GNIS_Bench,
+			GNIS_Bend,
+			GNIS_Canal,
+			GNIS_Cape,
+			GNIS_Census,
+			GNIS_Channel,
+			GNIS_Civil,
+			GNIS_Cliff,
+			GNIS_Crater,
+			GNIS_Crossing,
+			GNIS_Falls,
+			GNIS_Flat,
+			GNIS_Gap,
+			GNIS_Glacier,
+			GNIS_Gut,
+			GNIS_Island,
+			GNIS_Isthmus,
+			GNIS_Lake,
+			GNIS_Lava,
+			GNIS_Levee,
+			GNIS_Military,
+			GNIS_Pillar,
+			GNIS_Plain,
+			GNIS_PopulatedPlace,
+			GNIS_Range,
+			GNIS_Rapids,
+			GNIS_Reservoir,
+			GNIS_Ridge,
+			GNIS_Sea,
+			GNIS_Slope,
+			GNIS_Spring,
+			GNIS_Stream,
+			GNIS_Summit,
+			GNIS_Swamp,
+			GNIS_Valley,
+			GNIS_Woods
+		};
+
 		class Name
 		{
 			public :
@@ -154,17 +199,12 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 				~Chain( void );
 				unsigned GetNumNames( void ) const;
 				void GetName( Name *, int ) const;
-				//int GetCode( void ) const;
-				//void SetCode( int code );
-				//void SetTLID(long tlid);
-				//long GetTLID(void) const;
-
 				void SetName( Name lineNames[], int );
 
 				int is_equal(DbObject*);
 				long int hashKey(int nBits);
 
-				//SetSllOwner epl_poly;
+				virtual void Init(void);
 
 			protected :
 		    virtual void Compress( void * );
@@ -211,6 +251,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 			//SetSllOwner poly_epl;
 
 			//static SetRelation POLY_EDGE;
+			virtual void Init(void);
 
 		protected:
 			virtual void Compress(void*);
@@ -222,30 +263,25 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 		//	unsigned char code;
 		//	double area;
 		};
-		/*
-		class __declspec(dllexport) EdgePolyLink : public DbObject
+
+		class __declspec(dllexport) GNISFeature : public GeoDB::Point
 		{
 		public:
-			EdgePolyLink(void);
-			~EdgePolyLink(void);
-			int GetCode(void) const;
-			void SetCode(int code);
-			unsigned char GetDir(void) const;
-			void SetDir(unsigned char);
+			GNISFeature(void);
+			~GNISFeature(void);
 
-			SetSllMember poly_edge;
-			SetSllMember edge_poly;
+			std::string GetName(void);
+			virtual void Init(void);
 
 		protected:
-			virtual void Compress(void*);
+			/*virtual void Compress(void*);
 			virtual void Decompress(void*, int);
-			virtual unsigned DiskSize(void);
+			virtual unsigned DiskSize(void);*/
 
 		private:
-			unsigned char dir;
-			unsigned char code;
+			std::string name;
 		};
-		*/
+
 		TigerDB( CDatabase * );
 		~TigerDB( void );
 		int Close( void );
@@ -259,6 +295,7 @@ class  __declspec(dllexport) TigerDB : public GeoDB
 		CDatabase *db;
 		DistNames *names;
 		DistNames *nameById;
+		GNISName *nameByFeatureId;
 		friend Chain;
 };
 

@@ -11,6 +11,7 @@
 
 #include "tigerdb.hpp"
 #include "distname.h"
+#include "GNISName.h"
 
 const int MAX_TIGER_LINES		= 700;
 
@@ -43,6 +44,13 @@ TigerDB::TigerDB(CDatabase *rDB) : GeoDB(600, 800, 0, 500)
 	this->nameById->Open( CRecordset::forwardOnly, 0, CRecordset::readOnly );
 	while( ! this->nameById->IsEOF() )
 		this->nameById->MoveNext();
+
+	this->nameByFeatureId = new GNISName(this->db);
+	this->nameByFeatureId->idParam = 0;
+	this->nameByFeatureId->m_strFilter = _T("(feature_id = ?)");
+	this->nameByFeatureId->Open(CRecordset::forwardOnly, 0, CRecordset::readOnly);
+	while (!this->nameByFeatureId->IsEOF())
+		this->nameByFeatureId->MoveNext();
 }
 
 TigerDB::~TigerDB()
@@ -113,6 +121,15 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 		case GeoDB::DB_POLY:
 			object = new TigerDB::Polygon;
 			return object;
+			break;
+
+		case GeoDB::DB_POINT:
+			static int nPoints = 0;  // Temp
+			if (nPoints++ < 100)
+			{
+				object = new TigerDB::GNISFeature;
+				return object;
+			}
 			break;
 			/*
 		case DB_TIGER_EdgePolyLink:
