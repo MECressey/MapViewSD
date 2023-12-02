@@ -27,6 +27,8 @@
 
 #include "TString.h"
 
+using namespace NodeEdgePoly;
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -767,7 +769,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			{
 				case GeoDB::POINT:
 				{
-					if (code == GeoDB::DB_POINT)  // Only display Points for now
+					if (code == DB_POINT)  // Only display Points for now
 					{
 						TigerDB::GNISFeature* point = (TigerDB::GNISFeature*)spatialObj;
 						XY_t pt;
@@ -1431,7 +1433,7 @@ void CMapViewSDView::OnSearchUserid()
 		DbHash dbHash;
 		dbHash.tlid = key;
 		ObjHandle oh;
-		int err = pDoc->db->dacSearch(DB_GEO_LINE, &dbHash, oh);
+		int err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
 		if (err == 0)
 		{
 			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();

@@ -19,7 +19,7 @@ protected: // create from serialization only
 // Attributes
 public:
 	CDatabase odbcDB;
-	GeoDB* db;
+	TigerDB/*GeoDB*/* db;
 	Range2D range;
 	BOOL isOpen;
 #if defined( DO_PTS )

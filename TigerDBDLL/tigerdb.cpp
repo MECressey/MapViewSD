@@ -13,6 +13,8 @@
 #include "distname.h"
 #include "GNISName.h"
 
+using namespace NodeEdgePoly;
+
 const int MAX_TIGER_LINES		= 700;
 
 TigerDB::TigerDB(CDatabase *rDB) : GeoDB(600, 800, 0, 500)
@@ -107,7 +109,7 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 		  return( this->GeoDB::CreateDbObject( code ) );
       break;
 
-		case DB_GEO_LINE:
+		case DB_EDGE:
     //case DB_TIGER_LINE :    	
       if( this->nLines < MAX_TIGER_LINES )
 		  {
@@ -118,12 +120,12 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
       break;
 
 		//case DB_TIGER_POLY:
-		case GeoDB::DB_POLY:
+		case DB_POLY:
 			object = new TigerDB::Polygon;
 			return object;
 			break;
 
-		case GeoDB::DB_POINT:
+		case DB_POINT:
 			static int nPoints = 0;  // Temp
 			if (nPoints++ < 100)
 			{
@@ -152,7 +154,7 @@ void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
 		  this->GeoDB::DeleteDbObject( code, dbo );
       break;
 
-		  case DB_GEO_LINE : 
+		  case DB_EDGE : 
     //case DB_TIGER_LINE :    	
       assert( this->nLines > 0 );
       if( this->nLines > 0 )

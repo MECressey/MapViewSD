@@ -21,7 +21,9 @@ class GNISName;
 
 //extern /*__declspec(dllexport)*/ SetRelation EDGE_POLY;
 
-class  __declspec(dllexport) TigerDB : public GeoDB
+//using namespace NodeEdgePoly;
+
+class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 {
 	public:
 		enum Classification
