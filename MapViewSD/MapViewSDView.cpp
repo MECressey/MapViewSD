@@ -249,6 +249,153 @@ static const char* LineStr(int code)
 	return(str);
 }
 
+static const char* FeatureStr(int code)
+{
+	const char* str;
+	switch (code)
+	{
+	case TigerDB::GNIS_Summit:
+		str = "Summit";
+		break;
+	case TigerDB::GNIS_Range:
+		str = "Range";
+		break;
+	case TigerDB::GNIS_Flat:
+		str = "Flat";
+		break;
+	case TigerDB::GNIS_Plain:
+		str = "Plain";
+		break;
+	case TigerDB::GNIS_Ridge:
+		str = "Ridge";
+		break;
+	case TigerDB::GNIS_Swamp:
+		str = "Swamp";
+		break;
+	case TigerDB::GNIS_Valley:
+		str = "Valley";
+		break;
+	case TigerDB::GNIS_Woods:
+		str = "Woods";
+		break;
+	case TigerDB::GNIS_Gap:
+		str = "Gap";
+		break;
+	case TigerDB::GNIS_Basin:
+		str = "Basin";
+		break;
+	case TigerDB::GNIS_Bench:
+		str = "Bench";
+		break;
+
+	case TigerDB::GNIS_Bay:
+		str = "Bay";
+		break;
+	case TigerDB::GNIS_Sea:
+		str = "Sea";
+		break;
+	case TigerDB::GNIS_Beach:
+		str = "Beach";
+		break;
+	case TigerDB::GNIS_Canal:
+		str = "Canal";
+		break;
+	case TigerDB::GNIS_Channel:
+		str = "Channel";
+		break;
+	case TigerDB::GNIS_Cape:
+		str = "Cape";
+		break;
+	case TigerDB::GNIS_Bar:
+		str = "Bar";
+		break;
+	case TigerDB::GNIS_Isthmus:
+		str = "Isthmus";
+		break;
+
+	case TigerDB::GNIS_Arch:
+		str = "Arch";
+		break;
+	case TigerDB::GNIS_Area:
+		str = "Area";
+		break;
+	case TigerDB::GNIS_Arroyo:
+		str = "Arroyo";
+		break;
+	case TigerDB::GNIS_Bend:
+		str = "Bend";
+		break;
+	case TigerDB::GNIS_Cliff:
+		str = "Cliff";
+		break;
+	case TigerDB::GNIS_Crater:
+		str = "Crater";
+		break;
+	case TigerDB::GNIS_Crossing:
+		str = "Crossing";
+		break;
+	case TigerDB::GNIS_Slope:
+		str = "Slope";
+		break;
+	case TigerDB::GNIS_Gut:
+		str = "Gut";
+		break;
+
+	case TigerDB::GNIS_Census:
+		str = "Census";
+		break;
+	case TigerDB::GNIS_Civil:
+		str = "Civil";
+		break;
+	case TigerDB::GNIS_PopulatedPlace:
+		str = "Populated Place";
+		break;
+
+	case TigerDB::GNIS_Glacier:
+		str = "Glacier";
+		break;
+	case TigerDB::GNIS_Island:
+		str = "Island";
+		break;
+	case TigerDB::GNIS_Lake:
+		str = "Lake";
+		break;
+	case TigerDB::GNIS_Rapids:
+		str = "Rapids";
+		break;
+	case TigerDB::GNIS_Reservoir:
+		str = "Reservoir";
+		break;
+	case TigerDB::GNIS_Falls:
+		str = "Falls";
+		break;
+	case TigerDB::GNIS_Spring:
+		str = "Spring";
+		break;
+	case TigerDB::GNIS_Stream:
+		str = "Stream";
+		break;
+	case TigerDB::GNIS_Levee:
+		str = "Levee";
+		break;
+	case TigerDB::GNIS_Military:
+		str = "Military";
+		break;
+
+	case TigerDB::GNIS_Pillar:
+		str = "Pillar";
+		break;
+	case TigerDB::GNIS_Lava:
+		str = "Lava";
+		break;
+
+	default:
+		str = "Unknown";
+		break;
+	}
+	return str;
+}
+
 // CMapViewSDView construction/destruction
 enum RoadTypes
 {
@@ -769,11 +916,94 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			{
 				case GeoDB::POINT:
 				{
-					if (code == DB_POINT)  // Only display Points for now
+					if (code == DB_POINT && this->layerDlg.doGNISPoints)  // Only display Points for now
 					{
+						bool drawFeature = false;
+
 						TigerDB::GNISFeature* point = (TigerDB::GNISFeature*)spatialObj;
 						XY_t pt;
 						CPoint cPt;
+
+						int code = point->userCode;
+						switch (code)
+						{
+							case TigerDB::GNIS_Summit:
+							case TigerDB::GNIS_Range:
+							case TigerDB::GNIS_Flat:
+							case TigerDB::GNIS_Plain:
+							case TigerDB::GNIS_Ridge:
+							case TigerDB::GNIS_Swamp:
+							case TigerDB::GNIS_Valley:
+							case TigerDB::GNIS_Woods:
+							case TigerDB::GNIS_Gap:
+							case TigerDB::GNIS_Basin:
+							case TigerDB::GNIS_Bench:
+								if (this->layerDlg.doLandForm)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Bay:
+							case TigerDB::GNIS_Sea:
+							case TigerDB::GNIS_Beach:
+							case TigerDB::GNIS_Canal:
+							case TigerDB::GNIS_Channel:
+							case TigerDB::GNIS_Cape:
+							case TigerDB::GNIS_Bar:
+							case TigerDB::GNIS_Isthmus:
+								if (this->layerDlg.doCoastal)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Arch:
+							case TigerDB::GNIS_Area:
+							case TigerDB::GNIS_Arroyo:
+							case TigerDB::GNIS_Bend:
+							case TigerDB::GNIS_Cliff:
+							case TigerDB::GNIS_Crater:
+							case TigerDB::GNIS_Crossing:
+							case TigerDB::GNIS_Slope:
+							case TigerDB::GNIS_Gut:
+								if (this->layerDlg.doTopographic)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Census:
+							case TigerDB::GNIS_Civil:
+							case TigerDB::GNIS_PopulatedPlace:
+								if (this->layerDlg.doCensus)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Glacier:
+							case TigerDB::GNIS_Island:
+							case TigerDB::GNIS_Lake:
+							case TigerDB::GNIS_Rapids:
+							case TigerDB::GNIS_Reservoir:
+							case TigerDB::GNIS_Falls:
+							case TigerDB::GNIS_Spring:
+							case TigerDB::GNIS_Stream:
+								if (this->layerDlg.doHydrology)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Levee:
+							case TigerDB::GNIS_Military:
+								if (this->layerDlg.doCultural)
+									drawFeature = true;
+								break;
+
+							case TigerDB::GNIS_Pillar:
+							case TigerDB::GNIS_Lava:
+								if (this->layerDlg.doOtherNames)
+									drawFeature = true;
+								break;
+
+							default:
+								break;
+						}
+
+						if (!drawFeature)
+							break;
 
 						this->mapWin->Forward(&pt, point->GetPt());
 						cPt.x = (int)pt.x;
@@ -1040,6 +1270,15 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				GeoDB::SpatialClass sc = sObj->IsA();
 				switch (sc)
 				{
+				case GeoDB::POINT:
+				{
+					if (sObj->getClassCode() == DB_POINT)
+					{
+						TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
+						DisplayInfo(feat);
+					}
+					break;
+				}
 				case GeoDB::AREA:
 				{
 					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
@@ -1246,6 +1485,25 @@ void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
 		this->lineDlg->m_type = buffer;
 		this->lineDlg->UpdateData(FALSE);
 }
+
+void CMapViewSDView::DisplayInfo(TigerDB::GNISFeature* feature)
+{
+	if (!this->doInfo)
+		return;
+
+	char /*TCHAR*/ buffer[80];
+	sprintf/*_stprintf_s*/(buffer, "%ld", feature->dbAddress());
+	this->lineDlg->m_id = buffer;
+
+	std::string& name = feature->GetName();
+	this->lineDlg->m_name = name.c_str();
+
+	const char* code = FeatureStr(feature->userCode);
+	sprintf/*_stprintf_s*/(buffer, "POINT: %s", code);
+	this->lineDlg->m_type = buffer;
+	this->lineDlg->UpdateData(FALSE);
+}
+
 // CMapViewSDView printing
 
 

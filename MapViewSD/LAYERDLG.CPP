@@ -31,6 +31,14 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doTrails = FALSE;
 	doAreas = TRUE,
 	doLakesOrPonds = FALSE;
+	doGNISPoints = FALSE;
+	doLandForm = FALSE;
+	doCoastal = FALSE;
+	doCultural = FALSE;
+	doCensus = FALSE;
+	doOtherNames = FALSE;
+	doTopographic = FALSE;
+	doHydrology = FALSE;
 	//}}AFX_DATA_INIT
 }
 
@@ -50,6 +58,14 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_TRAILS, doTrails);
 	DDX_Check(pDX, IDC_AREA, doAreas);
 	DDX_Check(pDX, IDC_LAKE_POND, doLakesOrPonds);
+	DDX_Check(pDX, IDC_POINT_NAMES, doGNISPoints);
+	DDX_Check(pDX, IDC_LANDFORM, doLandForm);
+	DDX_Check(pDX, IDC_COASTAL, doCoastal);
+	DDX_Check(pDX, IDC_CULTURAL, doCultural);
+	DDX_Check(pDX, IDC_CENSUS, doCensus);
+	DDX_Check(pDX, IDC_OTHER_NAMES, doOtherNames);
+	DDX_Check(pDX, IDC_TOPOGRAPHIC, doTopographic);
+	DDX_Check(pDX, IDC_HYDROLOGY, doHydrology);
 	//}}AFX_DATA_MAP
 }
 

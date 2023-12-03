@@ -25,6 +25,14 @@ public:
 	BOOL	doTrails;
 	BOOL  doAreas;
 	BOOL	doLakesOrPonds;
+	BOOL	doGNISPoints;
+	BOOL  doLandForm;
+	BOOL  doCoastal;
+	BOOL  doCultural;
+	BOOL  doCensus;
+	BOOL  doOtherNames;
+	BOOL  doTopographic;
+	BOOL  doHydrology;
 	//}}AFX_DATA
 
 // Implementation

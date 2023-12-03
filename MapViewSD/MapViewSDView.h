@@ -80,6 +80,7 @@ protected:
 	void DoPan(double horizontal, double vertical);
 	void DisplayInfo(TigerDB::Chain* line);
 	void DisplayInfo(TigerDB::Polygon* poly);
+	void DisplayInfo(TigerDB::GNISFeature* );
 
 	CPen* GetPen(int code);
 	CBrush* GetBrush(int code);

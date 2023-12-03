@@ -88,7 +88,6 @@
 #define IDS_FIND_TAB                    302
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
-#define IDD_DIALOG2                     312
 #define IDD_SEARCH_USERID               312
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
@@ -111,6 +110,15 @@
 #define IDC_EDIT1                       1014
 #define IDC_TRANS_MERC                  1016
 #define IDC_EDIT_USERID                 1017
+#define IDC_POINT_NAMES                 1018
+#define IDC_TOPOGRAPHIC                 1019
+#define IDC_CULTURAL                    1020
+#define IDC_CENSUS                      1021
+#define IDC_HYDROLOGY                   1022
+#define IDC_OTHER_NAMES                 1023
+#define IDC_LANDFORM                    1024
+#define IDC_COASTOL                     1025
+#define IDC_COASTAL                     1025
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -127,9 +135,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        314
+#define _APS_NEXT_RESOURCE_VALUE        315
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1026
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
