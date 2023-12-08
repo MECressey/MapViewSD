@@ -52,7 +52,7 @@ void TigerDB::Chain::GetName( TigerDB::Name *out, int index ) const
 	}
 }
 
-TigerDB::Chain::Chain( void ) : GeoDB::Line( /*DB_TIGER_LINE*/)
+TigerDB::Chain::Chain( void ) : GeoDB::Edge( /*DB_TIGER_LINE*/)
 {
   //this->code = 0;
   this->nNames = 0;
@@ -66,7 +66,7 @@ TigerDB::Chain::~Chain( void )
 
 void TigerDB::Chain::Init(void)
 {
-	this->GeoDB::Line::Init();
+	this->GeoDB::Edge::Init();
 	this->nNames = 0;
 }
 
@@ -75,8 +75,8 @@ void TigerDB::Chain::Compress( void *obj )
   char *to = (char *)obj;
 	unsigned char buffer[40];
 
-	this->Line::Compress( to );
-	to += this->Line::DiskSize();
+	this->Edge::Compress( to );
+	to += this->Edge::DiskSize();
 
 	//buffer[ 0 ] = this->code;
 	//buffer[ 1 ] = this->nNames;
@@ -106,8 +106,8 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 {
   char *from = (char *)obj;
   
-	this->Line::Decompress( from, size );
-	from += this->Line::DiskSize();
+	this->Edge::Decompress( from, size );
+	from += this->Edge::DiskSize();
 
 	//this->code = *from++;
 	this->nNames = *from++;
@@ -136,7 +136,7 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 
 unsigned TigerDB::Chain::DiskSize( void )
 {
-  unsigned size = this->Line::DiskSize();
+  unsigned size = this->Edge::DiskSize();
 
 	size += 2 + ( this->nNames * 5 );
 	//size += sizeof(long); // TLID

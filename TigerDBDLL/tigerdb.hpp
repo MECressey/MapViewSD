@@ -195,7 +195,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 				char /*TCHAR*/ suffix[3];
 		};
 
-		class __declspec(dllexport) Chain : public GeoDB::Line, public DbHashAccess
+		class __declspec(dllexport) Chain : public GeoDB::Edge, public DbHashAccess
 		{
 			public :
 				Chain( void );
