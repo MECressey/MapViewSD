@@ -211,6 +211,8 @@ static const char* LineStr(int code)
 	case TigerDB::NVF_OtherTabulationBoundary:
 	case TigerDB::NVF_WaterAreaDefinitionBoundary:
 	case TigerDB::NVF_USGSClosureLine:
+	case TigerDB::NVF_CensusWaterCenterLine:
+	case TigerDB::NVF_ArtificialPath:
 		str = "Closure line";
 		break;
 
@@ -397,7 +399,7 @@ static const char* FeatureStr(int code)
 }
 
 // CMapViewSDView construction/destruction
-enum RoadTypes
+enum LineDisplayTypes
 {
 	INTERSTATE_ROAD = 0,
 	PRIMARY_ROAD,
@@ -408,7 +410,8 @@ enum RoadTypes
 	TRAIL,
 	BOUNDARY,
 	PARK,
-	OTHER_ROAD
+	OTHER_ROAD,
+	OTHER
 };
 
 const int BLCK_PEN = 1;
@@ -421,10 +424,11 @@ const int MAGENTA_PEN = 8;		// RGB(255,0,255)
 const int DASH_PEN = OTHER_ROAD + 1;
 const int DOT_PEN = 8;
 const int DASH_DOT_PEN = DASH_PEN + 1;
-const int DASH_2DOTS_PEN = 10;
+const int DASH_2DOTS_PEN = 12;
 
 CMapViewSDView::CMapViewSDView() noexcept
 {
+	this->layerDlg = new LayerDlg(this);
 	this->doThining = FALSE;
 	this->doProj = 0;
 	this->mapWin = 0;
@@ -433,20 +437,21 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
 	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
 	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
-	this->pens[STREAM].CreatePen(PS_DASHDOTDOT, 1, RGB(0, 255, 255));
+	this->pens[STREAM].CreatePen(PS_DASHDOTDOT, 1, RGB(100, 255, 255)/*RGB(0, 255, 255)*/);
 	this->pens[TRAIL].CreatePen(PS_DOT, 1, RGB(0, 0, 0));
 	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(255, 0, 0));
 	this->pens[PARK].CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
 	this->pens[OTHER_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 255, 0));
 	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
 	this->pens[DASH_DOT_PEN].CreatePen(PS_DASHDOT, 1, RGB(255, 0, 255));
+	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
 
-	this->polyBrush.CreateSolidBrush(RGB(27, 149, 224));
+	this->polyBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
 
 	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
-	this->sDist = 1.0;
+	this->sDist = .001;
 	this->tDist = 0.0;
 	this->pts = 0;
 	this->doWindow = FALSE;
@@ -505,6 +510,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 
 CMapViewSDView::~CMapViewSDView()
 {
+	delete this->layerDlg;
 	if (this->mapWin)
 		delete this->mapWin;
 
@@ -611,7 +617,7 @@ void CMapViewSDView::OnInitialUpdate()
 // CMapViewSDView drawing
 CBrush* CMapViewSDView::GetBrush(int code)
 {
-	if (!this->layerDlg.doAreas)
+	if (!this->layerDlg->doAreas)
 		return 0;
 	return &this->polyBrush;
 }
@@ -619,12 +625,13 @@ CBrush* CMapViewSDView::GetBrush(int code)
 CPen* CMapViewSDView::GetPen(int code)
 {
 	CPen* pen = 0;
-	if (!this->layerDlg.doLines)
+	if (!this->layerDlg->doLines)
 		return pen;
 
 	switch (code)
 	{
 	default:
+		pen = &this->pens[DASH_2DOTS_PEN];
 		break;
 
 	case TigerDB::ROAD_MajorCategoryUnknown:
@@ -635,32 +642,32 @@ CPen* CMapViewSDView::GetPen(int code)
 	case TigerDB::ROAD_ServiceDrive:
 	case TigerDB::ROAD_FerryCrossing:
 	case TigerDB::ROAD_OtherThoroughfare:
-		if (this->layerDlg.doOtherRds)
+		if (this->layerDlg->doOtherRds)
 			pen = &this->pens[OTHER_ROAD];
 		break;
 
 	case TigerDB::ROAD_PrimaryLimitedAccess:
-		if (this->layerDlg.doPrimaryRds)
+		if (this->layerDlg->doPrimaryRds)
 			pen = &this->pens[INTERSTATE_ROAD];
 		break;
 
 	case TigerDB::ROAD_PrimaryUnlimitedAccess:
-		if (this->layerDlg.doPrimaryRds)
+		if (this->layerDlg->doPrimaryRds)
 			pen = &this->pens[PRIMARY_ROAD];
 		break;
 
 	case TigerDB::ROAD_SecondaryAndConnecting:
-		if (this->layerDlg.doSecondaryRds)
+		if (this->layerDlg->doSecondaryRds)
 			pen = &this->pens[SECONDARY_ROAD];
 		break;
 
 	case TigerDB::ROAD_LocalNeighborhoodAndRural:
-		if (this->layerDlg.doLocalRds)
+		if (this->layerDlg->doLocalRds)
 			pen = &this->pens[LOCAL_ROAD];
 		break;
 
 	case TigerDB::ROAD_VehicularTrail:
-		if (this->layerDlg.doTrails)
+		if (this->layerDlg->doTrails)
 			pen = &this->pens[TRAIL];
 		break;
 
@@ -692,12 +699,14 @@ CPen* CMapViewSDView::GetPen(int code)
 
 	case TigerDB::NVF_BoundaryClassificationUnknown:
 	case TigerDB::NVF_LegalOrAdministrativeBoundary:
-		if (this->layerDlg.doBoundary)
+		if (this->layerDlg->doBoundary)
 			pen = &this->pens[BOUNDARY];
 		break;
 
 	case TigerDB::NVF_PropertyLine:
-		if (this->layerDlg.doOtherFeatures)
+	case TigerDB::NVF_CensusWaterCenterLine:
+	case TigerDB::NVF_ArtificialPath:
+		if (this->layerDlg->doOtherFeatures)
 			pen = &this->pens[PARK];
 		break;
 
@@ -713,13 +722,13 @@ CPen* CMapViewSDView::GetPen(int code)
 	case TigerDB::HYDRO_SeaOrOcean:
 	case TigerDB::HYDRO_GravelPitOrQuarry:
 	case TigerDB::HYDRO_Glacier:
-		if (this->layerDlg.doShoreline)
+		if (this->layerDlg->doShoreline)
 			pen = &this->pens[SHORELINE];
 		break;
 
 	case TigerDB::HYDRO_PerennialStream:
 	case TigerDB::HYDRO_IntermittentStream:
-		if (this->layerDlg.doStreams)
+		if (this->layerDlg->doStreams)
 			pen = &this->pens[STREAM];
 		break;
 	}
@@ -728,27 +737,27 @@ CPen* CMapViewSDView::GetPen(int code)
 	{
 		if (code >= 10 && code < 30)		// Interstates & US highways
 		{
-			if (this->layerDlg.doPrimaryRds)
+			if (this->layerDlg->doPrimaryRds)
 				pen = &this->pens[PRIMARY_ROAD];
 		}
 		else if (code >= 30 && code < 40)	// Secondary & Connectors
 		{
-			if (this->layerDlg.doSecondaryRds)
+			if (this->layerDlg->doSecondaryRds)
 				pen = &this->pens[SECONDARY_ROAD];
 		}
 		else if (code >= 40 && code < 50)	// Local/Rural
 		{
-			if (this->layerDlg.doLocalRds)
+			if (this->layerDlg->doLocalRds)
 				pen = &this->pens[LOCAL_ROAD];
 		}
 		else if (code >= 50 && code < 60)		// Trails
 		{
-			if (this->layerDlg.doTrails)
+			if (this->layerDlg->doTrails)
 				pen = &this->pens[TRAIL];
 		}
 		else if (code < 10 || code >= 60)
 		{
-			if (this->layerDlg.doOtherRds)
+			if (this->layerDlg->doOtherRds)
 				pen = &this->pens[OTHER_ROAD];
 		}
 	}
@@ -758,7 +767,7 @@ CPen* CMapViewSDView::GetPen(int code)
 		pen = 0;
 	else if (code >= 300 && code < 400)	// Land Mark features
 	{
-		if (this->layerDlg.doOtherFeatures)
+		if (this->layerDlg->doOtherFeatures)
 			pen = &this->pens[PARK];
 	}
 	else if (code >= 400 && code < 500)	// Physical features
@@ -767,12 +776,12 @@ CPen* CMapViewSDView::GetPen(int code)
 	{
 		if (code == 510 || code == 511 || code == 512)
 		{
-			if (this->layerDlg.doBoundary)
+			if (this->layerDlg->doBoundary)
 				pen = &this->pens[BOUNDARY];
 		}
 		else if (code == 540)
 		{
-			if (this->layerDlg.doOtherFeatures)
+			if (this->layerDlg->doOtherFeatures)
 				pen = &this->pens[PARK];
 		}
 	}
@@ -793,14 +802,14 @@ CPen* CMapViewSDView::GetPen(int code)
 		case 751:
 		case 752:
 		case 753:
-			if (this->layerDlg.doShoreline)
+			if (this->layerDlg->doShoreline)
 				pen = &this->pens[SHORELINE];
 			break;
 
 		case 710:
 		case 711:
 		case 712:
-			if (this->layerDlg.doStreams)
+			if (this->layerDlg->doStreams)
 				pen = &this->pens[STREAM];
 			break;
 		}
@@ -903,7 +912,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 */
 //		pDoc->db->CheckTree();
 
-		pDoc->db->Init(range, &ss);
+		pDoc->db->Init(range, this->layerDlg->objClasses, &ss);
 		while (pDoc->db->GetNext(&ss, &dbo) == 0)
 		{
 			/*if (frame->OnAbort())
@@ -916,7 +925,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			{
 				case GeoDB::POINT:
 				{
-					if (code == DB_POINT && this->layerDlg.doGNISPoints)  // Only display Points for now
+					if (code == DB_POINT && this->layerDlg->doGNISPoints)  // Only display Points for now
 					{
 						bool drawFeature = false;
 
@@ -938,7 +947,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 							case TigerDB::GNIS_Gap:
 							case TigerDB::GNIS_Basin:
 							case TigerDB::GNIS_Bench:
-								if (this->layerDlg.doLandForm)
+								if (this->layerDlg->doLandForm)
 									drawFeature = true;
 								break;
 
@@ -950,7 +959,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 							case TigerDB::GNIS_Cape:
 							case TigerDB::GNIS_Bar:
 							case TigerDB::GNIS_Isthmus:
-								if (this->layerDlg.doCoastal)
+								if (this->layerDlg->doCoastal)
 									drawFeature = true;
 								break;
 
@@ -963,14 +972,14 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 							case TigerDB::GNIS_Crossing:
 							case TigerDB::GNIS_Slope:
 							case TigerDB::GNIS_Gut:
-								if (this->layerDlg.doTopographic)
+								if (this->layerDlg->doTopographic)
 									drawFeature = true;
 								break;
 
 							case TigerDB::GNIS_Census:
 							case TigerDB::GNIS_Civil:
 							case TigerDB::GNIS_PopulatedPlace:
-								if (this->layerDlg.doCensus)
+								if (this->layerDlg->doCensus)
 									drawFeature = true;
 								break;
 
@@ -982,19 +991,19 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 							case TigerDB::GNIS_Falls:
 							case TigerDB::GNIS_Spring:
 							case TigerDB::GNIS_Stream:
-								if (this->layerDlg.doHydrology)
+								if (this->layerDlg->doHydrology)
 									drawFeature = true;
 								break;
 
 							case TigerDB::GNIS_Levee:
 							case TigerDB::GNIS_Military:
-								if (this->layerDlg.doCultural)
+								if (this->layerDlg->doCultural)
 									drawFeature = true;
 								break;
 
 							case TigerDB::GNIS_Pillar:
 							case TigerDB::GNIS_Lava:
-								if (this->layerDlg.doOtherNames)
+								if (this->layerDlg->doOtherNames)
 									drawFeature = true;
 								break;
 
@@ -1224,7 +1233,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			DbSearch::Found fo;
 			lSeg.Init(this->pts[0], pt0);
 
-			so.Init(lSeg);
+			so.Init(lSeg, this->layerDlg->objClasses);
 			if (so.FindBest(&fo) == 0)
 			{
 			}
@@ -1239,14 +1248,13 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		pt0.y = (double)this->pt.y;
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
-
+/*
 		pt0.x = (double)point.x;
 		pt0.y = (double)point.y;
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
-
+*/
 		ASSERT(doc->db != 0);
-		//	if( doc->isOpen )
 		if (doc->db->IsOpen())
 		{
 			CDC* dc = GetDC();
@@ -1256,14 +1264,14 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			ObjHandle dbo;
 			GeoDB::Search ss;
 
-			doc->db->Init(range, &ss);
+			//doc->db->Init(range, &ss);
 			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
-			/**///DbSearchByPt so(*doc->db);
-			DbSearchByRange so(*doc->db);
+			DbSearchByPt so(*doc->db);
+			//DbSearchByRange so(*doc->db);
 			DbSearch::Found fo;
 
-			so.Init(range);
-			//so.Init(pt0, this->sDist);
+			//so.Init(range);
+			so.Init(pt0, this->sDist, this->layerDlg->objClasses);
 			if (so.FindBest(&fo) == 0)/**/
 			{
 				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
@@ -1539,7 +1547,7 @@ void CMapViewSDView::OnRButtonUp(UINT , CPoint point)
 void CMapViewSDView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
 {
 #ifndef SHARED_HANDLERS
-	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
+	// theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE); Don't want this to display 12/6/23
 #endif
 }
 
@@ -1587,7 +1595,7 @@ void CMapViewSDView::OnZoomOut()
 
 void CMapViewSDView::OnMapLayers()
 {
-	if (this->layerDlg.DoModal() == IDOK)
+	if (this->layerDlg->DoModal() == IDOK)
 	{
 		this->Invalidate();
 	}

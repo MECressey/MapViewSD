@@ -134,7 +134,8 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			LM_Urbanizacion,
 			PF_Island,
 			HYDRO_BraidedStream,
-			NVF_CensusWaterCenterLine
+			NVF_CensusWaterCenterLine,
+			NVF_ArtificialPath
 		};
 
 		enum GNISFeatures

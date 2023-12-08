@@ -1,6 +1,6 @@
 // layerdlg.h : header file
 //
-
+#include "GEODB.HPP"
 /////////////////////////////////////////////////////////////////////////////
 // LayerDlg dialog
 
@@ -8,7 +8,9 @@ class LayerDlg : public CDialog
 {
 // Construction
 public:
+	NodeEdgePoly::GeoDB::searchClasses_t objClasses;
 	LayerDlg(CWnd* pParent = NULL);	// standard constructor
+	void OnOK();
 
 // Dialog Data
 	//{{AFX_DATA(LayerDlg)
@@ -44,4 +46,6 @@ protected:
 		// NOTE: the ClassWizard will add member functions here
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+private:
+	void SetUpSpatialFilter(void);
 };

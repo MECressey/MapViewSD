@@ -11,9 +11,15 @@
 static char BASED_CODE THIS_FILE[] = __FILE__;
 #endif*/
 
+using namespace NodeEdgePoly;
+
 /////////////////////////////////////////////////////////////////////////////
 // LayerDlg dialog
-
+void LayerDlg::OnOK()
+{
+	CDialog::OnOK();
+	SetUpSpatialFilter();
+}
 
 LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(LayerDlg::IDD, pParent)
@@ -40,6 +46,20 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doTopographic = FALSE;
 	doHydrology = FALSE;
 	//}}AFX_DATA_INIT
+
+	SetUpSpatialFilter();
+}
+
+void LayerDlg::SetUpSpatialFilter(void)
+{
+	this->objClasses.reset();
+	if (doLines && (doOtherRds || doBoundary || doLocalRds || doOtherFeatures || doPrimaryRds || doSecondaryRds ||
+			doShoreline || doStreams || doTrails))
+		this->objClasses.set(DB_EDGE);
+	if (doGNISPoints)
+		this->objClasses.set(DB_POINT);
+	if (doAreas)
+		this->objClasses.set(DB_POLY);
 }
 
 void LayerDlg::DoDataExchange(CDataExchange* pDX)

@@ -7,6 +7,7 @@
 #include "mapwin.hpp"
 #include "layerdlg.h"
 #include "linedlg.h"
+#include "GEODB.HPP"
 
 class CMapViewSDView : public CView
 {
@@ -41,7 +42,7 @@ public:
 #endif
 
 protected:
-	CPen pens[12];
+	CPen pens[13];
 	CBrush polyBrush;
 	CFont font;
 	int			pan_overlap;
@@ -63,7 +64,7 @@ protected:
 	CBrush brush;
 	CRect rect;
 	LineDlg* lineDlg;
-	LayerDlg layerDlg;
+	LayerDlg *layerDlg;
 #if ! defined( DO_TIGER )
 	ObjHandle pickObj;
 #endif
@@ -84,6 +85,7 @@ protected:
 
 	CPen* GetPen(int code);
 	CBrush* GetBrush(int code);
+	friend LayerDlg;
 
 // Generated message map functions
 protected:
