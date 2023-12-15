@@ -101,47 +101,47 @@ int TigerDB::Close( void )
 
 DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 {
-  switch( code )
+	DbObject* object = 0;
+	switch( code )
   {
-    DbObject *object;
-
     default :
 		  return( this->GeoDB::CreateDbObject( code ) );
       break;
 
 		case DB_EDGE:
-    //case DB_TIGER_LINE :    	
+    //case DB_TIGER_LINE :    
+			object = new Chain;
+			this->nLines++;
+#ifdef SAVE_FOR_NOW
       if( this->nLines < MAX_TIGER_LINES )
 		  {
 	    	object = (DbObject *)&this->lines[ this->nLines ];
 	    	this->nLines++;
 	    	return( object );
       }
+#endif
       break;
 
 		//case DB_TIGER_POLY:
 		case DB_POLY:
 			object = new TigerDB::Polygon;
-			return object;
+			//return object;
 			break;
 
 		case DB_POINT:
+			object = new TigerDB::GNISFeature;
+#ifdef SAVE_FOR_NOW
 			static int nPoints = 0;  // Temp
 			if (nPoints++ < 100)
 			{
 				object = new TigerDB::GNISFeature;
 				return object;
 			}
+#endif
 			break;
-			/*
-		case DB_TIGER_EdgePolyLink:
-			object = new TigerDB::EdgePolyLink;
-			return object;
-			break;
-			*/
   }
 
-  return( 0 );
+  return( object );
 }
 
 void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
