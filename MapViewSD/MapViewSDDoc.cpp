@@ -90,7 +90,7 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 
 	if (this->db->Open(TString(lpszPathName), 0/*1*/, 0) != 0)
 		return(FALSE);
-	this->range = this->db->GetRange();
+	this->range = this->db->getRange();
 
 	this->isOpen = TRUE;
 	return TRUE;

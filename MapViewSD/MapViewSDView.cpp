@@ -913,7 +913,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 //		pDoc->db->CheckTree();
 
 		pDoc->db->Init(range, this->layerDlg->objClasses, &ss);
-		while (pDoc->db->GetNext(&ss, &dbo) == 0)
+		while (pDoc->db->getNext(&ss, &dbo) == 0)
 		{
 			/*if (frame->OnAbort())
 				break;*/
@@ -1029,10 +1029,10 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 				case GeoDB::AREA:
 				{
-					int nPts = /*TigerDB::Polygon*/GeoDB::Poly::GetPts(dbo, this->pts);
+					int nPts = /*TigerDB::Polygon*/GeoDB::Poly::getPts(dbo, this->pts);
 					GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
 					CBrush* brush;
-					if ((brush = this->GetBrush(poly->GetCode())) != 0)
+					if ((brush = this->GetBrush(poly->userCode)) != 0)
 					{
 						pDC->SelectObject(brush);
 						DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
@@ -1048,7 +1048,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 					CPen* pen;
 					if ((pen = this->GetPen(line->userCode/*GetCode()*/)) != 0)
 					{
-						int nPts = (int)line->GetNumPts();
+						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
 						if (pen != lastPen)
 						{
@@ -1304,7 +1304,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
 					{
 						//pen = &this->hPen;
-						int nPts = (int)line->GetNumPts();
+						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
 
 						CPen* oldPen = dc->SelectObject(pen);
@@ -1488,7 +1488,7 @@ void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
 
 		std::string &name = poly->GetName();
 		this->lineDlg->m_name = name.c_str();
-		const char* code = LineStr(poly->GetCode());
+		const char* code = LineStr(poly->userCode);
 		sprintf/*_stprintf_s*/(buffer, "POLY: %s", code);
 		this->lineDlg->m_type = buffer;
 		this->lineDlg->UpdateData(FALSE);
@@ -1704,7 +1704,7 @@ void CMapViewSDView::OnSearchUserid()
 		{
 			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
 			DisplayInfo(line);
-			const Range2D &range = line->GetMBR();
+			const Range2D &range = line->getMBR();
 			oh.Unlock();
 			this->mapWin->Set(range);
 			this->Invalidate();

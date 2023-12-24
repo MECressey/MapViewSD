@@ -17,7 +17,7 @@ using namespace NodeEdgePoly;
 
 const int MAX_TIGER_LINES		= 700;
 
-TigerDB::TigerDB(CDatabase *rDB) : GeoDB(600, 800, 0, 500)
+TigerDB::TigerDB(CDatabase *rDB) : GeoDB()
 {
 	this->nLines = 0;
   this->lines = new Chain[ MAX_TIGER_LINES ];
