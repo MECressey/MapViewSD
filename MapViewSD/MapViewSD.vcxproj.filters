@@ -220,5 +220,6 @@
     <Library Include="..\..\Lib2\DbOMDLL.lib" />
     <Library Include="..\..\Lib2\SetsDLL.lib" />
     <Library Include="..\..\Lib2\GeoDBDLL.lib" />
+    <Library Include="..\..\Lib2\TopoToolsDLL.lib" />
   </ItemGroup>
 </Project>

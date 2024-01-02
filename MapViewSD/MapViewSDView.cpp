@@ -24,8 +24,11 @@
 #include "trendlin.h"
 #include "SearchUserID.h"
 #include "HASHTABL.HPP"
+#include "ShortPath.h"
 
 #include "TString.h"
+
+#define DO_SHORT_PATH
 
 using namespace NodeEdgePoly;
 
@@ -473,7 +476,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->lineDlg = 0;
 	this->doInfo = FALSE;
 	this->doTest = FALSE;
-	this->doShortPath = FALSE;
+	this->doShortPath = TRUE;
 	this->pickCount = 0;
 	this->startId = 0;
 	this->startDir = 0;
@@ -1014,7 +1017,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						if (!drawFeature)
 							break;
 
-						this->mapWin->Forward(&pt, point->GetPt());
+						this->mapWin->Forward(&pt, point->getPt());
 						cPt.x = (int)pt.x;
 						cPt.y = (int)pt.y;
 						std::string name = point->GetName();
@@ -1316,7 +1319,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						//	      this->mapWin->Draw( dc, this->pts, nPts );
 						DisplayInfo(line);
 						/**/
-#ifdef DO_LATER		  
+#ifdef DO_SHORT_PATH		  
 						if (this->doShortPath)
 						{
 							double distSq;
@@ -1345,23 +1348,37 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 							else if (this->pickCount == 2)
 							{
 								ShortPath sPath;
-								CArray<long, long> lineIds;
+								//CArray<long, long> lineIds;
 								ObjHandle handle;
 								double dist;
 								int nIds;
 
-								doc->db->Read(this->startId, handle);
+								int err = doc->db->Read(this->startId, handle);
 								line = (TigerDB::Chain*)handle.Lock();
-								sPath.Init(tempPt, *line);
+								double length = line->Length();
 								handle.Unlock();
+								sPath.Init(handle, fo.handle, 0, this->startPt);
+								sPath.putEdge(handle, 0, length);
+	
 								//							sPath.Init( this->startId, line, 0, tempPt );
-								if (nIds = sPath.Find(doc->db, 0, 0, &lineIds, &dist))
+								ShortPath::filter_t f1,
+									f2,
+									f3;
+								std::vector<long> edgeIds;
+
+								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
+								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+								f1.push_back(TigerDB::ROAD_SecondaryAndConnecting);
+								f1.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
+								f1.push_back(TigerDB::ROAD_MajorCategoryUnknown);
+								f1.push_back(TigerDB::ROAD_SpecialCharacteristics);
+								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 								{
-									while (--nIds >= 0)
+									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
 									{
-										doc->db->Read(lineIds[nIds], handle);
+										err = doc->db->Read(edgeIds[i], handle);
 										line = (TigerDB::Chain*)handle.Lock();
-										nPts = (int)line->GetNumPts();
+										nPts = (int)line->getNumPts();
 										line->Get(this->pts);
 										DrawLine(*this->mapWin, dc, this->pts, nPts);
 										handle.Unlock();
