@@ -476,7 +476,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->lineDlg = 0;
 	this->doInfo = FALSE;
 	this->doTest = FALSE;
-	this->doShortPath = TRUE;
+	this->doShortPath = /*FALSE*/TRUE;
 	this->pickCount = 0;
 	this->startId = 0;
 	this->startDir = 0;
@@ -1358,7 +1358,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								double length = line->Length();
 								handle.Unlock();
 								sPath.Init(handle, fo.handle, 0, this->startPt);
-								sPath.putEdge(handle, 0, length);
+								sPath.putEdge(handle, 1, length);
 	
 								//							sPath.Init( this->startId, line, 0, tempPt );
 								ShortPath::filter_t f1,
@@ -1369,9 +1369,9 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
 								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
 								f1.push_back(TigerDB::ROAD_SecondaryAndConnecting);
-								f1.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
-								f1.push_back(TigerDB::ROAD_MajorCategoryUnknown);
-								f1.push_back(TigerDB::ROAD_SpecialCharacteristics);
+								f2.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
+								f2.push_back(TigerDB::ROAD_MajorCategoryUnknown);
+								f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
 								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 								{
 									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
