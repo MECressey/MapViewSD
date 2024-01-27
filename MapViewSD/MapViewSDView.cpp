@@ -476,7 +476,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->lineDlg = 0;
 	this->doInfo = FALSE;
 	this->doTest = FALSE;
-	this->doShortPath = /*FALSE*/TRUE;
+	this->doShortPath = FALSE/*TRUE*/;
 	this->pickCount = 0;
 	this->startId = 0;
 	this->startDir = 0;
@@ -1695,14 +1695,14 @@ void CMapViewSDView::OnThinPts()
 			this->Invalidate();
 	}
 }
-
+/*
 class DbHash : public DbHashAccess {
 public:
-	long tlid;
-	int is_equal(DbObject* dbo) { return this->tlid == ((TigerDB::Chain*)dbo)->userId/*GetTLID()*/; }
-	long int hashKey(int nBits) { return HashTable::HashDK(nBits, tlid); }
+	long id;
+	int is_equal(DbObject* dbo) { return this->id == ((GeoDB::Edge*)dbo)->userId; }
+	long int hashKey(int nBits) { return HashTable::HashDK(nBits, id); }
 };
-
+*/
 void CMapViewSDView::OnSearchUserid()
 {
 	SearchUserID searchDlg;
@@ -1713,8 +1713,8 @@ void CMapViewSDView::OnSearchUserid()
 		DbObject::Id key = atoi(TString(id));
 		CMapViewSDDoc* pDoc = GetDocument();
 
-		DbHash dbHash;
-		dbHash.tlid = key;
+		GeoDB::Edge::Hash dbHash;
+		dbHash.id = key;
 		ObjHandle oh;
 		int err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
 		if (err == 0)
