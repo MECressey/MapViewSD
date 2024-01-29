@@ -27,7 +27,7 @@ DistNames::DistNames( CDatabase* pDB )
 
 CString DistNames::GetDefaultConnect()
 {
-	return CString("ODBC;DSN=TigerData;");
+	return CString("ODBC;DSN=TigerBase;");
 }
 
 CString DistNames::GetDefaultSQL()

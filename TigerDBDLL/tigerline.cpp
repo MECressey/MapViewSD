@@ -1,6 +1,7 @@
 //#include "stdafx.h"
 #include "pch.h"
 #include <string.h>
+#include <assert.h>
 
 #include "tigerdb.hpp"
 #include "tgrtypes.h"
@@ -86,20 +87,21 @@ void TigerDB::Chain::Compress( void *obj )
 
 	for( int i = 0; i < this->nNames;  i++ )
 	{
-		unsigned long val = ((1L << 24 ) - 1) & this->names[ i ].nameId;
+		//unsigned long val = ((1L << 24 ) - 1) & this->names[ i ].nameId;
+		//assert(val <= 2862); // Very temporary
 
-		::memcpy( buffer, &val, 3 );
-		buffer[ 3 ] = this->names[ i ].typeCode;
+		::memcpy( buffer, &this->names[i].nameId /* &val*/, sizeof(unsigned short)/*3*/);
+		buffer[ 2/*3*/ ] = this->names[ i ].typeCode;
 
-		buffer[ 4 ] = (this->names[ i ].prefixCode << 4) | 
+		buffer[ 3/*4*/ ] = (this->names[ i ].prefixCode << 4) | 
 				(((1 << 4) - 1) & this->names[ i ].suffixCode);
 
-	  ::memcpy(to, buffer, 5 );
-	  to += 5;
+	  ::memcpy(to, buffer, 4/*5*/ );
+	  to += 4/*5*/;
 	}
 	/*::memcpy(to, &this->tlid, sizeof(long));	// TLID
 	to += sizeof(long);*/
-	to = this->epl_poly.store(to);
+	//to = this->epl_poly.store(to);
 }
 
 void TigerDB::Chain::Decompress( void *obj, int size )
@@ -107,7 +109,10 @@ void TigerDB::Chain::Decompress( void *obj, int size )
   char *from = (char *)obj;
   
 	this->Edge::Decompress( from, size );
-	from += this->Edge::DiskSize();
+
+	unsigned diskSize = this->Edge::DiskSize();
+	from += diskSize;
+	size -= diskSize;
 
 	//this->code = *from++;
 	this->nNames = *from++;
@@ -115,11 +120,12 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 
 	for( int i = 0; i < this->nNames;  i++ )
 	{
-		unsigned long val;
+		//unsigned long val = 0;
 
-		::memcpy( &val, from, 3 );
-		this->names[ i ].nameId = ((1L << 24 ) - 1) & val;
-		from += 3;
+		::memcpy(&this->names[i].nameId/* & val*/, from, sizeof(unsigned short)/*3*/);
+		//this->names[ i ].nameId = ((1L << 24 ) - 1) & val;
+		//assert(this->names[i].nameId <= 2862);		// Very Temporary!!!
+		from += sizeof(unsigned short)/*3*/;
 
 		this->names[ i ].typeCode = *from++;
 
@@ -127,21 +133,21 @@ void TigerDB::Chain::Decompress( void *obj, int size )
 		this->names[ i ].suffixCode = ((1 << 4) - 1) & this->names[ i ].prefixCode;
 		this->names[ i ].prefixCode = this->names[ i ].prefixCode >> 4;
 
-		size -= 5;
+		size -= 4/*5*/;
 	}
 	/*this->tlid = *(long*)from;  // TLID
 	from += sizeof(long);*/
-	from = this->epl_poly.fetch(from);
+	//from = this->epl_poly.fetch(from);
 }
 
 unsigned TigerDB::Chain::DiskSize( void )
 {
   unsigned size = this->Edge::DiskSize();
 
-	size += 2 + ( this->nNames * 5 );
+	size += 2 + ( this->nNames * 4/*5*/ );
 	//size += sizeof(long); // TLID
 
-	size += this->epl_poly.size();
+	//size += this->epl_poly.size();
 
 	return( size );
 }
@@ -166,7 +172,8 @@ void TigerDB::Chain::SetName( TigerDB::Name lineNames[], int count )
 		}
 		else
 		{
-			names[ i ].nameId = db->names->m_id;
+			assert(db->names->m_id <= 2862);		// Very Temporary!!!
+			names[ i ].nameId = (unsigned short)db->names->m_id;
 			while (! db->names->IsEOF())
 				db->names->MoveNext();
 		}

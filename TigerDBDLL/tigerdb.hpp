@@ -217,7 +217,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			private :
 				struct TName
 				{
-					long nameId;
+					unsigned short /*long*/ nameId;
 					unsigned char prefixCode;
 					unsigned char suffixCode;
 					unsigned char typeCode;
@@ -225,7 +225,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 		//
 		//	Used only for getting/setting the records
 				unsigned char nNames;
-				TName names[ 5 ];
+				TName names[5];
 				//unsigned char code;
 				//long tlid;	// Tiger LineID
 		};
