@@ -1,3 +1,17 @@
+//
+//	MapWin.hpp - implementation for the MapWindow class which is a tool for doing map display operations
+//  Copyright(C) 2024 Michael E. Cressey
+//
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
 #include <math.h>
 
 #include "mapwin.hpp"
@@ -22,8 +36,6 @@ MapWindow::MapWindow( int invertX, int invertY )
 
 MapWindow::~MapWindow()
 {
-//  if( this->mapProj )
-//	delete this->mapProj;
 }
 
 void MapWindow::Forward( XY_t *out, const XY_t &in ) const
@@ -85,20 +97,20 @@ int MapWindow::GetRange( Range2D *range ) const
 
 //	Upper left corner
 	corner_in.y = this->viewPort.y.max;
-	this->/*transform.*/Reverse( &corner_out, corner_in );
+	this->Reverse( &corner_out, corner_in );
 	range->Range2D::Add( corner_out );
 
 //	Upper right corner
 	corner_in.x = this->viewPort.x.max;
-	this->/*transform.*/Reverse( &corner_out, corner_in );
+	this->Reverse( &corner_out, corner_in );
 	range->Range2D::Add( corner_out );
 
 //	Lower right corner
 	corner_in.y = this->viewPort.y.min;
-	this->/*transform.*/Reverse( &corner_out, corner_in );
+	this->Reverse( &corner_out, corner_in );
 	range->Range2D::Add( corner_out );
 
-	return( 1/*TRUE*/);
+	return( 1 );
 }
 
 
@@ -106,8 +118,6 @@ int MapWindow::GetRange( Range2D *range ) const
 void MapWindow::SetViewport( const Range2D &viewport )
 {
   this->viewPort = viewport;
-/*  if( this->transform != 0 )
-	this->transform->SetOutClipRect( viewport, FALSE );*/
 }
 
 //	Builds a transform matrix from fields in the window.
@@ -143,7 +153,7 @@ void MapWindow::SetTransMatrix( void )
   matrix[3][2] = 0.0;
   matrix[3][3] = 1.0;
 
-//	Send the matrix to the tranformation object and resize the scalable
+//	Send the matrix to the transformation object and resize the scalable
 //	cursor using the new scaling factor.
 
   this->TransMatrix::/*transform.*/Init/*SetMatrix*/( matrix, Point::_2D );
@@ -221,14 +231,6 @@ void MapWindow::SetRotation( double rotation )
 
 void MapWindow::Set( MapProjection *mp )
 {
-/*	if( mp == 0 && this->mapProj != 0 )
-	{
-		Range2D range;
-		this->GetRange( &range );
-		this->mapProj = 0;
-		this->Set( range );
-	}
-*/
   this->mapProj = mp;
 }
 
@@ -310,7 +312,6 @@ void MapWindow::PanByDisplay( const XY_t &viewport_loc )
 		vcenter_new.y += vfactor;
 
   this->TransMatrix::Reverse( &this->center, vcenter_new );
-//  this->Reverse( &this->center, vcenter_new );
   this->SetTransMatrix();
 }
 

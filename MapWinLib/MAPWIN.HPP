@@ -1,9 +1,18 @@
 //
-//	Copyright (c) 1994-1995, Object-Based Technologies.
-//	All rights reserved.
+//	MapWin.hpp - declarations for the MapWindow class which is a tool for doing map display operations
+//  Copyright(C) 2024 Michael E. Cressey
 //
-#if ! defined( MAPWIN_HPP )
-#define MAPWIN_HPP
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
+#pragma once
 
 #include "transmat.hpp"
 #include "range.hpp"
@@ -27,7 +36,7 @@ class MapWindow : public TransMatrix
 		void PanByDisplay( const XY_t & );		// Offset in normalized units (viewport)
 //	void Get( XY_t *, const XY_t & ) const;
 //	const TransMatrix &GetTransform( void ) const;
-	MapProjection *GetMapProjection( void ) const;
+		MapProjection *GetMapProjection( void ) const;
 	
   private :
 		Range2D viewPort;
@@ -44,15 +53,8 @@ class MapWindow : public TransMatrix
 	void SetTransMatrix( void );
 };
 
-/*inline const TransMatrix &MapWindow::GetTransform( void ) const
-{
-  return( this->transform );
-}
-*/
-
 inline MapProjection *MapWindow::GetMapProjection( void ) const
 {
   return( this->mapProj );
 }
 
-#endif

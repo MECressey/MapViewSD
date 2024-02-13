@@ -1,25 +1,27 @@
-///////////////////////////////////////////////////////////////////////////////
 //
-//	TIGERDB.HPP - declarations for the Geographic Database.
+//	TIGERDB.HPP - declarations for the TigerDB custom database using the NodeEdgePoly class library.
+//  Copyright(C) 2024 Michael E. Cressey
 //
-//	Copyright (c) 1992-1996, Object-Based Technologies, Topsham, ME, USA.
-//	All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
 #pragma once
 
 #include <tchar.h>
 #include "geodb.hpp"
 #include <vector>
 #include <string>
-//#include "dac.hpp"
 
 class CDatabase;
 class DistNames;
 class GNISName;
-
-//extern /*__declspec(dllexport)*/ SetRelation POLY_EDGE;
-
-//extern /*__declspec(dllexport)*/ SetRelation EDGE_POLY;
 
 using namespace NodeEdgePoly;
 
@@ -217,7 +219,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			private :
 				struct TName
 				{
-					unsigned short /*long*/ nameId;
+					unsigned short nameId;
 					unsigned char prefixCode;
 					unsigned char suffixCode;
 					unsigned char typeCode;
@@ -226,8 +228,6 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 		//	Used only for getting/setting the records
 				unsigned char nNames;
 				TName names[5];
-				//unsigned char code;
-				//long tlid;	// Tiger LineID
 		};
 
 		class __declspec(dllexport) Polygon : public GeoDB::Poly
@@ -239,21 +239,6 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			void SetName(std::string);
 			std::string GetName(void) const;
 
-			//int GetCode(void) const;
-			//void SetCode(int code);
-			//double GetArea(void) const;
-			//void SetArea(double);
-			//int Level(int*);
-
-			//static int GetPts(ObjHandle &, XY_t[]);
-
-			//int AddEdge(ObjHandle& eh, unsigned char dir);
-
-			//int matchPoly(ObjHandle&, std::vector<DirLineId>& polyLines, int start, int end);
-
-			//SetSllOwner poly_epl;
-
-			//static SetRelation POLY_EDGE;
 			virtual void Init(void);
 
 		protected:
@@ -262,9 +247,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			virtual unsigned DiskSize(void);
 
 		private:
-			char name[31];
-		//	unsigned char code;
-		//	double area;
+			char name[31];			// Using a member variable, not an ODBC source
 		};
 
 		class __declspec(dllexport) GNISFeature : public GeoDB::Point
@@ -275,11 +258,6 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 
 			std::string GetName(void);
 			virtual void Init(void);
-
-		protected:
-			/*virtual void Compress(void*);
-			virtual void Decompress(void*, int);
-			virtual unsigned DiskSize(void);*/
 
 		private:
 			std::string name;
@@ -311,59 +289,3 @@ inline unsigned TigerDB::Chain::GetNumNames( void ) const
 {
 	return( this->nNames );
 }
-/*
-inline int TigerDB::Chain::GetCode( void ) const
-{
-	return( this->code );
-}
-
-inline void TigerDB::Chain::SetCode( int Code )
-{
-	this->code = Code;
-}
-*/
-/*
-inline void TigerDB::Chain::SetTLID(long tlid)
-{
-	this->tlid = tlid;
-}
-
-inline long TigerDB::Chain::GetTLID(void) const
-{
-	return(this->tlid);
-}
-*/
-/*
-inline int TigerDB::Polygon::GetCode(void) const
-{
-	return(this->code);
-}
-
-inline void TigerDB::Polygon::SetCode(int Code)
-{
-	this->code = Code;
-}
-
-inline int TigerDB::EdgePolyLink::GetCode(void) const
-{
-	return(this->code);
-}
-
-inline void TigerDB::EdgePolyLink::SetCode(int Code)
-{
-	this->code = Code;
-}
-
-inline unsigned char TigerDB::EdgePolyLink::GetDir(void) const
-{
-	return(this->dir);
-}
-
-inline void TigerDB::EdgePolyLink::SetDir(unsigned char dir)
-{
-	this->dir = dir;
-}
-
-inline double TigerDB::Polygon::GetArea(void) const { return this->area;  }
-inline void TigerDB::Polygon::SetArea(double a) { this->area = a; }
-*/

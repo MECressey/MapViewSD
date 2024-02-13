@@ -1,12 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
 //
-//	TIGERLINE.HPP - declarations for the DB Line object.
+//	TigerLine.hpp - declarations for the TigerLine class using the NodeEdgePoly class library.
+//  Copyright(C) 2024 Michael E. Cressey
 //
-//	Copyright (c) 1992-1996, Object-Based Technologies, Topsham, ME, USA.
-//	All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
-#if ! defined( TIGERLINE_HPP )
-#define TIGERLINE_HPP
+//	This definition is not used - see tigerdb.hpp
+//
+#pragma once
 
 #include "tigerdb.hpp"
 
@@ -54,5 +52,3 @@ inline unsigned TigerLine::GetNumNames( void ) const
 	return( this->nNames );
 }
 
-
-#endif

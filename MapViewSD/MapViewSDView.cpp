@@ -210,13 +210,31 @@ static const char* LineStr(int code)
 		break;
 
 	case TigerDB::NVF_ZIPCodeBoundary:
+		str = "ZIP Code Boundary";
+		break;
+
 	case TigerDB::NVF_StatisticalBoundary:
+		str = "Statistical Boundary";
+		break;
+
 	case TigerDB::NVF_OtherTabulationBoundary:
+		str = "Other Tabulation Boundary";
+		break;
+
 	case TigerDB::NVF_WaterAreaDefinitionBoundary:
+		str = "Water Area Definition Boundary";
+		break;
+
 	case TigerDB::NVF_USGSClosureLine:
+		str = "USGS Closure line";
+		break;
+
 	case TigerDB::NVF_CensusWaterCenterLine:
+		str = "Census Water Centerline";
+		break;
+
 	case TigerDB::NVF_ArtificialPath:
-		str = "Closure line";
+		str = "Artificial Path";
 		break;
 
 	case TigerDB::NVF_CensusWaterBoundary3Mile:
@@ -1315,7 +1333,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 
 						if (this->doThining)
 							nPts = TrendLine(this->pts, nPts, this->tDist);
-						DrawLine(*this->mapWin, dc, this->pts, nPts);
+						DrawLine(*this->mapWin, dc, this->pts, nPts, true);
 						//	      this->mapWin->Draw( dc, this->pts, nPts );
 						DisplayInfo(line);
 						/**/

@@ -1,3 +1,17 @@
+//
+//	GNISFeature.cpp - implementation for the TigerDB::GNISFeature class using the NodeEdgePoly class library.
+//  Copyright(C) 2024 Michael E. Cressey
+//
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
 #include "pch.h"
 #include <assert.h>
 
@@ -35,17 +49,7 @@ std::string TigerDB::GNISFeature::GetName(void)
 		}
 		else
 		{
-			/*char buffer[256];
-
-			::strcpy(buffer, TString(db->nameByFeatureId->m_name));
-			std::string s(buffer);
-			//std::string s2 = s;
-			this->name = s;
-			//this->name.assign();*/
-			//this->name = (const char *)db->nameByFeatureId->m_name;
 			this->name = (const char*)TString(db->nameByFeatureId->m_name);
-			//this->name = (LPCTSTR)db->nameByFeatureId->m_name;
-			//::strcpy(out->name, TString(db->nameById->m_name));
 			while (!db->nameByFeatureId->IsEOF())
 				db->nameByFeatureId->MoveNext();
 		}

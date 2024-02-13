@@ -7,7 +7,25 @@
 
 static CPoint cpts[ 10000 ];
 
-void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts )
+void DrawMarker(CPoint &pt, CDC* dc)
+{
+  CPoint newPt;
+  const int pixels = 20;
+
+  newPt.x = pt.x - pixels;
+  newPt.y = pt.y;
+  dc->MoveTo(newPt);
+  newPt.x = pt.x + pixels;
+  dc->LineTo(newPt);
+
+  newPt.x = pt.x;
+  newPt.y = pt.y - pixels;
+  dc->MoveTo(newPt);
+  newPt.y = pt.y + pixels;
+  dc->MoveTo(newPt);
+}
+
+void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts, bool drawDir)
 {
   XY_t pt;
   CPoint cPt;
@@ -21,6 +39,11 @@ void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts )
   }
 
   dc->Polyline( cpts, nPts );
+  if (drawDir)
+  {
+    DrawMarker(cpts[nPts - 1], dc);
+  }
+
 /*
   transform.Forward( &pt, pts[ 0 ] );
   cPt.x = (int)pt.x;

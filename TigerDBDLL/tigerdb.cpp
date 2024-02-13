@@ -1,10 +1,17 @@
-///////////////////////////////////////////////////////////////////////////////
 //
-//	TIGERDB.CPP - declarations for the Geographic Databasenames
+//	TIGERDB.CPP - implementation for the TigerDB custom database using the NodeEdgePoly class library.
+//  Copyright(C) 2024 Michael E. Cressey
 //
-//	Copyright (c) 1992-1996, Object-Based Technologies, Topsham, ME, USA.
-//	All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
 #include "pch.h"
 #include <assert.h>
 #include <afxdb.h>
@@ -22,14 +29,8 @@ TigerDB::TigerDB(CDatabase *rDB) : GeoDB()
 	this->nLines = 0;
   this->lines = new Chain[ MAX_TIGER_LINES ];
   assert( this->lines != 0 );
-	this->db = rDB/*new CDatabase*/;
+	this->db = rDB;
   assert( this->db != 0 );
-#ifdef SAVE_FOR_NOW
-	this->db->SetQueryTimeout( 60 * 10 );
-	//this->db->Open( _T("TigerData"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE ); // Access MDB
-	this->db->Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
-	this->db->SetSynchronousMode( TRUE );
-#endif
 
 	this->names = new DistNames( this->db );
   assert( this->names != 0 );
@@ -70,10 +71,6 @@ TigerDB::~TigerDB()
 
 	assert( this->nameById != 0 );
 	delete this->nameById;
-/*
-	assert( this->db != 0 );
-	delete this->db;
-*/
 }
 
 int TigerDB::Close( void )
@@ -89,13 +86,7 @@ int TigerDB::Close( void )
 	{
 		this->nameById->Close();
 	}
-/*
-	assert( this->db != 0 );
-	if( this->db->IsOpen() )
-	{
-		this->db->Close();
-	}
-*/
+
 	return( this->GeoDB::Close() );
 }
 
@@ -109,7 +100,6 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
       break;
 
 		case DB_EDGE:
-    //case DB_TIGER_LINE :    
 			object = new Chain;
 			this->nLines++;
 #ifdef SAVE_FOR_NOW
@@ -122,10 +112,8 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 #endif
       break;
 
-		//case DB_TIGER_POLY:
 		case DB_POLY:
 			object = new TigerDB::Polygon;
-			//return object;
 			break;
 
 		case DB_POINT:
@@ -154,8 +142,7 @@ void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
 		  this->GeoDB::DeleteDbObject( code, dbo );
       break;
 
-		  case DB_EDGE : 
-    //case DB_TIGER_LINE :    	
+		case DB_EDGE : 
       assert( this->nLines > 0 );
       if( this->nLines > 0 )
 		  {
@@ -164,13 +151,3 @@ void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
       break;       
   }
 }
-/*
-TigerDB::Chain::Chain() {
-	this->nNames = 0;
-	this->code = 0;
-}
-
-TigerDB::Chain::~Chain() {
-
-}
-*/
