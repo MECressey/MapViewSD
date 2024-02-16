@@ -1,5 +1,18 @@
-// mappdial.cpp : implementation file
 //
+//	mappdial.cpp - implementation of the MapPDIAL class which has some map projections
+//  Copyright(C) 2024 Michael E. Cressey
+//
+//	This program is free software : you can redistribute it and /or modify it under the terms of the
+//	GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+//	any later version.
+//
+//	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License along with this program.
+//  If not, see https://www.gnu.org/licenses/
+//
+// 
 
 #include "pch.h"
 #include "mapviewSD.h"
@@ -12,7 +25,6 @@ static char BASED_CODE THIS_FILE[] = __FILE__;
 
 /////////////////////////////////////////////////////////////////////////////
 // MapPDIAL dialog
-
 
 MapPDIAL::MapPDIAL(CWnd* pParent /*=NULL*/)
 	: CDialog(MapPDIAL::IDD, pParent)
