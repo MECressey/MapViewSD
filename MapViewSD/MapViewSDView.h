@@ -20,7 +20,7 @@
 #include "linedlg.h"
 #include "GEODB.HPP"
 
-class CMapViewSDView : public CView
+class CMapViewSDView : public CView, protected GeoDB::SpatialObjectFilter
 {
 protected: // create from serialization only
 	CMapViewSDView() noexcept;
@@ -97,6 +97,8 @@ protected:
 	CPen* GetPen(int code);
 	CBrush* GetBrush(int code);
 	friend LayerDlg;
+
+	virtual bool filter(GeoDB::SpatialObj *so);  // SpatialObjectFilter
 
 // Generated message map functions
 protected:

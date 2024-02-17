@@ -48,12 +48,12 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doStreams = FALSE;
 	doTrails = FALSE;
 	doAreas = TRUE,
-	doLakesOrPonds = FALSE;
-	doGNISPoints = FALSE;
+	doLakesOrPonds = TRUE;
+	doGNISPoints = TRUE;
 	doLandForm = FALSE;
 	doCoastal = FALSE;
 	doCultural = FALSE;
-	doCensus = FALSE;
+	doCensus = TRUE;
 	doOtherNames = FALSE;
 	doTopographic = FALSE;
 	doHydrology = FALSE;
@@ -70,7 +70,7 @@ void LayerDlg::SetUpSpatialFilter(void)
 		this->objClasses.set(DB_EDGE);
 	if (doGNISPoints)
 		this->objClasses.set(DB_POINT);
-	if (doAreas)
+	if (doAreas && (doLakesOrPonds))
 		this->objClasses.set(DB_POLY);
 }
 

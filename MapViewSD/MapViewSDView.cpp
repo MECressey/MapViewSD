@@ -465,7 +465,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->doProj = 0;
 	this->mapWin = 0;
 	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
-	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
 	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
 	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
 	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
@@ -850,6 +850,13 @@ CPen* CMapViewSDView::GetPen(int code)
 	return(pen);
 }
 
+bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
+{
+	if (so->IsA() != GeoDB::LINE)
+		return false;
+	GeoDB::Edge* edge = (GeoDB::Edge*)so;
+	return this->GetPen(edge->userCode) != 0;
+}
 
 void CMapViewSDView::OnDraw(CDC* pDC)
 {
@@ -944,7 +951,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 */
 //		pDoc->db->CheckTree();
 
-		pDoc->db->Init(range, this->layerDlg->objClasses, &ss);
+		pDoc->db->InitSearch(&ss, range, this->layerDlg->objClasses);
 		while (pDoc->db->getNext(&ss, &dbo) == 0)
 		{
 			/*if (frame->OnAbort())
@@ -1303,7 +1310,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			DbSearch::Found fo;
 
 			//so.Init(range);
-			so.Init(pt0, this->sDist, this->layerDlg->objClasses);
+			so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
 			if (so.FindBest(&fo) == 0)/**/
 			{
 				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
