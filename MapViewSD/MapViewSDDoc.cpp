@@ -100,7 +100,8 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 
 	ASSERT(this->db != 0);
 
-	if (this->db->Open(TString(lpszPathName), 0/*1*/, 0) != 0)
+	std::string version;
+	if (this->db->Open(TString(lpszPathName), version, 0/*1*/, 0) != 0)
 		return(FALSE);
 	this->range = this->db->getRange();
 

@@ -222,4 +222,7 @@
     <Library Include="..\..\Lib2\GeoDBDLL.lib" />
     <Library Include="..\..\Lib2\TopoToolsDLL.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
 </Project>

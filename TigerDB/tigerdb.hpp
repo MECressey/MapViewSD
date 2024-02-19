@@ -39,7 +39,7 @@ class TigerDB : public GeoDB
 			RR_MainLine,
 			RR_Spur,
 			RR_Yard,
-			RR_SpecialCharacteristics,
+			RR_RR_FerryCrossing,
 			RR_OtherThoroughfare,
 			MGT_CategoryUnknown,
 			MGT_Pipeline,
@@ -127,7 +127,42 @@ class TigerDB : public GeoDB
 			LM_Urbanizacion,
 			PF_Island,
 			HYDRO_BraidedStream,
-			NVF_CensusWaterCenterLine
+			NVF_CensusWaterCenterLine,
+      ROAD_BarrierToTravel,   // New 2006 codes (2/19/2024)
+      ROAD_InternalUSCensusBureau,
+      MGT_AerialTramway,
+      MGT_PierDock,
+      LM_Museum,
+      LM_CommunityCenter,
+      LM_Library,
+      LM_AirportIntermodelTransportationHub,
+      LM_AirportStatisticalRepresentation,
+      LM_ParkAndRide,
+      LM_ConventionCenter,
+      LM_TransmissionTower,
+      LM_WaterTower,
+      LM_LighthouseBeacon,
+      LM_Tank,
+      LM_WindmillFarm
+      LM_SolarFarm,
+      LM_MonumentMemorial,
+      LM_SurveyBoundaryMemorial,
+      LM_Zoo,
+      LM_VineyardWineryOrchard,
+      LM_LandfillDump,
+      LM_InternalUSCensusBureau,
+      PF_Levee,
+      PF_MarshSwamp,
+      PF_QuarryMine,
+      PF_Dam,
+      NVF_PublicLandSurveySystem,
+      NVF_InternalUSCensusBureau,
+      NVF_OregonUrbanAreaBoundary,
+      NVF_CurrentStatisticalAreaBoundary,
+      HYDRO_TreatmentPond,
+      HYDRO_WaterBoundaryInlandVsCoastal,
+      HYDRO_SpecialWaterFeature
+      
 		};
 		class Name
 		{
