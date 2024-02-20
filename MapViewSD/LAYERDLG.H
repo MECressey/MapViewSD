@@ -47,6 +47,8 @@ public:
 	BOOL  doOtherNames;
 	BOOL  doTopographic;
 	BOOL  doHydrology;
+	BOOL	doGroundTransportation;
+	BOOL  doPark;
 	//}}AFX_DATA
 
 // Implementation
@@ -60,4 +62,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	void SetUpSpatialFilter(void);
+public:
 };

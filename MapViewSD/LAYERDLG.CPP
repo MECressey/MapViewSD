@@ -53,10 +53,12 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doLandForm = FALSE;
 	doCoastal = FALSE;
 	doCultural = FALSE;
-	doCensus = TRUE;
+	doCensus = FALSE;
 	doOtherNames = FALSE;
 	doTopographic = FALSE;
-	doHydrology = FALSE;
+	doHydrology = TRUE;
+	doGroundTransportation = FALSE;
+	doPark = TRUE;
 	//}}AFX_DATA_INIT
 
 	SetUpSpatialFilter();
@@ -66,11 +68,11 @@ void LayerDlg::SetUpSpatialFilter(void)
 {
 	this->objClasses.reset();
 	if (doLines && (doOtherRds || doBoundary || doLocalRds || doOtherFeatures || doPrimaryRds || doSecondaryRds ||
-			doShoreline || doStreams || doTrails))
+			doShoreline || doStreams || doTrails || doGroundTransportation))
 		this->objClasses.set(DB_EDGE);
 	if (doGNISPoints)
 		this->objClasses.set(DB_POINT);
-	if (doAreas && (doLakesOrPonds))
+	if (doAreas && (doLakesOrPonds || doPark))
 		this->objClasses.set(DB_POLY);
 }
 
@@ -98,6 +100,8 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_OTHER_NAMES, doOtherNames);
 	DDX_Check(pDX, IDC_TOPOGRAPHIC, doTopographic);
 	DDX_Check(pDX, IDC_HYDROLOGY, doHydrology);
+	DDX_Check(pDX, IDC_GRD_TRANSPORTATION, doGroundTransportation);
+	DDX_Check(pDX, IDC_PARK_POLY, doPark);
 	//}}AFX_DATA_MAP
 }
 
@@ -110,3 +114,4 @@ END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // LayerDlg message handlers
+

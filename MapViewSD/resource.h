@@ -108,6 +108,7 @@
 #define IDC_CHECK1                      1013
 #define IDC_LAKE_POND                   1013
 #define IDC_EDIT1                       1014
+#define IDC_GRD_TRANSPORTATION          1014
 #define IDC_TRANS_MERC                  1016
 #define IDC_EDIT_USERID                 1017
 #define IDC_POINT_NAMES                 1018
@@ -117,8 +118,8 @@
 #define IDC_HYDROLOGY                   1022
 #define IDC_OTHER_NAMES                 1023
 #define IDC_LANDFORM                    1024
-#define IDC_COASTOL                     1025
 #define IDC_COASTAL                     1025
+#define IDC_PARK_POLY                   1026
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -137,7 +138,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        315
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

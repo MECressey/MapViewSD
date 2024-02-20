@@ -86,6 +86,9 @@ static const char* LineStr(int code)
 	switch (code)
 	{
 	default:
+		str = "Feature unknown";
+		break;
+
 	case TigerDB::NotClassified:
 		str = "Feature not classified";
 		break;
@@ -137,16 +140,28 @@ static const char* LineStr(int code)
 		break;
 
 	case TigerDB::RR_Yard:
-	case TigerDB::RR_SpecialCharacteristics:
+	case TigerDB::RR_FerryCrossing:
 	case TigerDB::RR_OtherThoroughfare:
 		str = "Railroad: other";
 		break;
 
 	case TigerDB::MGT_CategoryUnknown:
+		str = "Ground transportation Unknown";
+		break;
 	case TigerDB::MGT_Pipeline:
+		str = "Pipeline";
+		break;
 	case TigerDB::MGT_PowerLine:
-	case TigerDB::MGT_SpecialCharacteristics:
-		str = "Ground transportation";
+		str = "Power Line";
+		break;
+	case TigerDB::MGT_Other:
+		str = "Other Ground transportation";
+		break;
+	case TigerDB::MGT_AerialTramway:
+		str = "Aerial Tramway";
+		break;
+	case TigerDB::MGT_PierDock:
+		str = "Pier or Dock";
 		break;
 
 	case TigerDB::LM_CategoryUnknown:
@@ -190,10 +205,29 @@ static const char* LineStr(int code)
 	case TigerDB::LM_OpenSpace:
 	case TigerDB::LM_GolfCourse:
 	case TigerDB::LM_Cemetery:
-	case TigerDB::LM_NationalParkOrForest:
-	case TigerDB::LM_OtherFederalLand:
+	case TigerDB::LM_NationalParkService:
+	case TigerDB::LM_NationalForestOrOther:
 	case TigerDB::LM_StateOrLocalPark_Forest:
 	case TigerDB::LM_SpecialPurpose:
+	case TigerDB::LM_Museum:
+	case TigerDB::LM_CommunityCenter:
+	case TigerDB::LM_Library:
+	case TigerDB::LM_AirportIntermodelTransportationHub:
+	case TigerDB::LM_AirportStatisticalRepresentation:
+	case TigerDB::LM_ParkAndRide:
+	case TigerDB::LM_ConventionCenter:
+	case TigerDB::LM_TransmissionTower:
+	case TigerDB::LM_WaterTower:
+	case TigerDB::LM_LighthouseBeacon:
+	case TigerDB::LM_Tank:
+	case TigerDB::LM_WindmillFarm:
+	case TigerDB::LM_SolarFarm:
+	case TigerDB::LM_MonumentMemorial:
+	case TigerDB::LM_SurveyBoundaryMemorial:
+	case TigerDB::LM_Zoo:
+	case TigerDB::LM_VineyardWineryOrchard:
+	case TigerDB::LM_LandfillDump:
+	case TigerDB::LM_InternalUSCensusBureau:
 		str = "Land Mark features";
 		break;
 
@@ -202,6 +236,10 @@ static const char* LineStr(int code)
 	case TigerDB::PF_TopographicFeature:
 	case TigerDB::PF_RidgeLine:
 	case TigerDB::PF_MountainPeak:
+	case TigerDB::PF_Levee:
+	case TigerDB::PF_MarshSwamp:
+	case TigerDB::PF_QuarryMine:
+	case TigerDB::PF_Dam:
 		str = "Physical features";
 		break;
 
@@ -232,26 +270,26 @@ static const char* LineStr(int code)
 		str = "Other Tabulation Boundary";
 		break;
 
-	case TigerDB::NVF_WaterAreaDefinitionBoundary:
+	case TigerDB::HYDRO_WaterAreaDefinitionBoundary:
 		str = "Water Area Definition Boundary";
 		break;
 
-	case TigerDB::NVF_USGSClosureLine:
+	case TigerDB::HYDRO_USGSClosureLine:
 		str = "USGS Closure line";
 		break;
 
-	case TigerDB::NVF_CensusWaterCenterLine:
+	case TigerDB::HYDRO_CensusWaterCenterLine:
 		str = "Census Water Centerline";
 		break;
 
-	case TigerDB::NVF_ArtificialPath:
+	case TigerDB::HYDRO_ArtificialPath:
 		str = "Artificial Path";
 		break;
 
-	case TigerDB::NVF_CensusWaterBoundary3Mile:
+	case TigerDB::HYDRO_CensusWaterBoundary3Mile:
 		str = "3 Mile Water Boundary";
 		break;
-	case TigerDB::NVF_CensusWaterBoundary12Mile:
+	case TigerDB::HYDRO_CensusWaterBoundary12Mile:
 		str = "12 Mile Water Boundary";
 		break;
 
@@ -478,7 +516,8 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->pens[DASH_DOT_PEN].CreatePen(PS_DASHDOT, 1, RGB(255, 0, 255));
 	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
 
-	this->polyBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
+	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
+	this->parkBrush.CreateSolidBrush(RGB(0, 255, 0)/*RGB(27, 149, 224)*/);
 
 	pts = 0;
 	this->pan_overlap = 50;
@@ -651,7 +690,22 @@ CBrush* CMapViewSDView::GetBrush(int code)
 {
 	if (!this->layerDlg->doAreas)
 		return 0;
-	return &this->polyBrush;
+	switch (code)
+	{
+	default:
+		break;
+
+	case TigerDB::HYDRO_PerennialLakeOrPond :
+	case TigerDB::HYDRO_SeaOrOcean:
+		return &this->hydroBrush;
+
+	case TigerDB::LM_StateOrLocalPark_Forest:
+	case TigerDB::LM_NationalParkService:
+	case TigerDB::LM_NationalForestOrOther:
+		return &this->parkBrush;
+	}
+
+	return 0;
 }
 
 CPen* CMapViewSDView::GetPen(int code)
@@ -663,7 +717,7 @@ CPen* CMapViewSDView::GetPen(int code)
 	switch (code)
 	{
 	default:
-		pen = &this->pens[DASH_2DOTS_PEN];
+		// pen = &this->pens[DASH_2DOTS_PEN];
 		break;
 
 	case TigerDB::ROAD_MajorCategoryUnknown:
@@ -707,7 +761,7 @@ CPen* CMapViewSDView::GetPen(int code)
 	case TigerDB::RR_MainLine:
 	case TigerDB::RR_Spur:
 	case TigerDB::RR_Yard:
-	case TigerDB::RR_SpecialCharacteristics:
+	case TigerDB::RR_FerryCrossing:
 	case TigerDB::RR_OtherThoroughfare:
 		pen = 0;
 		break;
@@ -715,16 +769,17 @@ CPen* CMapViewSDView::GetPen(int code)
 	case TigerDB::MGT_CategoryUnknown:
 	case TigerDB::MGT_Pipeline:
 	case TigerDB::MGT_PowerLine:
-	case TigerDB::MGT_SpecialCharacteristics:
-		pen = &this->pens[DASH_DOT_PEN];
+	case TigerDB::MGT_Other:
+		if (this->layerDlg->doGroundTransportation)
+			pen = &this->pens[DASH_DOT_PEN];
 		//pen = 0;
 		break;
 
 	case TigerDB::LM_Airport:
 	case TigerDB::LM_GolfCourse:
 	case TigerDB::LM_Cemetery:
-	case TigerDB::LM_NationalParkOrForest:
-	case TigerDB::LM_OtherFederalLand:
+	case TigerDB::LM_NationalParkService:
+	case TigerDB::LM_NationalForestOrOther:
 	case TigerDB::LM_StateOrLocalPark_Forest:
 		pen = &this->pens[PARK];
 		break;
@@ -736,8 +791,8 @@ CPen* CMapViewSDView::GetPen(int code)
 		break;
 
 	case TigerDB::NVF_PropertyLine:
-	case TigerDB::NVF_CensusWaterCenterLine:
-	case TigerDB::NVF_ArtificialPath:
+	case TigerDB::HYDRO_CensusWaterCenterLine:
+	case TigerDB::HYDRO_ArtificialPath:
 		if (this->layerDlg->doOtherFeatures)
 			pen = &this->pens[PARK];
 		break;
@@ -1068,7 +1123,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 				case GeoDB::AREA:
 				{
-					int nPts = /*TigerDB::Polygon*/GeoDB::Poly::getPts(dbo, this->pts);
+					int nPts = GeoDB::Poly::getPts(dbo, this->pts);
 					GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
 					CBrush* brush;
 					if ((brush = this->GetBrush(poly->userCode)) != 0)
@@ -1089,15 +1144,18 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 					{
 						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
-						if (pen != lastPen)
+						/*if (pen != lastPen)
 						{
 							pDC->SelectObject(pen);
 							lastPen = pen;
-						}
+						}*/
+						pDC->SelectObject(pen);
 						if (doThining)
 							nPts = TrendLine(this->pts, nPts, this->tDist);
 						DrawLine(*this->mapWin, pDC, this->pts, nPts);
 						//	    this->mapWin->Draw( pDC, this->pts, nPts );
+						pDC->SelectObject(oldPen);
+						
 					}
 				}
 			}

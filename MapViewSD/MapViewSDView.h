@@ -54,7 +54,8 @@ public:
 
 protected:
 	CPen pens[13];
-	CBrush polyBrush;
+	CBrush hydroBrush,
+				 parkBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
