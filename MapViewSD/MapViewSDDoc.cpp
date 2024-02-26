@@ -45,24 +45,14 @@ END_MESSAGE_MAP()
 CMapViewSDDoc::CMapViewSDDoc() noexcept
 {
 	odbcDB.SetQueryTimeout(60 * 10);
-	//odbcDB.Open( _T("TigerData"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE ); // Access MDB
-	odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
-	//odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB
+	//odbcDB.Open( _T("TigerData"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE ); // Access MDB (Old)
+	//odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
+	odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	odbcDB.SetSynchronousMode(TRUE);
 	this->db = new TigerDB(&odbcDB);
 	ASSERT(this->db != 0);
 
 	this->isOpen = FALSE;
-#if defined( DO_PTS )
-	this->nPts = 3;
-	this->points[0].x = 150.0;
-	this->points[0].y = 1100.0;
-	this->points[1].x = 950.0;
-	this->points[1].y = 1500.0;
-	this->points[2].x = 500.0;
-	this->points[2].y = 1950.0;
-#endif
-
 }
 
 CMapViewSDDoc::~CMapViewSDDoc()

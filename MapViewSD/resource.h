@@ -112,6 +112,7 @@
 #define IDC_TRANS_MERC                  1016
 #define IDC_EDIT_USERID                 1017
 #define IDC_POINT_NAMES                 1018
+#define IDC_EDIT_USERID2                1018
 #define IDC_TOPOGRAPHIC                 1019
 #define IDC_CULTURAL                    1020
 #define IDC_CENSUS                      1021
@@ -131,13 +132,15 @@
 #define ID_MAP_THINING                  32779
 #define ID_ZOOM_UP                      32780
 #define ID_SEARCH_USERID                32781
+#define ID_TOOLS_SHORTPATH              32782
+#define ID_TOOLS_THINING                32783
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        315
-#define _APS_NEXT_COMMAND_VALUE         32782
+#define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

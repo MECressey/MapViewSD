@@ -38,4 +38,6 @@ protected:
 public:
 	CEdit m_UserID;
 	CString m_UserIDStr;
+	CEdit m_DatabaseID;
+	CString m_DatabaseIDStr;
 };

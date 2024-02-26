@@ -156,7 +156,7 @@ void MapWindow::SetTransMatrix( void )
 //	Send the matrix to the transformation object and resize the scalable
 //	cursor using the new scaling factor.
 
-  this->TransMatrix::/*transform.*/Init/*SetMatrix*/( matrix, Point::_2D );
+  this->TransMatrix::Init( matrix, Point::_2D );
 }
 
 
@@ -294,7 +294,7 @@ void MapWindow::PanByDisplay( const XY_t &viewport_loc )
 //	NOTE: If the viewport is inverted in X or Y the factor must be
 //	subtracted rather than added.
 
-//	Compute X */
+//	Compute X
   vcenter_new.x = ( this->viewPort.x.max + this->viewPort.x.min ) * 0.5;
   vfactor = ( this->viewPort.x.max - this->viewPort.x.min ) * viewport_loc.x;
   if( this->invert_x < 0.0 )

@@ -181,6 +181,8 @@ protected:
 // Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnUpdateSearchUserid(CCmdUI* pCmdUI);
 };
 
 CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
@@ -193,6 +195,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_UPDATE_COMMAND_UI(ID_SEARCH_USERID, &CAboutDlg::OnUpdateSearchUserid)
 END_MESSAGE_MAP()
 
 // App command to run the dialog
@@ -228,3 +231,9 @@ void CMapViewSDApp::SaveCustomState()
 
 
 
+
+
+void CAboutDlg::OnUpdateSearchUserid(CCmdUI* pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+}

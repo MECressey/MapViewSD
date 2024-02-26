@@ -23,7 +23,6 @@
 #endif
 #include "mapviewSD.h"
 #include "MainFrm.h"
-//#include "GEODB.HPP"
 #include "MapViewSDDoc.h"
 #include "MapViewSDView.h"
 
@@ -36,6 +35,7 @@
 #include "SearchUserID.h"
 #include "HASHTABL.HPP"
 #include "ShortPath.h"
+#include "TopoTools.h"
 
 #include "TString.h"
 
@@ -77,7 +77,1286 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_COMMAND(ID_MAP_PROJECTION, OnMapProj)
 	ON_COMMAND(ID_MAP_THINING, OnThinPts)
 	ON_COMMAND(ID_SEARCH_USERID, OnSearchUserid)
+	ON_UPDATE_COMMAND_UI(ID_SEARCH_USERID, &CMapViewSDView::OnUpdateSearchUserid)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_SHORTPATH, &CMapViewSDView::OnUpdateToolsShortpath)
+	ON_COMMAND(ID_TOOLS_SHORTPATH, &CMapViewSDView::OnToolsShortpath)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_THINING, &CMapViewSDView::OnUpdateToolsThining)
+	ON_COMMAND(ID_TOOLS_THINING, &CMapViewSDView::OnToolsThining)
 END_MESSAGE_MAP()
+
+static const char* LineStr(int code);
+static const char* FeatureStr(int code);
+
+// CMapViewSDView construction/destruction
+enum LineDisplayTypes
+{
+	INTERSTATE_ROAD = 0,
+	PRIMARY_ROAD,
+	SECONDARY_ROAD,
+	LOCAL_ROAD,
+	SHORELINE,
+	STREAM,
+	TRAIL,
+	BOUNDARY,
+	PARK,
+	OTHER_ROAD,
+	OTHER
+};
+
+const int BLCK_PEN = 1;
+const int RED_PEN = 0;
+const int GREEN_PEN = 7;
+const int BLUE_PEN = 3;
+const int YELLOW_PEN = 4;		// RGB(255,255,0)
+const int CYAN_PEN = 5;		// RGB(0,255,255)
+const int MAGENTA_PEN = 8;		// RGB(255,0,255)
+const int DASH_PEN = OTHER_ROAD + 1;
+const int DOT_PEN = 8;
+const int DASH_DOT_PEN = DASH_PEN + 1;
+const int DASH_2DOTS_PEN = 12;
+
+CMapViewSDView::CMapViewSDView() noexcept
+{
+	this->layerDlg = new LayerDlg(this);
+	this->doThining = FALSE;
+	this->doProj = 0;
+	this->mapWin = 0;
+	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
+	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+	this->pens[STREAM].CreatePen(PS_DASHDOTDOT, 1, RGB(100, 255, 255)/*RGB(0, 255, 255)*/);
+	this->pens[TRAIL].CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(255, 0, 0));
+	this->pens[PARK].CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
+	this->pens[OTHER_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 255, 0));
+	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
+	this->pens[DASH_DOT_PEN].CreatePen(PS_DASHDOT, 1, RGB(255, 0, 255));
+	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
+
+	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
+	this->parkBrush.CreateSolidBrush(RGB(0, 255, 0)/*RGB(27, 149, 224)*/);
+
+	pts = 0;
+	this->pan_overlap = 50;
+	this->zoom_factor = 2.0;
+	this->sDist = .001;
+	this->tDist = 0.0;
+	this->pts = 0;
+	this->doWindow = FALSE;
+	this->doPick = FALSE;
+	this->doInfo = FALSE;
+
+	this->pen.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
+	this->hPen.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
+
+	this->mapProj = 0;
+	this->lineDlg = 0;
+
+	GeoSphere sphere(6378.137);
+	GeoEllipsoid ellipsoid;
+
+	this->mapProjs[0] = new EquidistantCylindrical(sphere);
+	this->mapProjs[1] = new TransverseMeracator(ellipsoid);
+	this->lineDlg = 0;
+	this->doTest = FALSE;
+	this->doShortPath = FALSE/*TRUE*/;
+	this->pickCount = 0;
+	this->startId = 0;
+	this->startDir = 0;
+	this->startDist = 0.0;
+
+	VERIFY(font.CreateFont(
+		16,                       // nHeight
+		0,                        // nWidth
+		0,                        // nEscapement
+		0,                        // nOrientation
+		FW_NORMAL,                // nWeight
+		FALSE,                    // bItalic
+		FALSE,                    // bUnderline
+		0,                        // cStrikeOut
+		ANSI_CHARSET,             // nCharSet
+		OUT_DEFAULT_PRECIS,       // nOutPrecision
+		CLIP_DEFAULT_PRECIS,      // nClipPrecision
+		DEFAULT_QUALITY,          // nQuality
+		DEFAULT_PITCH | FF_SWISS, // nPitchAndFamily
+		_T("Arial")));
+}
+
+CMapViewSDView::~CMapViewSDView()
+{
+	delete this->layerDlg;
+	if (this->mapWin)
+		delete this->mapWin;
+
+	delete this->mapProj;
+
+	if (this->pts)
+		delete[] pts;
+
+	for (int i = 0; i < sizeof(this->pens) / sizeof(this->pens[0]); i++)
+		this->pens[i].DeleteObject();
+
+	this->pen.DeleteObject();
+	this->hPen.DeleteObject();
+	if (this->lineDlg)
+		delete this->lineDlg;
+}
+
+BOOL CMapViewSDView::PreCreateWindow(CREATESTRUCT& cs)
+{
+	// TODO: Modify the Window class or styles here by modifying
+	//  the CREATESTRUCT cs
+
+	return CView::PreCreateWindow(cs);
+}
+
+void CMapViewSDView::OnInitialUpdate()
+{
+	//	CSize region( 1, 1 );
+	CView::OnInitialUpdate();
+	CMapViewSDDoc* pDoc = GetDocument();
+
+	ASSERT_VALID(pDoc);
+	ASSERT(pDoc != NULL);
+	ASSERT(pDoc->db != 0);
+	if (!pDoc->isOpen)
+		//  if( ! pDoc->db->IsOpen() )
+		return;
+
+	if (this->mapWin == 0)
+	{
+		this->mapWin = new MapWindow(0, 1);
+		ASSERT(this->mapWin != 0);
+		if (this->doProj != 0)
+			this->mapWin->Set(this->mapProj);
+	}
+
+	this->lineDlg = new LineDlg(this);
+
+	if (this->pts == 0)
+		this->pts = new XY_t[15000];
+	ASSERT(this->pts != 0);
+
+	CRect region;
+	GetClientRect(region);
+
+	Range2D range;
+
+	range.x.min = (double)region.left;
+	range.x.max = (double)region.right;
+	range.y.min = (double)region.top;
+	range.y.max = (double)region.bottom;
+
+	this->mapWin->SetViewport(range);
+
+#ifdef SAVE_FOR_NOW
+	if (this->mapProj)
+	{
+		XY_t ll,
+			ur,
+			center;
+
+		pDoc->range.Corners(&ll, &ur);
+		pDoc->range.Center(&center);
+		this->mapProj->Set(center.x, center.y);
+
+		this->mapProj->Forward(&ll, ll);
+		this->mapProj->Forward(&ur, ur);
+		range.Init(ll, ur);
+		this->mapWin->Set(range);
+		this->sDist = (range.x.max - range.x.min) / 100.0;
+	}
+	else
+#endif
+	{
+		this->mapWin->Set(pDoc->range);
+		if (this->mapProj)
+		{
+			XY_t center;
+
+			pDoc->range.Center(&center);
+			this->mapProj->Forward(&center, center);
+			this->mapProj->Set(center.x, center.y);
+		}
+	}
+	//	SetScrollSizes( MM_TEXT, region /*GetDocument()->GetDocSize()*/ );
+	//	this->SetWindowText( GetDocument()->title );
+}
+
+
+// CMapViewSDView drawing
+CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
+{
+	if (!this->layerDlg->doAreas)
+		return 0;
+	
+	switch (code)
+	{
+	default:
+		break;
+
+	case TigerDB::HYDRO_PerennialLakeOrPond :
+	case TigerDB::HYDRO_SeaOrOcean:
+		return &this->hydroBrush;
+
+	case TigerDB::LM_StateOrLocalPark_Forest:
+	case TigerDB::LM_NationalParkService:
+	case TigerDB::LM_NationalForestOrOther:
+		return &this->parkBrush;
+	}
+
+	return 0;
+}
+
+CPen* CMapViewSDView::GetPen(int code)		// Used for edges
+{
+	CPen* pen = 0;
+	if (!this->layerDlg->doLines)
+		return pen;
+
+	switch (code)
+	{
+	default:
+		// pen = &this->pens[DASH_2DOTS_PEN];
+		break;
+
+	case TigerDB::ROAD_MajorCategoryUnknown:
+	case TigerDB::ROAD_SpecialCharacteristics:
+	case TigerDB::ROAD_Cul_de_sac:
+	case TigerDB::ROAD_TrafficCircle:
+	case TigerDB::ROAD_AccessRamp:
+	case TigerDB::ROAD_ServiceDrive:
+	case TigerDB::ROAD_FerryCrossing:
+	case TigerDB::ROAD_OtherThoroughfare:
+		if (this->layerDlg->doOtherRds)
+			pen = &this->pens[OTHER_ROAD];
+		break;
+
+	case TigerDB::ROAD_PrimaryLimitedAccess:
+		if (this->layerDlg->doPrimaryRds)
+			pen = &this->pens[INTERSTATE_ROAD];
+		break;
+
+	case TigerDB::ROAD_PrimaryUnlimitedAccess:
+		if (this->layerDlg->doPrimaryRds)
+			pen = &this->pens[PRIMARY_ROAD];
+		break;
+
+	case TigerDB::ROAD_SecondaryAndConnecting:
+		if (this->layerDlg->doSecondaryRds)
+			pen = &this->pens[SECONDARY_ROAD];
+		break;
+
+	case TigerDB::ROAD_LocalNeighborhoodAndRural:
+		if (this->layerDlg->doLocalRds)
+			pen = &this->pens[LOCAL_ROAD];
+		break;
+
+	case TigerDB::ROAD_VehicularTrail:
+		if (this->layerDlg->doTrails)
+			pen = &this->pens[TRAIL];
+		break;
+
+	case TigerDB::RR_MajorCategoryUnknown:
+	case TigerDB::RR_MainLine:
+	case TigerDB::RR_Spur:
+	case TigerDB::RR_Yard:
+	case TigerDB::RR_FerryCrossing:
+	case TigerDB::RR_OtherThoroughfare:
+		pen = 0;
+		break;
+
+	case TigerDB::MGT_CategoryUnknown:
+	case TigerDB::MGT_Pipeline:
+	case TigerDB::MGT_PowerLine:
+	case TigerDB::MGT_Other:
+		if (this->layerDlg->doGroundTransportation)
+			pen = &this->pens[DASH_DOT_PEN];
+		//pen = 0;
+		break;
+
+	case TigerDB::LM_Airport:
+	case TigerDB::LM_GolfCourse:
+	case TigerDB::LM_Cemetery:
+	case TigerDB::LM_NationalParkService:
+	case TigerDB::LM_NationalForestOrOther:
+	case TigerDB::LM_StateOrLocalPark_Forest:
+		pen = &this->pens[PARK];
+		break;
+
+	case TigerDB::NVF_BoundaryClassificationUnknown:
+	case TigerDB::NVF_LegalOrAdministrativeBoundary:
+		if (this->layerDlg->doBoundary)
+			pen = &this->pens[BOUNDARY];
+		break;
+
+	case TigerDB::NVF_PropertyLine:
+	case TigerDB::HYDRO_CensusWaterCenterLine:
+	case TigerDB::HYDRO_ArtificialPath:
+		if (this->layerDlg->doOtherFeatures)
+			pen = &this->pens[PARK];
+		break;
+
+	case TigerDB::HYDRO_ClassificationUnknown:
+	case TigerDB::HYDRO_PerennialShoreline:
+	case TigerDB::HYDRO_IntermittentShoreline:
+	case TigerDB::HYDRO_IntermittentCanalDitchOrAqueduct:
+	case TigerDB::HYDRO_PerennialLakeOrPond:
+	case TigerDB::HYDRO_IntermittentLakeOrPond:
+	case TigerDB::HYDRO_PerennialReservoir:
+	case TigerDB::HYDRO_IntermittentReservoir:
+	case TigerDB::HYDRO_BayEstuaryGulfOrSound:
+	case TigerDB::HYDRO_SeaOrOcean:
+	case TigerDB::HYDRO_GravelPitOrQuarry:
+	case TigerDB::HYDRO_Glacier:
+		if (this->layerDlg->doShoreline)
+			pen = &this->pens[SHORELINE];
+		break;
+
+	case TigerDB::HYDRO_PerennialStream:
+	case TigerDB::HYDRO_IntermittentStream:
+		if (this->layerDlg->doStreams)
+			pen = &this->pens[STREAM];
+		break;
+	}
+
+	return(pen);
+}
+
+bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
+{
+	if (so->IsA() != GeoDB::LINE)
+		return false;
+	GeoDB::Edge* edge = (GeoDB::Edge*)so;
+	return this->GetPen(edge->userCode) != 0;
+}
+
+void CMapViewSDView::OnDraw(CDC* pDC)
+{
+	CMapViewSDDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+	CMainFrame* frame = (CMainFrame*)AfxGetApp()->m_pMainWnd;
+
+	HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+
+	ASSERT(pDoc->db != 0);
+	if (pDoc->isOpen)
+	{
+		Range2D range;
+		CPen* lastPen = 0;
+		CPen* oldPen = pDC->SelectObject((CPen*)pDC->SelectStockObject(NULL_PEN));
+		//	CWinApp *app = AfxGetApp();
+		//	this->mapWin->ReverseRange( &range );
+
+		{
+			CRect region;
+			XY_t pt1,
+				pt2;
+
+			pDC->GetClipBox(region);
+
+			CPoint& pt = region.TopLeft();
+			pt1.x = (double)pt.x;
+			pt1.y = (double)pt.y;
+			this->mapWin->Reverse(&pt1, pt1);
+			pt = region.BottomRight();
+			pt2.x = (double)pt.x;
+			pt2.y = (double)pt.y;
+			this->mapWin->Reverse(&pt2, pt2);
+
+			range.Init(pt1, pt2);
+			//range = pDoc->db->GetRange();  // Temporary hack to get all the features
+			//	range.Envelope( pt0 );
+		}
+		//	app->LoadStandardCursor( IDC_WAIT );
+		ObjHandle dbo;
+		GeoDB::Search ss;
+		int nLines = 0;
+/* Temporary testing code
+		int err = pDoc->db->Read(45700, dbo);
+		GeoDB::SpatialObj* so = (GeoDB::SpatialObj*)dbo.Lock();
+  	TigerDB::Chain * line = (TigerDB::Chain*)so;
+		dbo.Unlock();
+*/
+//		pDoc->db->CheckTree();
+
+		pDoc->db->InitSearch(&ss, range, this->layerDlg->objClasses);
+		while (pDoc->db->getNext(&ss, &dbo) == 0)
+		{
+			/*if (frame->OnAbort())
+				break;*/
+			GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)dbo.Lock();
+			DbObject::ClassCode code = spatialObj->getClassCode();
+			GeoDB::SpatialClass sc = spatialObj->IsA();
+			switch (sc)
+			{
+				case GeoDB::POINT:
+				{
+					if (code == DB_POINT && this->layerDlg->doGNISPoints)  // Only display Points for now
+					{
+						TigerDB::GNISFeature* point = (TigerDB::GNISFeature*)spatialObj;
+						XY_t pt;
+						CPoint cPt;
+
+						int code = point->userCode;
+
+						if (!drawGNISFeature(code))
+							break;
+
+						this->mapWin->Forward(&pt, point->getPt());
+						cPt.x = (int)pt.x;
+						cPt.y = (int)pt.y;
+						std::string name = point->GetName();
+						CString str(name.c_str());
+						CFont *def_font = pDC->SelectObject(&this->font);
+						pDC->TextOut(cPt.x, cPt.y, str);
+						pDC->SelectObject(def_font);
+						BOOL b = pDC->Ellipse(cPt.x-2, cPt.y-2, cPt.x + 2, cPt.y + 2);
+					}
+					break;
+				}
+
+				case GeoDB::AREA:
+				{
+					TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
+					CBrush* brush;
+					if ((brush = this->GetBrush(poly->userCode)) != 0)
+					{
+						XY_t cen = poly->getCentroid();
+//						bool in = TopoTools::PtInPoly(cen, poly);
+						int nPts = GeoDB::Poly::getPts(dbo, this->pts);
+						XY_t cen2;
+						double area2;
+						TopoTools::calcCentroid(this->pts, nPts, &cen2, &area2);		// For testing ONLY
+						bool in = TopoTools::PtInPoly(cen2, this->pts, nPts);
+						assert(in);
+/*						for (int i = 0; i < nPts; i++)
+						{
+							if (! TopoTools::PtInPoly(this->pts[i], poly))
+								break;
+						}*/
+						pDC->SelectObject(brush);
+						DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+						XY_t pt;
+						CPoint cPt;
+						this->mapWin->Forward(&pt, cen);
+						cPt.x = (int)pt.x;
+						cPt.y = (int)pt.y;
+						std::string name = poly->GetName();
+						if (!name.empty())
+						{
+							CString str(name.c_str());
+							CFont* def_font = pDC->SelectObject(&this->font);
+							pDC->TextOut(cPt.x, cPt.y, str);
+							pDC->SelectObject(def_font);
+						}
+					}
+					break;
+				}
+
+				case GeoDB::LINE:
+				{
+					nLines++;
+					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
+					ASSERT(line != 0);
+					CPen* pen;
+					if ((pen = this->GetPen(line->userCode)) != 0)
+					{
+						int nPts = (int)line->getNumPts();
+						line->Get(this->pts);
+						/*if (pen != lastPen)
+						{
+							pDC->SelectObject(pen);
+							lastPen = pen;
+						}*/
+						pDC->SelectObject(pen);
+						if (doThining)
+							nPts = TrendLine(this->pts, nPts, this->tDist);
+						DrawLine(*this->mapWin, pDC, this->pts, nPts);
+						pDC->SelectObject(oldPen);
+						
+					}
+				}
+			}
+			dbo.Unlock();
+		}
+		if (oldPen != 0)
+			pDC->SelectObject(oldPen);
+		//	app->LoadStandardCursor( IDC_ARROW );
+	}
+
+	SetCursor(cursor);
+}
+
+void CMapViewSDView::DoPan(double horizontal, double vertical)
+{
+	if (this->mapWin != 0)
+	{
+		double pan_factor = (double)(100 - this->pan_overlap) / 100.0;
+		XY_t dispPt;
+
+		dispPt.x = horizontal * pan_factor;
+		dispPt.y = vertical * pan_factor;
+
+		this->mapWin->PanByDisplay(dispPt);
+		this->Invalidate();
+	}
+}
+
+void CMapViewSDView::OnPanDown()
+{
+	this->DoPan(0.0, -1.0);
+}
+
+void CMapViewSDView::OnPanLeft()
+{
+	this->DoPan(-1.0, 0.0);
+}
+
+void CMapViewSDView::OnPanRight()
+{
+	this->DoPan(1.0, 0.0);
+}
+
+void CMapViewSDView::OnPanUp()
+{
+	this->DoPan(0.0, 1.0);
+}
+
+void CMapViewSDView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (this->mapWin != 0)
+	{
+		this->pt = point;
+		this->doWindow = TRUE;
+		this->rect.SetRectEmpty();
+	}
+
+	CView::OnLButtonDown(nFlags, point);
+}
+
+const int PICK_TOL = 3;
+
+void CMapViewSDView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	CView::OnLButtonUp(nFlags, point);
+
+	if (this->doWindow /*&& this->mOnLButtonUpapWin != 0*/)
+	{
+		XY_t pt0;
+		int xDiff,
+			yDiff;
+
+		pt0.x = (double)this->pt.x;
+		pt0.y = (double)this->pt.y;
+		this->mapWin->Reverse(&pt0, pt0);
+
+		if ((xDiff = point.x - this->pt.x) < 0)
+			xDiff = -xDiff;
+
+		if ((yDiff = point.y - this->pt.y) < 0)
+			yDiff = -yDiff;
+
+		if (xDiff <= PICK_TOL && yDiff <= PICK_TOL)
+			//	if( point.x == this->pt.x && point.y == this->pt.y )
+		{
+#ifdef SAVE_FOR_NOW
+			if (this->mapProj)
+			{
+				this->mapProj->Set(pt0.x, pt0.y);
+				this->mapProj->Forward(&pt0, pt0);
+			}
+#endif
+			this->mapWin->Set(pt0);
+		}
+		else
+		{
+			Range2D range;
+
+			range.Add(pt0);
+
+			pt0.x = (double)point.x;
+			pt0.y = (double)point.y;
+			this->mapWin->Reverse(&pt0, pt0);
+			range.Add(pt0);
+
+#ifdef SAVE_FOR_NOW  
+			if (this->mapProj)
+			{
+				XY_t ll,
+					ur,
+					center;
+
+				range.Corners(&ll, &ur);
+				range.Center(&center);
+				this->mapProj->Set(center.x, center.y);
+
+				this->mapProj->Forward(&ll, ll);
+				this->mapProj->Forward(&ur, ur);
+				range.Init(ll, ur);
+			}
+#endif
+			this->mapWin->Set(range);
+		}
+
+		this->doWindow = FALSE;
+		this->Invalidate();
+	}
+}
+
+void CMapViewSDView::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	if (this->mapWin != 0)
+	{
+		this->doPick = TRUE;
+		this->pt = point;
+		this->rect.SetRectEmpty();
+
+		if (this->doTest)
+		{
+			XY_t pt0;
+
+			pt0.x = (double)point.x;
+			pt0.y = (double)point.y;
+			this->mapWin->Reverse(&this->pts[0], pt0);
+		}
+	}
+
+	CView::OnRButtonDown(nFlags, point);
+}
+
+void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	XY_t pt0;
+	CMapViewSDDoc* doc = GetDocument();
+
+	if (this->doTest)
+	{
+		LineSeg2D lSeg;
+
+		pt0.x = (double)point.x;
+		pt0.y = (double)point.y;
+		this->mapWin->Reverse(&pt0, pt0);
+
+		ASSERT(doc->db != 0);
+		if (doc->db->IsOpen())
+		{
+			DbSearchByLSeg so(*doc->db);
+			DbSearch::Found fo;
+			lSeg.Init(this->pts[0], pt0);
+
+			so.Init(lSeg, this->layerDlg->objClasses);
+			if (so.FindBest(&fo) == 0)
+			{
+			}
+		}
+	}
+	else if (this->doPick)
+	{
+		Range2D range;
+
+		pt0.x = (double)this->pt.x;
+		pt0.y = (double)this->pt.y;
+		this->mapWin->Reverse(&pt0, pt0);
+		range.Add(pt0);
+/*
+		pt0.x = (double)point.x;
+		pt0.y = (double)point.y;
+		this->mapWin->Reverse(&pt0, pt0);
+		range.Add(pt0);
+*/
+		ASSERT(doc->db != 0);
+		if (doc->db->IsOpen())
+		{
+			CDC* dc = GetDC();
+			HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+			ObjHandle dbo;
+			GeoDB::Search ss;
+
+			//doc->db->Init(range, &ss);
+			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
+			DbSearchByPt so(*doc->db);
+			//DbSearchByRange so(*doc->db);
+			DbSearch::Found fo;
+
+			//so.Init(range);
+			so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
+			if (so.FindBest(&fo) == 0)/**/
+			{
+				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+				GeoDB::SpatialClass sc = sObj->IsA();
+				switch (sc)
+				{
+				case GeoDB::POINT:
+				{
+					if (sObj->getClassCode() == DB_POINT)
+					{
+						TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
+						DisplayInfo(feat);
+					}
+					break;
+				}
+				case GeoDB::AREA:
+				{
+					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+					DisplayInfo(poly);
+					break;
+				}
+				case GeoDB::LINE:
+				{
+					TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+					//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
+					ASSERT(line != 0);
+					CPen* pen;
+					int code = line->userCode/*GetCode()*/;
+
+					if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
+					{
+						//pen = &this->hPen;
+						int nPts = (int)line->getNumPts();
+						line->Get(this->pts);
+
+						CPen* oldPen = dc->SelectObject(pen);
+						int old_rop2 = dc->SetROP2(R2_XORPEN);
+
+						if (this->doThining)
+							nPts = TrendLine(this->pts, nPts, this->tDist);
+						DrawLine(*this->mapWin, dc, this->pts, nPts, true);
+						//	      this->mapWin->Draw( dc, this->pts, nPts );
+						DisplayInfo(line);
+						/**/
+#ifdef DO_SHORT_PATH		  
+						if (this->doShortPath)
+						{
+							double distSq;
+							XY_t tempPt;
+							int dir;
+
+							distSq = fo.pt.DistSqr(this->pts[0]);
+							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
+							{
+								tempPt = this->pts[0];
+								dir = -1;
+							}
+							else
+							{
+								tempPt = this->pts[nPts - 1];
+								dir = 1;
+							}
+
+							if (++this->pickCount == 1)
+							{
+								this->startId = line->dbAddress();
+								this->startPt = tempPt;
+								this->startDir = dir;
+								this->startDist = line->Length();
+							}
+							else if (this->pickCount == 2)
+							{
+								ShortPath sPath;
+								//CArray<long, long> lineIds;
+								ObjHandle handle;
+								double dist;
+								int nIds;
+
+								int err = doc->db->Read(this->startId, handle);
+								assert(err == 0);
+								line = (TigerDB::Chain*)handle.Lock();
+								XY_t sPt, ePt;
+								line->getNodes(&sPt, &ePt);
+								double length = line->Length();
+								handle.Unlock();
+								double d1 = this->pts[0].DistSqr(sPt),
+											 d2 = this->pts[0].DistSqr(ePt);
+								if (d1 < d2)
+									dir = 1;
+								else
+									dir = 0;
+								sPath.Init(handle, fo.handle, 0, this->startPt);
+								sPath.putEdge(handle, dir, length);
+	
+								//							sPath.Init( this->startId, line, 0, tempPt );
+								ShortPath::filter_t f1,
+									f2,
+									f3;
+								std::vector<long> edgeIds;
+
+								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
+								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+								f1.push_back(TigerDB::ROAD_SecondaryAndConnecting);
+								f2.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
+								f2.push_back(TigerDB::ROAD_MajorCategoryUnknown);
+								f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
+								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
+								{
+									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
+									{
+										DbObject::Id id = edgeIds[i];
+										if (id < 0)
+											id = -id;
+										err = doc->db->Read(id, handle);
+										line = (TigerDB::Chain*)handle.Lock();
+										nPts = (int)line->getNumPts();
+										line->Get(this->pts);
+										DrawLine(*this->mapWin, dc, this->pts, nPts);
+										handle.Unlock();
+									}
+								}
+
+								this->pickCount = 0;
+							}
+						}
+#endif
+						dc->SelectObject(oldPen);
+						dc->SetROP2(old_rop2);
+					}
+					break;
+					}
+				}
+				//fo.handle.Unlock();
+				//this->pickObj = fo.handle;
+				//dbo.Unlock();
+				fo.handle.Unlock();
+			}
+			SetCursor(cursor);
+			ReleaseDC(dc);
+		}
+	}
+
+	this->doPick = FALSE;
+	CView::OnRButtonUp(nFlags, point);
+}
+
+void CMapViewSDView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (doWindow || doPick)
+	{
+		CDC* dc = GetDC();
+
+		this->brush.Attach(GetStockObject(NULL_BRUSH));
+
+		CPen* old_pen = (CPen*)dc->SelectStockObject(WHITE_PEN /*&this->pen*/);
+		CBrush* old_brush = dc->SelectObject(&this->brush);
+		int old_rop2 = dc->SetROP2(R2_XORPEN);
+
+		//	int dx = abs( this->pt.x - point.x);
+		//	int dy = abs( this->pt.y - point.y);
+		if (!this->rect.IsRectEmpty())
+			dc->Rectangle(this->rect);
+
+		this->rect.SetRect(this->pt.x, this->pt.y, point.x, point.y);
+		this->rect.NormalizeRect();
+
+		dc->Rectangle(this->rect);
+
+		dc->SelectObject(old_pen);
+		dc->SelectObject(old_brush);
+		dc->SetROP2(old_rop2);
+		this->brush.Detach();
+
+		ReleaseDC(dc);
+	}
+
+	CView::OnMouseMove(nFlags, point);
+}
+
+void CMapViewSDView::DisplayInfo(TigerDB::Chain* line)
+{
+	if (this->doInfo)
+	{
+		TCHAR buffer[80];
+		TigerDB::Name name;
+		_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
+		this->lineDlg->m_id = buffer;
+		int nNames = line->GetNumNames();
+
+		buffer[0] = _T('\0');
+		if (nNames > 0)
+		{
+			for (int i = 0; i < nNames; i++)
+			{
+				line->GetName(&name, i);
+				if (i > 0)
+					_tcscat_s(buffer, _T("|"));
+
+				if (::strlen(name.prefix) > 0)
+				{
+					_tcscat_s(buffer, TString(name.prefix));
+					_tcscat_s(buffer, _T(" "));
+				}
+
+				if (::strlen(name.name) > 0)
+				{
+					_tcscat_s(buffer, TString(name.name));
+				}
+				if (::strlen(name.type) > 0)
+				{
+					_tcscat_s(buffer, _T(" "));
+					_tcscat_s(buffer, TString(name.type));
+				}
+				if (::strlen(name.suffix) > 0)
+				{
+					_tcscat_s(buffer, _T(" "));
+					_tcscat_s(buffer, TString(name.suffix));
+				}
+			}
+		}
+
+		this->lineDlg->m_name = buffer;
+		this->lineDlg->m_type = "LINE: ";
+		this->lineDlg->m_type += LineStr(line->userCode);
+		this->lineDlg->UpdateData(FALSE);
+	}
+}
+
+
+void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
+{
+	if (!this->doInfo)
+		return;
+
+		char /*TCHAR*/ buffer[80];
+		sprintf/*_stprintf_s*/(buffer, "%ld", poly->dbAddress());
+		this->lineDlg->m_id = buffer;
+
+		std::string &name = poly->GetName();
+		this->lineDlg->m_name = name.c_str();
+		const char* code = LineStr(poly->userCode);
+		sprintf/*_stprintf_s*/(buffer, "POLY: %s", code);
+		this->lineDlg->m_type = buffer;
+		this->lineDlg->UpdateData(FALSE);
+}
+
+void CMapViewSDView::DisplayInfo(TigerDB::GNISFeature* feature)
+{
+	if (!this->doInfo)
+		return;
+
+	char /*TCHAR*/ buffer[80];
+	sprintf/*_stprintf_s*/(buffer, "%ld", feature->dbAddress());
+	this->lineDlg->m_id = buffer;
+
+	std::string& name = feature->GetName();
+	this->lineDlg->m_name = name.c_str();
+
+	const char* code = FeatureStr(feature->userCode);
+	sprintf/*_stprintf_s*/(buffer, "POINT: %s", code);
+	this->lineDlg->m_type = buffer;
+	this->lineDlg->UpdateData(FALSE);
+}
+
+// CMapViewSDView printing
+
+
+void CMapViewSDView::OnFilePrintPreview()
+{
+#ifndef SHARED_HANDLERS
+	AFXPrintPreview(this);
+#endif
+}
+
+BOOL CMapViewSDView::OnPreparePrinting(CPrintInfo* pInfo)
+{
+	// default preparation
+	return DoPreparePrinting(pInfo);
+}
+
+void CMapViewSDView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: add extra initialization before printing
+}
+
+void CMapViewSDView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: add cleanup after printing
+}
+/*
+void CMapViewSDView::OnRButtonUp(UINT , CPoint point)
+{
+	ClientToScreen(&point);
+	OnContextMenu(this, point);
+}
+*/
+void CMapViewSDView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
+{
+#ifndef SHARED_HANDLERS
+	// theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE); Don't want this to display 12/6/23
+#endif
+}
+
+
+// CMapViewSDView diagnostics
+
+#ifdef _DEBUG
+void CMapViewSDView::AssertValid() const
+{
+	CView::AssertValid();
+}
+
+void CMapViewSDView::Dump(CDumpContext& dc) const
+{
+	CView::Dump(dc);
+}
+
+CMapViewSDDoc* CMapViewSDView::GetDocument() const // non-debug version is inline
+{
+	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CMapViewSDDoc)));
+	return (CMapViewSDDoc*)m_pDocument;
+}
+#endif //_DEBUG
+
+
+// CMapViewSDView message handlers
+
+void CMapViewSDView::OnZoomIn()
+{
+	if (this->mapWin != 0)
+	{
+		this->mapWin->ScaleByFactor(this->zoom_factor);
+		this->Invalidate();
+	}
+}
+
+void CMapViewSDView::OnZoomOut()
+{
+	if (this->mapWin != 0)
+	{
+		this->mapWin->ScaleByFactor(1.0 / this->zoom_factor);
+		this->Invalidate();
+	}
+}
+
+void CMapViewSDView::OnMapLayers()
+{
+	if (this->layerDlg->DoModal() == IDOK)
+	{
+		this->Invalidate();
+	}
+}
+
+void CMapViewSDView::OnUpdateMapLayers(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(this->mapWin != 0);
+}
+
+void CMapViewSDView::OnLineInfo()
+{
+	this->doInfo = !this->doInfo;
+	if (doInfo)
+		this->lineDlg->ShowWindow(SW_NORMAL);
+	else
+		this->lineDlg->ShowWindow(SW_HIDE);
+}
+
+void CMapViewSDView::OnUpdateLineInfo(CCmdUI* pCmdUI)
+{
+	if (this->mapWin != 0)
+	{
+		pCmdUI->SetCheck(this->doInfo);
+	}
+	else
+		pCmdUI->Enable(FALSE);
+}
+
+void CMapViewSDView::OnMapProj()
+{
+	MapPDIAL dialog(this);
+
+	dialog.m_projNum = this->doProj;
+	if (dialog.DoModal() == IDOK)
+	{
+		if (dialog.m_projNum != this->doProj)
+		{
+			Range2D range;
+			this->mapWin->GetRange(&range);
+
+			this->doProj = dialog.m_projNum;
+			if (this->doProj != 0)
+			{
+				this->mapProj = this->mapProjs[this->doProj - 1];
+				this->mapWin->Set(this->mapProj);
+			}
+			else
+				this->mapWin->Set(0);
+			this->mapWin->Set(range);
+			this->Invalidate();
+		}
+	}
+}
+
+void CMapViewSDView::OnThinPts()
+{
+	ThinDlg dlg(this);
+
+	dlg.m_checked = this->doThining;
+	dlg.m_value.Format(_T("%f"), this->tDist);
+	if (dlg.DoModal() == IDOK)
+	{
+		double dist = ::atof(TString(dlg.m_value));
+		BOOL doInvalid = FALSE;
+
+		if (dist != this->tDist)
+		{
+			doInvalid = TRUE;
+			this->tDist = dist;
+		}
+
+		if (this->doThining != dlg.m_checked)
+		{
+			doInvalid = TRUE;
+			this->doThining = dlg.m_checked;
+		}
+
+		if (doInvalid)
+			this->Invalidate();
+	}
+}
+/*
+class DbHash : public DbHashAccess {
+public:
+	long id;
+	int is_equal(DbObject* dbo) { return this->id == ((GeoDB::Edge*)dbo)->userId; }
+	long int hashKey(int nBits) { return HashTable::HashDK(nBits, id); }
+};
+*/
+void CMapViewSDView::OnSearchUserid()
+{
+	SearchUserID searchDlg;
+	INT_PTR retVal = searchDlg.DoModal();
+	ObjHandle oh;
+
+	if (retVal == IDOK)
+	{
+		int err = -1;
+		CMapViewSDDoc* pDoc = GetDocument();
+		if (!searchDlg.m_UserIDStr.IsEmpty())
+		{
+			DbObject::Id key = atoi(TString(searchDlg.m_UserIDStr));
+
+
+			GeoDB::Edge::Hash dbHash;
+			dbHash.id = key;
+
+			err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
+			/*if (err == 0)
+			{
+				TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
+				DisplayInfo(line);
+				const Range2D& range = line->getMBR();
+				oh.Unlock();
+				this->mapWin->Set(range);
+				this->Invalidate();
+			}*/
+		}
+		else if (!searchDlg.m_DatabaseIDStr.IsEmpty())
+		{
+			DbObject::Id key = atoi(TString(searchDlg.m_DatabaseIDStr));
+
+			err = pDoc->db->Read(key, oh);
+		}
+		if (err == 0)
+		{
+			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
+			DisplayInfo(line);
+			const Range2D& range = line->getMBR();
+			oh.Unlock();
+			this->mapWin->Set(range);
+			this->Invalidate();
+		}
+	}
+
+	bool test = true;
+}
+
+bool CMapViewSDView::drawGNISFeature(int code)
+{
+	bool drawFeature = false;
+
+	switch (code)
+	{
+	case TigerDB::GNIS_Summit:
+	case TigerDB::GNIS_Range:
+	case TigerDB::GNIS_Flat:
+	case TigerDB::GNIS_Plain:
+	case TigerDB::GNIS_Ridge:
+	case TigerDB::GNIS_Swamp:
+	case TigerDB::GNIS_Valley:
+	case TigerDB::GNIS_Woods:
+	case TigerDB::GNIS_Gap:
+	case TigerDB::GNIS_Basin:
+	case TigerDB::GNIS_Bench:
+		if (this->layerDlg->doLandForm)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Bay:
+	case TigerDB::GNIS_Sea:
+	case TigerDB::GNIS_Beach:
+	case TigerDB::GNIS_Canal:
+	case TigerDB::GNIS_Channel:
+	case TigerDB::GNIS_Cape:
+	case TigerDB::GNIS_Bar:
+	case TigerDB::GNIS_Isthmus:
+		if (this->layerDlg->doCoastal)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Arch:
+	case TigerDB::GNIS_Area:
+	case TigerDB::GNIS_Arroyo:
+	case TigerDB::GNIS_Bend:
+	case TigerDB::GNIS_Cliff:
+	case TigerDB::GNIS_Crater:
+	case TigerDB::GNIS_Crossing:
+	case TigerDB::GNIS_Slope:
+	case TigerDB::GNIS_Gut:
+		if (this->layerDlg->doTopographic)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Census:
+	case TigerDB::GNIS_Civil:
+	case TigerDB::GNIS_PopulatedPlace:
+		if (this->layerDlg->doCensus)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Glacier:
+	case TigerDB::GNIS_Island:
+	case TigerDB::GNIS_Lake:
+	case TigerDB::GNIS_Rapids:
+	case TigerDB::GNIS_Reservoir:
+	case TigerDB::GNIS_Falls:
+	case TigerDB::GNIS_Spring:
+	case TigerDB::GNIS_Stream:
+		if (this->layerDlg->doHydrology)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Levee:
+	case TigerDB::GNIS_Military:
+		if (this->layerDlg->doCultural)
+			drawFeature = true;
+		break;
+
+	case TigerDB::GNIS_Pillar:
+	case TigerDB::GNIS_Lava:
+		if (this->layerDlg->doOtherNames)
+			drawFeature = true;
+		break;
+
+	default:
+		break;
+	}
+	return drawFeature;
+}
 
 static const char* LineStr(int code)
 {
@@ -468,1301 +1747,35 @@ static const char* FeatureStr(int code)
 	return str;
 }
 
-// CMapViewSDView construction/destruction
-enum LineDisplayTypes
-{
-	INTERSTATE_ROAD = 0,
-	PRIMARY_ROAD,
-	SECONDARY_ROAD,
-	LOCAL_ROAD,
-	SHORELINE,
-	STREAM,
-	TRAIL,
-	BOUNDARY,
-	PARK,
-	OTHER_ROAD,
-	OTHER
-};
 
-const int BLCK_PEN = 1;
-const int RED_PEN = 0;
-const int GREEN_PEN = 7;
-const int BLUE_PEN = 3;
-const int YELLOW_PEN = 4;		// RGB(255,255,0)
-const int CYAN_PEN = 5;		// RGB(0,255,255)
-const int MAGENTA_PEN = 8;		// RGB(255,0,255)
-const int DASH_PEN = OTHER_ROAD + 1;
-const int DOT_PEN = 8;
-const int DASH_DOT_PEN = DASH_PEN + 1;
-const int DASH_2DOTS_PEN = 12;
-
-CMapViewSDView::CMapViewSDView() noexcept
-{
-	this->layerDlg = new LayerDlg(this);
-	this->doThining = FALSE;
-	this->doProj = 0;
-	this->mapWin = 0;
-	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
-	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
-	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
-	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
-	this->pens[STREAM].CreatePen(PS_DASHDOTDOT, 1, RGB(100, 255, 255)/*RGB(0, 255, 255)*/);
-	this->pens[TRAIL].CreatePen(PS_DOT, 1, RGB(0, 0, 0));
-	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(255, 0, 0));
-	this->pens[PARK].CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
-	this->pens[OTHER_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 255, 0));
-	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
-	this->pens[DASH_DOT_PEN].CreatePen(PS_DASHDOT, 1, RGB(255, 0, 255));
-	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
-
-	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
-	this->parkBrush.CreateSolidBrush(RGB(0, 255, 0)/*RGB(27, 149, 224)*/);
-
-	pts = 0;
-	this->pan_overlap = 50;
-	this->zoom_factor = 2.0;
-	this->sDist = .001;
-	this->tDist = 0.0;
-	this->pts = 0;
-	this->doWindow = FALSE;
-	this->doPick = FALSE;
-	this->doInfo = FALSE;
-
-	this->pen.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
-	this->hPen.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
-
-	this->mapProj = 0;
-	this->lineDlg = 0;
-
-	GeoSphere sphere(6378.137);
-	GeoEllipsoid ellipsoid;
-
-	this->mapProjs[0] = new EquidistantCylindrical(sphere);
-	this->mapProjs[1] = new TransverseMeracator(ellipsoid);
-	//ASSERT(this->mapProj != 0);
-	this->lineDlg = 0;
-	this->doInfo = FALSE;
-	this->doTest = FALSE;
-	this->doShortPath = FALSE/*TRUE*/;
-	this->pickCount = 0;
-	this->startId = 0;
-	this->startDir = 0;
-	this->startDist = 0.0;
-
-/* This didn't seem to work?!?!
-	LOGFONT lf;
-	memset(&lf, 0, sizeof(LOGFONT));
-	// request a 12-pixel-height font
-	lf.lfHeight = 16;
-	// request a face name "Arial"
-	_tcsncpy_s(lf.lfFaceName, LF_FACESIZE, _T("Arial"), 7);
-	// create the font
-	HFONT hfont = ::CreateFontIndirect(&lf);
-
-	this->font = CFont::FromHandle(hfont);
-	*/
-	VERIFY(font.CreateFont(
-		16,                       // nHeight
-		0,                        // nWidth
-		0,                        // nEscapement
-		0,                        // nOrientation
-		FW_NORMAL,                // nWeight
-		FALSE,                    // bItalic
-		FALSE,                    // bUnderline
-		0,                        // cStrikeOut
-		ANSI_CHARSET,             // nCharSet
-		OUT_DEFAULT_PRECIS,       // nOutPrecision
-		CLIP_DEFAULT_PRECIS,      // nClipPrecision
-		DEFAULT_QUALITY,          // nQuality
-		DEFAULT_PITCH | FF_SWISS, // nPitchAndFamily
-		_T("Arial")));
-}
-
-CMapViewSDView::~CMapViewSDView()
-{
-	delete this->layerDlg;
-	if (this->mapWin)
-		delete this->mapWin;
-
-	delete this->mapProj;
-
-	if (this->pts)
-		delete[] pts;
-
-	for (int i = 0; i < sizeof(this->pens) / sizeof(this->pens[0]); i++)
-		this->pens[i].DeleteObject();
-
-	this->pen.DeleteObject();
-	this->hPen.DeleteObject();
-	if (this->lineDlg)
-		delete this->lineDlg;
-}
-
-BOOL CMapViewSDView::PreCreateWindow(CREATESTRUCT& cs)
-{
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
-
-	return CView::PreCreateWindow(cs);
-}
-
-void CMapViewSDView::OnInitialUpdate()
-{
-	//	CSize region( 1, 1 );
-	CView::OnInitialUpdate();
-	CMapViewSDDoc* pDoc = GetDocument();
-
-	ASSERT_VALID(pDoc);
-	ASSERT(pDoc != NULL);
-	ASSERT(pDoc->db != 0);
-	if (!pDoc->isOpen)
-		//  if( ! pDoc->db->IsOpen() )
-		return;
-
-	if (this->mapWin == 0)
-	{
-		this->mapWin = new MapWindow(0, 1);
-		ASSERT(this->mapWin != 0);
-		if (this->doProj != 0)
-			this->mapWin->Set(this->mapProj);
-	}
-
-	this->lineDlg = new LineDlg(this);
-
-#if defined( DO_TIGER )
-	this->geoPts.SetSize(1000, 100);
-#endif
-
-	if (this->pts == 0)
-		this->pts = new XY_t/*GeoPoint*/[15000];
-	ASSERT(this->pts != 0);
-
-	CRect region;
-	GetClientRect(region);
-
-	Range2D range;
-
-	range.x.min = (double)region.left;
-	range.x.max = (double)region.right;
-	range.y.min = (double)region.top;
-	range.y.max = (double)region.bottom;
-
-	this->mapWin->SetViewport(range);
-
-#ifdef SAVE_FOR_NOW
-	if (this->mapProj)
-	{
-		XY_t ll,
-			ur,
-			center;
-
-		pDoc->range.Corners(&ll, &ur);
-		pDoc->range.Center(&center);
-		this->mapProj->Set(center.x, center.y);
-
-		this->mapProj->Forward(&ll, ll);
-		this->mapProj->Forward(&ur, ur);
-		range.Init(ll, ur);
-		this->mapWin->Set(range);
-		this->sDist = (range.x.max - range.x.min) / 100.0;
-	}
-	else
-#endif
-	{
-		this->mapWin->Set(pDoc->range);
-		if (this->mapProj)
-		{
-			XY_t center;
-
-			pDoc->range.Center(&center);
-			this->mapProj->Forward(&center, center);
-			this->mapProj->Set(center.x, center.y);
-		}
-	}
-	//	SetScrollSizes( MM_TEXT, region /*GetDocument()->GetDocSize()*/ );
-	//	this->SetWindowText( GetDocument()->title );
-}
-
-
-// CMapViewSDView drawing
-CBrush* CMapViewSDView::GetBrush(int code)
-{
-	if (!this->layerDlg->doAreas)
-		return 0;
-	switch (code)
-	{
-	default:
-		break;
-
-	case TigerDB::HYDRO_PerennialLakeOrPond :
-	case TigerDB::HYDRO_SeaOrOcean:
-		return &this->hydroBrush;
-
-	case TigerDB::LM_StateOrLocalPark_Forest:
-	case TigerDB::LM_NationalParkService:
-	case TigerDB::LM_NationalForestOrOther:
-		return &this->parkBrush;
-	}
-
-	return 0;
-}
-
-CPen* CMapViewSDView::GetPen(int code)
-{
-	CPen* pen = 0;
-	if (!this->layerDlg->doLines)
-		return pen;
-
-	switch (code)
-	{
-	default:
-		// pen = &this->pens[DASH_2DOTS_PEN];
-		break;
-
-	case TigerDB::ROAD_MajorCategoryUnknown:
-	case TigerDB::ROAD_SpecialCharacteristics:
-	case TigerDB::ROAD_Cul_de_sac:
-	case TigerDB::ROAD_TrafficCircle:
-	case TigerDB::ROAD_AccessRamp:
-	case TigerDB::ROAD_ServiceDrive:
-	case TigerDB::ROAD_FerryCrossing:
-	case TigerDB::ROAD_OtherThoroughfare:
-		if (this->layerDlg->doOtherRds)
-			pen = &this->pens[OTHER_ROAD];
-		break;
-
-	case TigerDB::ROAD_PrimaryLimitedAccess:
-		if (this->layerDlg->doPrimaryRds)
-			pen = &this->pens[INTERSTATE_ROAD];
-		break;
-
-	case TigerDB::ROAD_PrimaryUnlimitedAccess:
-		if (this->layerDlg->doPrimaryRds)
-			pen = &this->pens[PRIMARY_ROAD];
-		break;
-
-	case TigerDB::ROAD_SecondaryAndConnecting:
-		if (this->layerDlg->doSecondaryRds)
-			pen = &this->pens[SECONDARY_ROAD];
-		break;
-
-	case TigerDB::ROAD_LocalNeighborhoodAndRural:
-		if (this->layerDlg->doLocalRds)
-			pen = &this->pens[LOCAL_ROAD];
-		break;
-
-	case TigerDB::ROAD_VehicularTrail:
-		if (this->layerDlg->doTrails)
-			pen = &this->pens[TRAIL];
-		break;
-
-	case TigerDB::RR_MajorCategoryUnknown:
-	case TigerDB::RR_MainLine:
-	case TigerDB::RR_Spur:
-	case TigerDB::RR_Yard:
-	case TigerDB::RR_FerryCrossing:
-	case TigerDB::RR_OtherThoroughfare:
-		pen = 0;
-		break;
-
-	case TigerDB::MGT_CategoryUnknown:
-	case TigerDB::MGT_Pipeline:
-	case TigerDB::MGT_PowerLine:
-	case TigerDB::MGT_Other:
-		if (this->layerDlg->doGroundTransportation)
-			pen = &this->pens[DASH_DOT_PEN];
-		//pen = 0;
-		break;
-
-	case TigerDB::LM_Airport:
-	case TigerDB::LM_GolfCourse:
-	case TigerDB::LM_Cemetery:
-	case TigerDB::LM_NationalParkService:
-	case TigerDB::LM_NationalForestOrOther:
-	case TigerDB::LM_StateOrLocalPark_Forest:
-		pen = &this->pens[PARK];
-		break;
-
-	case TigerDB::NVF_BoundaryClassificationUnknown:
-	case TigerDB::NVF_LegalOrAdministrativeBoundary:
-		if (this->layerDlg->doBoundary)
-			pen = &this->pens[BOUNDARY];
-		break;
-
-	case TigerDB::NVF_PropertyLine:
-	case TigerDB::HYDRO_CensusWaterCenterLine:
-	case TigerDB::HYDRO_ArtificialPath:
-		if (this->layerDlg->doOtherFeatures)
-			pen = &this->pens[PARK];
-		break;
-
-	case TigerDB::HYDRO_ClassificationUnknown:
-	case TigerDB::HYDRO_PerennialShoreline:
-	case TigerDB::HYDRO_IntermittentShoreline:
-	case TigerDB::HYDRO_IntermittentCanalDitchOrAqueduct:
-	case TigerDB::HYDRO_PerennialLakeOrPond:
-	case TigerDB::HYDRO_IntermittentLakeOrPond:
-	case TigerDB::HYDRO_PerennialReservoir:
-	case TigerDB::HYDRO_IntermittentReservoir:
-	case TigerDB::HYDRO_BayEstuaryGulfOrSound:
-	case TigerDB::HYDRO_SeaOrOcean:
-	case TigerDB::HYDRO_GravelPitOrQuarry:
-	case TigerDB::HYDRO_Glacier:
-		if (this->layerDlg->doShoreline)
-			pen = &this->pens[SHORELINE];
-		break;
-
-	case TigerDB::HYDRO_PerennialStream:
-	case TigerDB::HYDRO_IntermittentStream:
-		if (this->layerDlg->doStreams)
-			pen = &this->pens[STREAM];
-		break;
-	}
-#ifdef SAVE_FOR_NOW
-	if (code >= 0 && code < 100)			// roads
-	{
-		if (code >= 10 && code < 30)		// Interstates & US highways
-		{
-			if (this->layerDlg->doPrimaryRds)
-				pen = &this->pens[PRIMARY_ROAD];
-		}
-		else if (code >= 30 && code < 40)	// Secondary & Connectors
-		{
-			if (this->layerDlg->doSecondaryRds)
-				pen = &this->pens[SECONDARY_ROAD];
-		}
-		else if (code >= 40 && code < 50)	// Local/Rural
-		{
-			if (this->layerDlg->doLocalRds)
-				pen = &this->pens[LOCAL_ROAD];
-		}
-		else if (code >= 50 && code < 60)		// Trails
-		{
-			if (this->layerDlg->doTrails)
-				pen = &this->pens[TRAIL];
-		}
-		else if (code < 10 || code >= 60)
-		{
-			if (this->layerDlg->doOtherRds)
-				pen = &this->pens[OTHER_ROAD];
-		}
-	}
-	else if (code >= 100 && code < 200)	// railroad
-		pen = 0;
-	else if (code >= 200 && code < 300)	// Miscellenous ground transportation
-		pen = 0;
-	else if (code >= 300 && code < 400)	// Land Mark features
-	{
-		if (this->layerDlg->doOtherFeatures)
-			pen = &this->pens[PARK];
-	}
-	else if (code >= 400 && code < 500)	// Physical features
-		pen = 0;
-	else if (code >= 500 && code < 600)	// Non-visible features
-	{
-		if (code == 510 || code == 511 || code == 512)
-		{
-			if (this->layerDlg->doBoundary)
-				pen = &this->pens[BOUNDARY];
-		}
-		else if (code == 540)
-		{
-			if (this->layerDlg->doOtherFeatures)
-				pen = &this->pens[PARK];
-		}
-	}
-	else if (code >= 700 && code < 800)	// Hydrography
-	{
-		switch (code)
-		{
-		default:
-			//	        pen = &this->pens[ GREEN_PEN ];
-			break;
-
-		case 700:
-		case 701:
-		case 702:
-		case 730:
-		case 731:
-		case 750:
-		case 751:
-		case 752:
-		case 753:
-			if (this->layerDlg->doShoreline)
-				pen = &this->pens[SHORELINE];
-			break;
-
-		case 710:
-		case 711:
-		case 712:
-			if (this->layerDlg->doStreams)
-				pen = &this->pens[STREAM];
-			break;
-		}
-	}
-#endif
-	return(pen);
-}
-
-bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
-{
-	if (so->IsA() != GeoDB::LINE)
-		return false;
-	GeoDB::Edge* edge = (GeoDB::Edge*)so;
-	return this->GetPen(edge->userCode) != 0;
-}
-
-void CMapViewSDView::OnDraw(CDC* pDC)
-{
-	CMapViewSDDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	if (!pDoc)
-		return;
-
-	CMainFrame* frame = (CMainFrame*)AfxGetApp()->m_pMainWnd;
-
-	HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
-
-	ASSERT(pDoc->db != 0);
-	if (pDoc->isOpen)
-		//  if( doc->db->IsOpen() )
-	{
-		Range2D range;
-		CPen* lastPen = 0;
-		CPen* oldPen = pDC->SelectObject((CPen*)pDC->SelectStockObject(NULL_PEN));
-		//	CWinApp *app = AfxGetApp();
-		//	this->mapWin->ReverseRange( &range );
-
-		{
-			CRect region;
-			XY_t pt1,
-				pt2;
-
-			pDC->GetClipBox(region);
-
-			CPoint& pt = region.TopLeft();
-			pt1.x = (double)pt.x;
-			pt1.y = (double)pt.y;
-			this->mapWin->Reverse(&pt1, pt1);
-			pt = region.BottomRight();
-			pt2.x = (double)pt.x;
-			pt2.y = (double)pt.y;
-			this->mapWin->Reverse(&pt2, pt2);
-
-			range.Init(pt1, pt2);
-			//range = pDoc->db->GetRange();  // Temporary hack to get all the features
-			//	range.Envelope( pt0 );
-		}
-		//	app->LoadStandardCursor( IDC_WAIT );
-#if defined (DO_TIGER)
-		GeoPoint min,
-			max;
-
-		min.lon = (long)range.x.min;
-		max.lon = (long)range.x.max;
-
-		min.lat = (long)range.y.min;
-		max.lat = (long)range.y.max;
-
-		doc->tigerLines->SetQueryByMBR(min, max);
-		doc->tigerLines->Requery();
-		while (!doc->tigerLines->IsEOF())
-		{
-			if (frame->OnAbort())
-				break;
-			int nPts = doc->tigerLines->GetGeoPts(this->geoPts);
-			ASSERT(nPts <= 1000);
-			for (int i = nPts; --i >= 0; )
-			{
-				this->pts[i].x = this->geoPts[i].lon;
-				this->pts[i].y = this->geoPts[i].lat;
-			}
-
-			CPen* pen;
-			if ((pen = this->GetPen(doc->tigerLines->GetDFCC())) != 0)
-			{
-				if (pen != lastPen)
-				{
-					pDC->SelectObject(pen);
-					lastPen = pen;
-				}
-				if (doThining)
-					nPts = TrendLine(this->pts, nPts, this->tDist);
-				DrawLine(*this->mapWin, pDC, this->pts, nPts);
-			}
-
-			doc->tigerLines->MoveNext();
-		}
-#else
-		ObjHandle dbo;
-		GeoDB::Search ss;
-		int nLines = 0;
-/*
-		int err = pDoc->db->Read(45700, dbo);
-		GeoDB::SpatialObj* so = (GeoDB::SpatialObj*)dbo.Lock();
-  	TigerDB::Chain * line = (TigerDB::Chain*)so;
-		dbo.Unlock();
-*/
-//		pDoc->db->CheckTree();
-
-		pDoc->db->InitSearch(&ss, range, this->layerDlg->objClasses);
-		while (pDoc->db->getNext(&ss, &dbo) == 0)
-		{
-			/*if (frame->OnAbort())
-				break;*/
-			GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)dbo.Lock();
-			DbObject::ClassCode code = spatialObj->getClassCode();
-//			if (code == DB_TIGER_POLY)
-			GeoDB::SpatialClass sc = spatialObj->IsA();
-			switch (sc)
-			{
-				case GeoDB::POINT:
-				{
-					if (code == DB_POINT && this->layerDlg->doGNISPoints)  // Only display Points for now
-					{
-						bool drawFeature = false;
-
-						TigerDB::GNISFeature* point = (TigerDB::GNISFeature*)spatialObj;
-						XY_t pt;
-						CPoint cPt;
-
-						int code = point->userCode;
-						switch (code)
-						{
-							case TigerDB::GNIS_Summit:
-							case TigerDB::GNIS_Range:
-							case TigerDB::GNIS_Flat:
-							case TigerDB::GNIS_Plain:
-							case TigerDB::GNIS_Ridge:
-							case TigerDB::GNIS_Swamp:
-							case TigerDB::GNIS_Valley:
-							case TigerDB::GNIS_Woods:
-							case TigerDB::GNIS_Gap:
-							case TigerDB::GNIS_Basin:
-							case TigerDB::GNIS_Bench:
-								if (this->layerDlg->doLandForm)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Bay:
-							case TigerDB::GNIS_Sea:
-							case TigerDB::GNIS_Beach:
-							case TigerDB::GNIS_Canal:
-							case TigerDB::GNIS_Channel:
-							case TigerDB::GNIS_Cape:
-							case TigerDB::GNIS_Bar:
-							case TigerDB::GNIS_Isthmus:
-								if (this->layerDlg->doCoastal)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Arch:
-							case TigerDB::GNIS_Area:
-							case TigerDB::GNIS_Arroyo:
-							case TigerDB::GNIS_Bend:
-							case TigerDB::GNIS_Cliff:
-							case TigerDB::GNIS_Crater:
-							case TigerDB::GNIS_Crossing:
-							case TigerDB::GNIS_Slope:
-							case TigerDB::GNIS_Gut:
-								if (this->layerDlg->doTopographic)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Census:
-							case TigerDB::GNIS_Civil:
-							case TigerDB::GNIS_PopulatedPlace:
-								if (this->layerDlg->doCensus)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Glacier:
-							case TigerDB::GNIS_Island:
-							case TigerDB::GNIS_Lake:
-							case TigerDB::GNIS_Rapids:
-							case TigerDB::GNIS_Reservoir:
-							case TigerDB::GNIS_Falls:
-							case TigerDB::GNIS_Spring:
-							case TigerDB::GNIS_Stream:
-								if (this->layerDlg->doHydrology)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Levee:
-							case TigerDB::GNIS_Military:
-								if (this->layerDlg->doCultural)
-									drawFeature = true;
-								break;
-
-							case TigerDB::GNIS_Pillar:
-							case TigerDB::GNIS_Lava:
-								if (this->layerDlg->doOtherNames)
-									drawFeature = true;
-								break;
-
-							default:
-								break;
-						}
-
-						if (!drawFeature)
-							break;
-
-						this->mapWin->Forward(&pt, point->getPt());
-						cPt.x = (int)pt.x;
-						cPt.y = (int)pt.y;
-						std::string name = point->GetName();
-						CString str(name.c_str());
-						CFont *def_font = pDC->SelectObject(&this->font);
-						pDC->TextOut(cPt.x, cPt.y, str);
-						pDC->SelectObject(def_font);
-						BOOL b = pDC->Ellipse(cPt.x-2, cPt.y-2, cPt.x + 2, cPt.y + 2);
-					}
-					break;
-				}
-
-				case GeoDB::AREA:
-				{
-					int nPts = GeoDB::Poly::getPts(dbo, this->pts);
-					GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
-					CBrush* brush;
-					if ((brush = this->GetBrush(poly->userCode)) != 0)
-					{
-						pDC->SelectObject(brush);
-						DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
-					}
-					break;
-				}
-
-				case GeoDB::LINE:
-				{
-					nLines++;
-					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
-					ASSERT(line != 0);
-					CPen* pen;
-					if ((pen = this->GetPen(line->userCode/*GetCode()*/)) != 0)
-					{
-						int nPts = (int)line->getNumPts();
-						line->Get(this->pts);
-						/*if (pen != lastPen)
-						{
-							pDC->SelectObject(pen);
-							lastPen = pen;
-						}*/
-						pDC->SelectObject(pen);
-						if (doThining)
-							nPts = TrendLine(this->pts, nPts, this->tDist);
-						DrawLine(*this->mapWin, pDC, this->pts, nPts);
-						//	    this->mapWin->Draw( pDC, this->pts, nPts );
-						pDC->SelectObject(oldPen);
-						
-					}
-				}
-			}
-			dbo.Unlock();
-		}
-#endif
-		if (oldPen != 0)
-			pDC->SelectObject(oldPen);
-		//	app->LoadStandardCursor( IDC_ARROW );
-	}
-
-	SetCursor(cursor);
-}
-
-void CMapViewSDView::DoPan(double horizontal, double vertical)
-{
-	if (this->mapWin != 0)
-	{
-		double pan_factor = (double)(100 - this->pan_overlap) / 100.0;
-		XY_t dispPt;
-
-		dispPt.x = horizontal * pan_factor;
-		dispPt.y = vertical * pan_factor;
-
-		this->mapWin->PanByDisplay(dispPt);
-		this->Invalidate();
-	}
-}
-
-void CMapViewSDView::OnPanDown()
-{
-	this->DoPan(0.0, -1.0);
-}
-
-void CMapViewSDView::OnPanLeft()
-{
-	this->DoPan(-1.0, 0.0);
-}
-
-void CMapViewSDView::OnPanRight()
-{
-	this->DoPan(1.0, 0.0);
-}
-
-void CMapViewSDView::OnPanUp()
-{
-	this->DoPan(0.0, 1.0);
-}
-
-void CMapViewSDView::OnLButtonDown(UINT nFlags, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (this->mapWin != 0)
-	{
-		this->pt = point;
-		this->doWindow = TRUE;
-		this->rect.SetRectEmpty();
-	}
-
-	CView::OnLButtonDown(nFlags, point);
-}
-
-const int PICK_TOL = 3;
-
-void CMapViewSDView::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	CView::OnLButtonUp(nFlags, point);
-
-	if (this->doWindow /*&& this->mOnLButtonUpapWin != 0*/)
-	{
-		XY_t pt0;
-		int xDiff,
-			yDiff;
-
-		pt0.x = (double)this->pt.x;
-		pt0.y = (double)this->pt.y;
-		this->mapWin->Reverse(&pt0, pt0);
-
-		if ((xDiff = point.x - this->pt.x) < 0)
-			xDiff = -xDiff;
-
-		if ((yDiff = point.y - this->pt.y) < 0)
-			yDiff = -yDiff;
-
-		if (xDiff <= PICK_TOL && yDiff <= PICK_TOL)
-			//	if( point.x == this->pt.x && point.y == this->pt.y )
-		{
-#ifdef SAVE_FOR_NOW
-			if (this->mapProj)
-			{
-				this->mapProj->Set(pt0.x, pt0.y);
-				this->mapProj->Forward(&pt0, pt0);
-			}
-#endif
-			this->mapWin->Set(pt0);
-		}
-		else
-		{
-			Range2D range;
-
-			range.Add(pt0);
-
-			pt0.x = (double)point.x;
-			pt0.y = (double)point.y;
-			this->mapWin->Reverse(&pt0, pt0);
-			range.Add(pt0);
-
-#ifdef SAVE_FOR_NOW  
-			if (this->mapProj)
-			{
-				XY_t ll,
-					ur,
-					center;
-
-				range.Corners(&ll, &ur);
-				range.Center(&center);
-				this->mapProj->Set(center.x, center.y);
-
-				this->mapProj->Forward(&ll, ll);
-				this->mapProj->Forward(&ur, ur);
-				range.Init(ll, ur);
-			}
-#endif
-			this->mapWin->Set(range);
-		}
-
-		this->doWindow = FALSE;
-		this->Invalidate();
-	}
-}
-
-void CMapViewSDView::OnRButtonDown(UINT nFlags, CPoint point)
-{
-	if (this->mapWin != 0)
-	{
-		this->doPick = TRUE;
-		this->pt = point;
-		this->rect.SetRectEmpty();
-
-		if (this->doTest)
-		{
-			XY_t pt0;
-
-			pt0.x = (double)point.x;
-			pt0.y = (double)point.y;
-			this->mapWin->Reverse(&this->pts[0], pt0);
-		}
-	}
-
-	CView::OnRButtonDown(nFlags, point);
-}
-
-void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
-{
-	XY_t pt0;
-	CMapViewSDDoc* doc = GetDocument();
-
-	if (this->doTest)
-	{
-		LineSeg2D lSeg;
-
-		pt0.x = (double)point.x;
-		pt0.y = (double)point.y;
-		this->mapWin->Reverse(&pt0, pt0);
-
-		ASSERT(doc->db != 0);
-		if (doc->db->IsOpen())
-		{
-#if defined( DO_TIGER )
-#else
-			DbSearchByLSeg so(*doc->db);
-			DbSearch::Found fo;
-			lSeg.Init(this->pts[0], pt0);
-
-			so.Init(lSeg, this->layerDlg->objClasses);
-			if (so.FindBest(&fo) == 0)
-			{
-			}
-#endif
-		}
-	}
-	else if (this->doPick)
-	{
-		Range2D range;
-
-		pt0.x = (double)this->pt.x;
-		pt0.y = (double)this->pt.y;
-		this->mapWin->Reverse(&pt0, pt0);
-		range.Add(pt0);
-/*
-		pt0.x = (double)point.x;
-		pt0.y = (double)point.y;
-		this->mapWin->Reverse(&pt0, pt0);
-		range.Add(pt0);
-*/
-		ASSERT(doc->db != 0);
-		if (doc->db->IsOpen())
-		{
-			CDC* dc = GetDC();
-			HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
-#if defined( DO_TIGER )
-#else
-			ObjHandle dbo;
-			GeoDB::Search ss;
-
-			//doc->db->Init(range, &ss);
-			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
-			DbSearchByPt so(*doc->db);
-			//DbSearchByRange so(*doc->db);
-			DbSearch::Found fo;
-
-			//so.Init(range);
-			so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
-			if (so.FindBest(&fo) == 0)/**/
-			{
-				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
-				GeoDB::SpatialClass sc = sObj->IsA();
-				switch (sc)
-				{
-				case GeoDB::POINT:
-				{
-					if (sObj->getClassCode() == DB_POINT)
-					{
-						TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
-						DisplayInfo(feat);
-					}
-					break;
-				}
-				case GeoDB::AREA:
-				{
-					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
-					DisplayInfo(poly);
-					break;
-				}
-				case GeoDB::LINE:
-				{
-					TigerDB::Chain* line = (TigerDB::Chain*)sObj;
-					//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
-					ASSERT(line != 0);
-					CPen* pen;
-					int code = line->userCode/*GetCode()*/;
-
-					if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
-					{
-						//pen = &this->hPen;
-						int nPts = (int)line->getNumPts();
-						line->Get(this->pts);
-
-						CPen* oldPen = dc->SelectObject(pen);
-						int old_rop2 = dc->SetROP2(R2_XORPEN);
-
-						if (this->doThining)
-							nPts = TrendLine(this->pts, nPts, this->tDist);
-						DrawLine(*this->mapWin, dc, this->pts, nPts, true);
-						//	      this->mapWin->Draw( dc, this->pts, nPts );
-						DisplayInfo(line);
-						/**/
-#ifdef DO_SHORT_PATH		  
-						if (this->doShortPath)
-						{
-							double distSq;
-							XY_t tempPt;
-							int dir;
-
-							distSq = fo.pt.DistSqr(this->pts[0]);
-							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
-							{
-								tempPt = this->pts[0];
-								dir = -1;
-							}
-							else
-							{
-								tempPt = this->pts[nPts - 1];
-								dir = 1;
-							}
-
-							if (++this->pickCount == 1)
-							{
-								this->startId = line->dbAddress();
-								this->startPt = tempPt;
-								this->startDir = dir;
-								this->startDist = line->Length();
-							}
-							else if (this->pickCount == 2)
-							{
-								ShortPath sPath;
-								//CArray<long, long> lineIds;
-								ObjHandle handle;
-								double dist;
-								int nIds;
-
-								int err = doc->db->Read(this->startId, handle);
-								line = (TigerDB::Chain*)handle.Lock();
-								double length = line->Length();
-								handle.Unlock();
-								sPath.Init(handle, fo.handle, 0, this->startPt);
-								sPath.putEdge(handle, 1, length);
-	
-								//							sPath.Init( this->startId, line, 0, tempPt );
-								ShortPath::filter_t f1,
-									f2,
-									f3;
-								std::vector<long> edgeIds;
-
-								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
-								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-								f1.push_back(TigerDB::ROAD_SecondaryAndConnecting);
-								f2.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
-								f2.push_back(TigerDB::ROAD_MajorCategoryUnknown);
-								f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
-								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
-								{
-									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
-									{
-										err = doc->db->Read(edgeIds[i], handle);
-										line = (TigerDB::Chain*)handle.Lock();
-										nPts = (int)line->getNumPts();
-										line->Get(this->pts);
-										DrawLine(*this->mapWin, dc, this->pts, nPts);
-										handle.Unlock();
-									}
-								}
-
-								this->pickCount = 0;
-							}
-						}
-#endif
-						dc->SelectObject(oldPen);
-						dc->SetROP2(old_rop2);
-					}
-					break;
-					}
-				}
-				//fo.handle.Unlock();
-				//this->pickObj = fo.handle;
-				//dbo.Unlock();
-				fo.handle.Unlock();
-			}
-#endif
-			SetCursor(cursor);
-			ReleaseDC(dc);
-		}
-	}
-
-	this->doPick = FALSE;
-	CView::OnRButtonUp(nFlags, point);
-}
-
-void CMapViewSDView::OnMouseMove(UINT nFlags, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (doWindow || doPick)
-	{
-		CDC* dc = GetDC();
-
-		this->brush.Attach(GetStockObject(NULL_BRUSH));
-
-		CPen* old_pen = (CPen*)dc->SelectStockObject(WHITE_PEN /*&this->pen*/);
-		CBrush* old_brush = dc->SelectObject(&this->brush);
-		int old_rop2 = dc->SetROP2(R2_XORPEN);
-
-		//	int dx = abs( this->pt.x - point.x);
-		//	int dy = abs( this->pt.y - point.y);
-		if (!this->rect.IsRectEmpty())
-			dc->Rectangle(this->rect);
-
-		this->rect.SetRect(this->pt.x, this->pt.y, point.x, point.y);
-		this->rect.NormalizeRect();
-
-		dc->Rectangle(this->rect);
-
-		dc->SelectObject(old_pen);
-		dc->SelectObject(old_brush);
-		dc->SetROP2(old_rop2);
-		this->brush.Detach();
-
-		ReleaseDC(dc);
-	}
-
-	CView::OnMouseMove(nFlags, point);
-}
-
-void CMapViewSDView::DisplayInfo(TigerDB::Chain* line)
-{
-	if (this->doInfo)
-	{
-		TCHAR buffer[80];
-		TigerDB::Name name;
-		_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
-		this->lineDlg->m_id = buffer;
-		int nNames = line->GetNumNames();
-
-		buffer[0] = _T('\0');
-		if (nNames > 0)
-		{
-			for (int i = 0; i < nNames; i++)
-			{
-				line->GetName(&name, i);
-				if (i > 0)
-					_tcscat_s(buffer, _T("|"));
-
-				if (::strlen(name.prefix) > 0)
-				{
-					_tcscat_s(buffer, TString(name.prefix));
-					_tcscat_s(buffer, _T(" "));
-				}
-
-				if (::strlen(name.name) > 0)
-				{
-					_tcscat_s(buffer, TString(name.name));
-				}
-				if (::strlen(name.type) > 0)
-				{
-					_tcscat_s(buffer, _T(" "));
-					_tcscat_s(buffer, TString(name.type));
-				}
-				if (::strlen(name.suffix) > 0)
-				{
-					_tcscat_s(buffer, _T(" "));
-					_tcscat_s(buffer, TString(name.suffix));
-				}
-			}
-		}
-
-		this->lineDlg->m_name = buffer;
-		this->lineDlg->m_type = "LINE: ";
-		this->lineDlg->m_type += LineStr(line->userCode);
-		this->lineDlg->UpdateData(FALSE);
-	}
-}
-
-
-void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
-{
-	if (!this->doInfo)
-		return;
-
-		char /*TCHAR*/ buffer[80];
-		sprintf/*_stprintf_s*/(buffer, "%ld", poly->dbAddress());
-		this->lineDlg->m_id = buffer;
-
-		std::string &name = poly->GetName();
-		this->lineDlg->m_name = name.c_str();
-		const char* code = LineStr(poly->userCode);
-		sprintf/*_stprintf_s*/(buffer, "POLY: %s", code);
-		this->lineDlg->m_type = buffer;
-		this->lineDlg->UpdateData(FALSE);
-}
-
-void CMapViewSDView::DisplayInfo(TigerDB::GNISFeature* feature)
-{
-	if (!this->doInfo)
-		return;
-
-	char /*TCHAR*/ buffer[80];
-	sprintf/*_stprintf_s*/(buffer, "%ld", feature->dbAddress());
-	this->lineDlg->m_id = buffer;
-
-	std::string& name = feature->GetName();
-	this->lineDlg->m_name = name.c_str();
-
-	const char* code = FeatureStr(feature->userCode);
-	sprintf/*_stprintf_s*/(buffer, "POINT: %s", code);
-	this->lineDlg->m_type = buffer;
-	this->lineDlg->UpdateData(FALSE);
-}
-
-// CMapViewSDView printing
-
-
-void CMapViewSDView::OnFilePrintPreview()
-{
-#ifndef SHARED_HANDLERS
-	AFXPrintPreview(this);
-#endif
-}
-
-BOOL CMapViewSDView::OnPreparePrinting(CPrintInfo* pInfo)
-{
-	// default preparation
-	return DoPreparePrinting(pInfo);
-}
-
-void CMapViewSDView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
-{
-	// TODO: add extra initialization before printing
-}
-
-void CMapViewSDView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
-{
-	// TODO: add cleanup after printing
-}
-/*
-void CMapViewSDView::OnRButtonUp(UINT , CPoint point)
-{
-	ClientToScreen(&point);
-	OnContextMenu(this, point);
-}
-*/
-void CMapViewSDView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
-{
-#ifndef SHARED_HANDLERS
-	// theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE); Don't want this to display 12/6/23
-#endif
-}
-
-
-// CMapViewSDView diagnostics
-
-#ifdef _DEBUG
-void CMapViewSDView::AssertValid() const
-{
-	CView::AssertValid();
-}
-
-void CMapViewSDView::Dump(CDumpContext& dc) const
-{
-	CView::Dump(dc);
-}
-
-CMapViewSDDoc* CMapViewSDView::GetDocument() const // non-debug version is inline
-{
-	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CMapViewSDDoc)));
-	return (CMapViewSDDoc*)m_pDocument;
-}
-#endif //_DEBUG
-
-
-// CMapViewSDView message handlers
-
-void CMapViewSDView::OnZoomIn()
-{
-	if (this->mapWin != 0)
-	{
-		this->mapWin->ScaleByFactor(this->zoom_factor);
-		this->Invalidate();
-	}
-}
-
-void CMapViewSDView::OnZoomOut()
-{
-	if (this->mapWin != 0)
-	{
-		this->mapWin->ScaleByFactor(1.0 / this->zoom_factor);
-		this->Invalidate();
-	}
-}
-
-void CMapViewSDView::OnMapLayers()
-{
-	if (this->layerDlg->DoModal() == IDOK)
-	{
-		this->Invalidate();
-	}
-}
-
-void CMapViewSDView::OnUpdateMapLayers(CCmdUI* pCmdUI)
+void CMapViewSDView::OnUpdateSearchUserid(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(this->mapWin != 0);
 }
 
-void CMapViewSDView::OnLineInfo()
+
+void CMapViewSDView::OnUpdateToolsShortpath(CCmdUI* pCmdUI)
 {
-	this->doInfo = !this->doInfo;
-	if (doInfo)
-		this->lineDlg->ShowWindow(SW_NORMAL);
-	else
-		this->lineDlg->ShowWindow(SW_HIDE);
+	pCmdUI->Enable(this->mapWin != 0);
+	pCmdUI->SetCheck(this->doShortPath);
+
 }
 
-void CMapViewSDView::OnUpdateLineInfo(CCmdUI* pCmdUI)
+
+void CMapViewSDView::OnToolsShortpath()
 {
-	if (this->mapWin != 0)
-	{
-		pCmdUI->SetCheck(this->doInfo);
-	}
-	else
-		pCmdUI->Enable(FALSE);
+	this->doShortPath = !this->doShortPath;
+
 }
 
-void CMapViewSDView::OnMapProj()
+
+void CMapViewSDView::OnUpdateToolsThining(CCmdUI* pCmdUI)
 {
-	MapPDIAL dialog(this);
-
-	dialog.m_projNum = this->doProj;
-	if (dialog.DoModal() == IDOK)
-	{
-		if (dialog.m_projNum != this->doProj)
-		{
-			Range2D range;
-			this->mapWin->GetRange(&range);
-
-			this->doProj = dialog.m_projNum;
-			if (this->doProj != 0)
-			{
-				this->mapProj = this->mapProjs[this->doProj - 1];
-				this->mapWin->Set(this->mapProj);
-			}
-			else
-				this->mapWin->Set(0);
-			this->mapWin->Set(range);
-			this->Invalidate();
-		}
-	}
+	pCmdUI->Enable(this->mapWin != 0);
 }
 
-void CMapViewSDView::OnThinPts()
+
+void CMapViewSDView::OnToolsThining()
 {
 	ThinDlg dlg(this);
 
@@ -1788,39 +1801,4 @@ void CMapViewSDView::OnThinPts()
 		if (doInvalid)
 			this->Invalidate();
 	}
-}
-/*
-class DbHash : public DbHashAccess {
-public:
-	long id;
-	int is_equal(DbObject* dbo) { return this->id == ((GeoDB::Edge*)dbo)->userId; }
-	long int hashKey(int nBits) { return HashTable::HashDK(nBits, id); }
-};
-*/
-void CMapViewSDView::OnSearchUserid()
-{
-	SearchUserID searchDlg;
-	INT_PTR retVal = searchDlg.DoModal();
-	if (retVal == IDOK)
-	{
-		CString id = searchDlg.m_UserIDStr;
-		DbObject::Id key = atoi(TString(id));
-		CMapViewSDDoc* pDoc = GetDocument();
-
-		GeoDB::Edge::Hash dbHash;
-		dbHash.id = key;
-		ObjHandle oh;
-		int err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
-		if (err == 0)
-		{
-			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
-			DisplayInfo(line);
-			const Range2D &range = line->getMBR();
-			oh.Unlock();
-			this->mapWin->Set(range);
-			this->Invalidate();
-		}
-	}
-
-	bool test = true;
 }

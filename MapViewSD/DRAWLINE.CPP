@@ -36,7 +36,7 @@ void DrawMarker(CPoint &pt, CDC* dc)
   newPt.y = pt.y - pixels;
   dc->MoveTo(newPt);
   newPt.y = pt.y + pixels;
-  dc->MoveTo(newPt);
+  dc->LineTo(newPt);
 }
 
 void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts, bool drawDir)

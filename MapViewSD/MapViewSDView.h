@@ -61,9 +61,6 @@ protected:
 	double		zoom_factor;
 	MapProjection* mapProjs[1];
 	MapProjection* mapProj;
-#if defined( DO_TIGER )
-	CArray<GeoPoint, GeoPoint> geoPts;
-#endif
 	XY_t* pts;
 	BOOL doWindow,
 		doPick,
@@ -77,9 +74,6 @@ protected:
 	CRect rect;
 	LineDlg* lineDlg;
 	LayerDlg *layerDlg;
-#if ! defined( DO_TIGER )
-	ObjHandle pickObj;
-#endif
 	int doProj;
 	BOOL doTest;
 	BOOL doThining;
@@ -97,6 +91,7 @@ protected:
 
 	CPen* GetPen(int code);
 	CBrush* GetBrush(int code);
+	bool drawGNISFeature(int code);
 	friend LayerDlg;
 
 	virtual bool filter(GeoDB::SpatialObj *so);  // SpatialObjectFilter
@@ -125,6 +120,12 @@ protected:
 	afx_msg void OnThinPts();
 	afx_msg void OnSearchUserid();
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnUpdateSearchUserid(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateToolsShortpath(CCmdUI* pCmdUI);
+	afx_msg void OnToolsShortpath();
+	afx_msg void OnUpdateToolsThining(CCmdUI* pCmdUI);
+	afx_msg void OnToolsThining();
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

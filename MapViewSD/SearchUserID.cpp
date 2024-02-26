@@ -38,6 +38,8 @@ void SearchUserID::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_USERID, m_UserID);
 	DDX_Text(pDX, IDC_EDIT_USERID, m_UserIDStr);
+	DDX_Control(pDX, IDC_EDIT_USERID2, m_DatabaseID);
+	DDX_Text(pDX, IDC_EDIT_USERID2, m_DatabaseIDStr);
 }
 
 
