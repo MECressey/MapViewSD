@@ -268,9 +268,9 @@
     <Library Include="..\..\Lib2\GeoDBDLL.lib" />
     <Library Include="..\..\Lib2\GeoToolsDLL.lib" />
     <Library Include="..\..\Lib2\MapProjDLL.lib" />
+    <Library Include="..\..\Lib2\MapWinDLL.lib" />
     <Library Include="..\..\Lib2\SetsDLL.lib" />
     <Library Include="..\..\Lib2\TopoToolsDLL.lib" />
-    <Library Include="..\x64\Debug\MapWinLib.lib" />
     <Library Include="..\x64\Debug\TigerDBDLL.lib" />
   </ItemGroup>
   <ItemGroup>

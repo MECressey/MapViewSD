@@ -530,11 +530,11 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						XY_t cen = poly->getCentroid();
 //						bool in = TopoTools::PtInPoly(cen, poly);
 						int nPts = GeoDB::Poly::getPts(dbo, this->pts);
-						XY_t cen2;
+						/*XY_t cen2;
 						double area2;
 						TopoTools::calcCentroid(this->pts, nPts, &cen2, &area2);		// For testing ONLY
-						bool in = TopoTools::PtInPoly(cen2, this->pts, nPts);
-						assert(in);
+						bool in = TopoTools::PtInPoly(cen2, this->pts, nPts);*/
+						//assert(in);
 /*						for (int i = 0; i < nPts; i++)
 						{
 							if (! TopoTools::PtInPoly(this->pts[i], poly))
@@ -761,6 +761,8 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 	{
 		Range2D range;
 
+		CMainFrame* frame = (CMainFrame*)AfxGetApp()->m_pMainWnd;
+
 		pt0.x = (double)this->pt.x;
 		pt0.y = (double)this->pt.y;
 		this->mapWin->Reverse(&pt0, pt0);
@@ -856,14 +858,16 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								this->startPt = tempPt;
 								this->startDir = dir;
 								this->startDist = line->Length();
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
 							}
 							else if (this->pickCount == 2)
 							{
 								ShortPath sPath;
-								//CArray<long, long> lineIds;
 								ObjHandle handle;
 								double dist;
 								int nIds;
+
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
 
 								int err = doc->db->Read(this->startId, handle);
 								assert(err == 0);
@@ -889,10 +893,10 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 
 								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
 								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-								f1.push_back(TigerDB::ROAD_SecondaryAndConnecting);
-								f2.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
-								f2.push_back(TigerDB::ROAD_MajorCategoryUnknown);
-								f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
+								f2.push_back(TigerDB::ROAD_SecondaryAndConnecting);
+								f3.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
+								//f3.push_back(TigerDB::ROAD_MajorCategoryUnknown);
+								//f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
 								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 								{
 									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
@@ -910,6 +914,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								}
 
 								this->pickCount = 0;
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
 							}
 						}
 #endif
@@ -1765,7 +1770,11 @@ void CMapViewSDView::OnUpdateToolsShortpath(CCmdUI* pCmdUI)
 void CMapViewSDView::OnToolsShortpath()
 {
 	this->doShortPath = !this->doShortPath;
-
+	CMainFrame* frame = (CMainFrame*)AfxGetApp()->m_pMainWnd;
+	if (this->doShortPath)
+		frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
+	else
+		frame->m_wndStatusBar.SetPaneText(0, _T(""));
 }
 
 

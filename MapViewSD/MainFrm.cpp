@@ -41,11 +41,14 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnUpdateApplicationLook)
 	ON_WM_SETTINGCHANGE()
+	ON_UPDATE_COMMAND_UI(ID_COORD_PAGE, &CMainFrame::OnUpdatePage)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
 {
+
 	ID_SEPARATOR,           // status line indicator
+	//ID_COORD_PAGE,
 	ID_INDICATOR_CAPS,
 	ID_INDICATOR_NUM,
 	ID_INDICATOR_SCRL,
@@ -419,4 +422,12 @@ void CMainFrame::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
 	CFrameWndEx::OnSettingChange(uFlags, lpszSection);
 	m_wndOutput.UpdateFonts();
+}
+
+void CMainFrame::OnUpdatePage(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable();
+	CString strPage;
+	strPage.Format(_T("P: %d"), 1);
+	pCmdUI->SetText(strPage);
 }

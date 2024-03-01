@@ -19,6 +19,9 @@
 #include "ClassView.h"
 #include "OutputWnd.h"
 #include "PropertiesWnd.h"
+//#include "MapViewSDView.h"
+
+//using namespace NodeLinePoly;
 
 class CMainFrame : public CFrameWndEx
 {
@@ -46,7 +49,7 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-protected:  // control bar embedded members
+//protected:  // control bar embedded members.  MEC - made this public to get access to the m_wndStatusBar
 	CMFCMenuBar       m_wndMenuBar;
 	CMFCToolBar       m_wndToolBar;
 	CMFCStatusBar     m_wndStatusBar;
@@ -56,6 +59,8 @@ protected:  // control bar embedded members
 	COutputWnd        m_wndOutput;
 	CPropertiesWnd    m_wndProperties;
 
+//	friend CMapViewSDView;
+
 // Generated message map functions
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -64,6 +69,7 @@ protected:
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
+	afx_msg void OnUpdatePage(CCmdUI* pCmdUI);
 	DECLARE_MESSAGE_MAP()
 
 	BOOL CreateDockingWindows();

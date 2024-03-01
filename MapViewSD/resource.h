@@ -88,6 +88,7 @@
 #define IDS_FIND_TAB                    302
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
+#define ID_COORD_PAGE                   310
 #define IDD_SEARCH_USERID               312
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
@@ -142,6 +143,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        315
 #define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1027
-#define _APS_NEXT_SYMED_VALUE           310
+#define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif
