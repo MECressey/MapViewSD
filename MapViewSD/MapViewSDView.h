@@ -55,11 +55,12 @@ public:
 protected:
 	CPen pens[13];
 	CBrush hydroBrush,
-				 parkBrush;
+				 parkBrush,
+				 isleBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
-	MapProjection* mapProjs[1];
+	MapProjection* mapProjs[2];
 	MapProjection* mapProj;
 	XY_t* pts;
 	BOOL doWindow,

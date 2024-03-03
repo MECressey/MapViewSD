@@ -57,28 +57,12 @@ void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts, bool d
   {
     DrawMarker(cpts[nPts - 1], dc);
   }
-
-/*
-  transform.Forward( &pt, pts[ 0 ] );
-  cPt.x = (int)pt.x;
-  cPt.y = (int)pt.y;
-  dc->MoveTo( cPt );
-  for( int i = 1; i < nPts; i++ )
-  {
- 	transform.Forward( &pt, pts[ i ] );
-	cPt.x = (int)pt.x;
- 	cPt.y = (int)pt.y;
-	dc->LineTo( cPt );
-  }
-*/
 }
 
 void DrawPolygon(const Transform& transform, CDC* dc, XY_t pts[], int nPts)
 {
   XY_t pt;
   CPoint cPt;
-
-  //Graphics* pGraphics = FromHDC(dc);
 
   for (int i = 0; i < nPts; i++)
   {

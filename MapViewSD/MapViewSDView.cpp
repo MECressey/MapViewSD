@@ -36,7 +36,8 @@
 #include "HASHTABL.HPP"
 #include "ShortPath.h"
 #include "TopoTools.h"
-
+#include <vector>
+#include <algorithm>
 #include "TString.h"
 
 #define DO_SHORT_PATH
@@ -123,12 +124,12 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->mapWin = 0;
 	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
 	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
-	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
 	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
 	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
-	this->pens[STREAM].CreatePen(PS_DASHDOTDOT, 1, RGB(100, 255, 255)/*RGB(0, 255, 255)*/);
+	this->pens[STREAM].CreatePen(PS_SOLID/*PS_DASHDOTDOT*/, 1, RGB(115, 223, 255)/*RGB(0, 255, 255)*/);
 	this->pens[TRAIL].CreatePen(PS_DOT, 1, RGB(0, 0, 0));
-	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(255, 0, 0));
+	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(230, 230, 0)/*RGB(255, 0, 0)*/);	// Citroen Yellow
 	this->pens[PARK].CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
 	this->pens[OTHER_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 255, 0));
 	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
@@ -136,8 +137,9 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
 
 	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
-	this->parkBrush.CreateSolidBrush(RGB(0, 255, 0)/*RGB(27, 149, 224)*/);
-
+	this->parkBrush.CreateSolidBrush(RGB(85, 255, 0)/*RGB(0, 255, 0)*RGB(27, 149, 224)*/);	// ESRI Medium Apple
+	this->isleBrush.CreateSolidBrush(RGB(205, 170, 102)/*RGB(168, 112, 0)*/);		// ESRI Light Sienna
+	
 	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
@@ -161,7 +163,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->mapProjs[1] = new TransverseMeracator(ellipsoid);
 	this->lineDlg = 0;
 	this->doTest = FALSE;
-	this->doShortPath = FALSE/*TRUE*/;
+	this->doShortPath = FALSE;
 	this->pickCount = 0;
 	this->startId = 0;
 	this->startDir = 0;
@@ -374,7 +376,6 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 	case TigerDB::MGT_Other:
 		if (this->layerDlg->doGroundTransportation)
 			pen = &this->pens[DASH_DOT_PEN];
-		//pen = 0;
 		break;
 
 	case TigerDB::LM_Airport:
@@ -425,6 +426,19 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 	return(pen);
 }
 
+struct PolySort {
+	double area;
+	DbObject::Id id;
+};
+
+struct greater_than_key
+{
+	inline bool operator() (const PolySort& lhs, const PolySort& rhs)
+	{
+		return (lhs.area > rhs.area);
+	}
+};
+
 bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
 {
 	if (so->IsA() != GeoDB::LINE)
@@ -451,7 +465,6 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 		CPen* lastPen = 0;
 		CPen* oldPen = pDC->SelectObject((CPen*)pDC->SelectStockObject(NULL_PEN));
 		//	CWinApp *app = AfxGetApp();
-		//	this->mapWin->ReverseRange( &range );
 
 		{
 			CRect region;
@@ -470,22 +483,82 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			this->mapWin->Reverse(&pt2, pt2);
 
 			range.Init(pt1, pt2);
-			//range = pDoc->db->GetRange();  // Temporary hack to get all the features
-			//	range.Envelope( pt0 );
 		}
+
 		//	app->LoadStandardCursor( IDC_WAIT );
 		ObjHandle dbo;
 		GeoDB::Search ss;
 		int nLines = 0;
-/* Temporary testing code
-		int err = pDoc->db->Read(45700, dbo);
-		GeoDB::SpatialObj* so = (GeoDB::SpatialObj*)dbo.Lock();
-  	TigerDB::Chain * line = (TigerDB::Chain*)so;
-		dbo.Unlock();
-*/
+
 //		pDoc->db->CheckTree();
 
-		pDoc->db->InitSearch(&ss, range, this->layerDlg->objClasses);
+		// Polygons need to be displayed first because they are solid features.
+		GeoDB::searchClasses_t polyClass;
+		if (this->layerDlg->objClasses.test(DB_POLY))
+		{
+			std::vector<PolySort> polys;
+			polyClass.set(DB_POLY);
+			pDoc->db->InitSearch(&ss, range, polyClass);
+			ObjHandle po;
+			while (pDoc->db->getNext(&ss, &po) == 0)
+			{
+				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)po.Lock();
+				GeoDB::SpatialClass sc = spatialObj->IsA();
+				assert(sc == GeoDB::AREA);
+				GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
+
+				PolySort ps;
+				ps.area = poly->getArea();
+				ps.id = poly->dbAddress();
+				polys.push_back(ps);
+
+				po.Unlock();
+			}
+
+			// Polygons need to be displayed in order of largest area first
+			std::sort(polys.begin(), polys.end(), greater_than_key());
+			for (int i = 0; i < polys.size(); i++)
+			{
+				PolySort ps = polys[i];
+
+				int err = pDoc->db->Read(ps.id, po);
+				assert(err == 0);
+				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)po.Lock();
+				TigerDB::Polygon* poly = (TigerDB::Polygon *)spatialObj;
+				CBrush* brush;
+				if ((brush = this->GetBrush(poly->userCode)) != 0)
+				{
+					XY_t cen = poly->getCentroid();
+					int nPts = GeoDB::Poly::getPts(po, this->pts);
+					std::string name = poly->GetName();
+					if (poly->getArea() < 0.0)
+						brush = &this->isleBrush;
+
+					pDC->SelectObject(brush);
+					DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+					XY_t pt;
+					CPoint cPt;
+					this->mapWin->Forward(&pt, cen);
+					cPt.x = (int)pt.x;
+					cPt.y = (int)pt.y;
+
+					if (!name.empty() && (name != "Hydro" && name != "Island"))
+					{
+						CString str(name.c_str());
+						CFont* def_font = pDC->SelectObject(&this->font);
+						pDC->TextOut(cPt.x, cPt.y, str);
+						pDC->SelectObject(def_font);
+					}
+				}
+				po.Unlock();
+			}
+		}
+
+		GeoDB::searchClasses_t objClasses = this->layerDlg->objClasses;
+		if (objClasses.test(DB_POLY))
+			objClasses.reset(DB_POLY);
+
+		pDoc->db->InitSearch(&ss, range, objClasses);
 		while (pDoc->db->getNext(&ss, &dbo) == 0)
 		{
 			/*if (frame->OnAbort())
@@ -523,39 +596,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 				case GeoDB::AREA:
 				{
-					TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
-					CBrush* brush;
-					if ((brush = this->GetBrush(poly->userCode)) != 0)
-					{
-						XY_t cen = poly->getCentroid();
-//						bool in = TopoTools::PtInPoly(cen, poly);
-						int nPts = GeoDB::Poly::getPts(dbo, this->pts);
-						/*XY_t cen2;
-						double area2;
-						TopoTools::calcCentroid(this->pts, nPts, &cen2, &area2);		// For testing ONLY
-						bool in = TopoTools::PtInPoly(cen2, this->pts, nPts);*/
-						//assert(in);
-/*						for (int i = 0; i < nPts; i++)
-						{
-							if (! TopoTools::PtInPoly(this->pts[i], poly))
-								break;
-						}*/
-						pDC->SelectObject(brush);
-						DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
-						XY_t pt;
-						CPoint cPt;
-						this->mapWin->Forward(&pt, cen);
-						cPt.x = (int)pt.x;
-						cPt.y = (int)pt.y;
-						std::string name = poly->GetName();
-						if (!name.empty())
-						{
-							CString str(name.c_str());
-							CFont* def_font = pDC->SelectObject(&this->font);
-							pDC->TextOut(cPt.x, cPt.y, str);
-							pDC->SelectObject(def_font);
-						}
-					}
+					assert(false);
 					break;
 				}
 
@@ -569,7 +610,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 					{
 						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
-						/*if (pen != lastPen)
+						/*if (pen != lastPen)  Disable - this caused a bug in symbology
 						{
 							pDC->SelectObject(pen);
 							lastPen = pen;
@@ -630,7 +671,6 @@ void CMapViewSDView::OnPanUp()
 
 void CMapViewSDView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	// TODO: Add your message handler code here and/or call default
 	if (this->mapWin != 0)
 	{
 		this->pt = point;
@@ -647,7 +687,7 @@ void CMapViewSDView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	CView::OnLButtonUp(nFlags, point);
 
-	if (this->doWindow /*&& this->mOnLButtonUpapWin != 0*/)
+	if (this->doWindow)
 	{
 		XY_t pt0;
 		int xDiff,
@@ -664,7 +704,6 @@ void CMapViewSDView::OnLButtonUp(UINT nFlags, CPoint point)
 			yDiff = -yDiff;
 
 		if (xDiff <= PICK_TOL && yDiff <= PICK_TOL)
-			//	if( point.x == this->pt.x && point.y == this->pt.y )
 		{
 #ifdef SAVE_FOR_NOW
 			if (this->mapProj)
@@ -767,12 +806,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		pt0.y = (double)this->pt.y;
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
-/*
-		pt0.x = (double)point.x;
-		pt0.y = (double)point.y;
-		this->mapWin->Reverse(&pt0, pt0);
-		range.Add(pt0);
-*/
+
 		ASSERT(doc->db != 0);
 		if (doc->db->IsOpen())
 		{
@@ -781,6 +815,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			ObjHandle dbo;
 			GeoDB::Search ss;
 
+			// Note - testing different search methods
 			//doc->db->Init(range, &ss);
 			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
 			DbSearchByPt so(*doc->db);
@@ -813,7 +848,6 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				case GeoDB::LINE:
 				{
 					TigerDB::Chain* line = (TigerDB::Chain*)sObj;
-					//TigerDB::Chain* line = (TigerDB::Chain*)dbo.Lock();
 					ASSERT(line != 0);
 					CPen* pen;
 					int code = line->userCode/*GetCode()*/;
@@ -830,10 +864,9 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						if (this->doThining)
 							nPts = TrendLine(this->pts, nPts, this->tDist);
 						DrawLine(*this->mapWin, dc, this->pts, nPts, true);
-						//	      this->mapWin->Draw( dc, this->pts, nPts );
 						DisplayInfo(line);
-						/**/
-#ifdef DO_SHORT_PATH		  
+
+#if defined(DO_SHORT_PATH)
 						if (this->doShortPath)
 						{
 							double distSq;
@@ -885,21 +918,18 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								sPath.Init(handle, fo.handle, 0, this->startPt);
 								sPath.putEdge(handle, dir, length);
 	
-								//							sPath.Init( this->startId, line, 0, tempPt );
 								ShortPath::filter_t f1,
 									f2,
 									f3;
 								std::vector<long> edgeIds;
 
-								f1.push_back(TigerDB::ROAD_PrimaryLimitedAccess);
-								f1.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+								f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
+								f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
 								f2.push_back(TigerDB::ROAD_SecondaryAndConnecting);
 								f3.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
-								//f3.push_back(TigerDB::ROAD_MajorCategoryUnknown);
-								//f2.push_back(TigerDB::ROAD_SpecialCharacteristics);
 								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 								{
-									for (int i = 0; i < edgeIds.size(); i++ /*--nIds >= 0*/)
+									for (int i = 0; i < edgeIds.size(); i++)
 									{
 										DbObject::Id id = edgeIds[i];
 										if (id < 0)
@@ -924,9 +954,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					break;
 					}
 				}
-				//fo.handle.Unlock();
-				//this->pickObj = fo.handle;
-				//dbo.Unlock();
+
 				fo.handle.Unlock();
 			}
 			SetCursor(cursor);
@@ -978,7 +1006,7 @@ void CMapViewSDView::DisplayInfo(TigerDB::Chain* line)
 	{
 		TCHAR buffer[80];
 		TigerDB::Name name;
-		_stprintf_s(buffer, _T("%ld (%ld)"), line->userId/*GetTLID()*/, line->dbAddress());
+		_stprintf_s(buffer, _T("%ld (%ld)"), line->userId, line->dbAddress());
 		this->lineDlg->m_id = buffer;
 		int nNames = line->GetNumNames();
 
@@ -1028,13 +1056,13 @@ void CMapViewSDView::DisplayInfo(TigerDB::Polygon* poly)
 		return;
 
 		char /*TCHAR*/ buffer[80];
-		sprintf/*_stprintf_s*/(buffer, "%ld", poly->dbAddress());
+		sprintf(buffer, "%ld", poly->dbAddress());
 		this->lineDlg->m_id = buffer;
 
 		std::string &name = poly->GetName();
 		this->lineDlg->m_name = name.c_str();
 		const char* code = LineStr(poly->userCode);
-		sprintf/*_stprintf_s*/(buffer, "POLY: %s", code);
+		sprintf(buffer, "POLY: %s", code);
 		this->lineDlg->m_type = buffer;
 		this->lineDlg->UpdateData(FALSE);
 }
@@ -1045,14 +1073,14 @@ void CMapViewSDView::DisplayInfo(TigerDB::GNISFeature* feature)
 		return;
 
 	char /*TCHAR*/ buffer[80];
-	sprintf/*_stprintf_s*/(buffer, "%ld", feature->dbAddress());
+	sprintf(buffer, "%ld", feature->dbAddress());
 	this->lineDlg->m_id = buffer;
 
 	std::string& name = feature->GetName();
 	this->lineDlg->m_name = name.c_str();
 
 	const char* code = FeatureStr(feature->userCode);
-	sprintf/*_stprintf_s*/(buffer, "POINT: %s", code);
+	sprintf(buffer, "POINT: %s", code);
 	this->lineDlg->m_type = buffer;
 	this->lineDlg->UpdateData(FALSE);
 }
@@ -1223,14 +1251,7 @@ void CMapViewSDView::OnThinPts()
 			this->Invalidate();
 	}
 }
-/*
-class DbHash : public DbHashAccess {
-public:
-	long id;
-	int is_equal(DbObject* dbo) { return this->id == ((GeoDB::Edge*)dbo)->userId; }
-	long int hashKey(int nBits) { return HashTable::HashDK(nBits, id); }
-};
-*/
+
 void CMapViewSDView::OnSearchUserid()
 {
 	SearchUserID searchDlg;
@@ -1244,21 +1265,10 @@ void CMapViewSDView::OnSearchUserid()
 		if (!searchDlg.m_UserIDStr.IsEmpty())
 		{
 			DbObject::Id key = atoi(TString(searchDlg.m_UserIDStr));
-
-
 			GeoDB::Edge::Hash dbHash;
 			dbHash.id = key;
 
 			err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
-			/*if (err == 0)
-			{
-				TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
-				DisplayInfo(line);
-				const Range2D& range = line->getMBR();
-				oh.Unlock();
-				this->mapWin->Set(range);
-				this->Invalidate();
-			}*/
 		}
 		else if (!searchDlg.m_DatabaseIDStr.IsEmpty())
 		{
