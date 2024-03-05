@@ -535,6 +535,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						brush = &this->isleBrush;
 
 					pDC->SelectObject(brush);
+					if (doThining)
+						nPts = TrendLine(this->pts, nPts, this->tDist);
 					DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
 					XY_t pt;
 					CPoint cPt;

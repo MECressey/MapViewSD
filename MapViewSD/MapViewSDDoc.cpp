@@ -62,6 +62,7 @@ CMapViewSDDoc::~CMapViewSDDoc()
 			this->db->Close();
 	}
 	delete this->db;
+	odbcDB.Close();
 }
 
 void CMapViewSDDoc::OnCloseDocument()
