@@ -88,17 +88,19 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>\Work\Inc2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>\Work\inc</AdditionalIncludeDirectories>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>.\TigerDBDLL.DEF</ModuleDefinitionFile>
+      <OutputFile>\Work\bin\TigerDBDLL.dll</OutputFile>
+      <ProgramDatabaseFile>\Work\bin\TigerDBDLL.pdb</ProgramDatabaseFile>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -160,19 +162,22 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>\Work\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ModuleDefinitionFile>.\TigerDBDLL.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>.\TigerDBDLL.DEF</ModuleDefinitionFile>
+      <OutputFile>\Work\bin\TigerDBDLL.dll</OutputFile>
+      <ProgramDatabaseFile>\Work\bin\TigerDBDLL.pdb</ProgramDatabaseFile>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -217,12 +222,11 @@
     <ResourceCompile Include="TigerDBDLL.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\Lib2\CxxToolsLib.lib" />
-    <Library Include="..\..\Lib2\DabIODLL.lib" />
-    <Library Include="..\..\Lib2\DbOMDLL.lib" />
-    <Library Include="..\..\Lib2\GeoDBDLL.lib" />
-    <Library Include="..\..\Lib2\GeoToolsDLL.lib" />
-    <Library Include="..\..\Lib2\SetsDLL.lib" />
+    <Library Include="..\..\lib\CxxToolsLib.lib" />
+    <Library Include="..\..\lib\DbOMDLL.lib" />
+    <Library Include="..\..\lib\GeoDBDLL.lib" />
+    <Library Include="..\..\lib\GeoToolsDLL.lib" />
+    <Library Include="..\..\lib\SetsDLL.lib" />
     <Library Include="..\x64\Debug\TgrTypesLib.lib" />
   </ItemGroup>
   <ItemGroup>

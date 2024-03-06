@@ -39,6 +39,7 @@
 #include <vector>
 #include <algorithm>
 #include "TString.h"
+#include <assert.h>
 
 #define DO_SHORT_PATH
 
