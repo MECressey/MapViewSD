@@ -1,0 +1,1 @@
+This repository contains the source code for the TigerDB spatial database example which inherits from the NodeEdgePoly class libraries.  It also contains the source code for the MapViewSD display/viewing application whose purpose is to demonstrate the features in NodeEdgePoly spatial database system.
