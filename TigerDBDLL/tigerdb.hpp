@@ -28,7 +28,7 @@ using namespace NodeEdgePoly;
 class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 {
 	public:
-		enum Classification
+		enum Classification			// Census Feature Class Codes (CFCC) for the Tiger chains
 		{
 			NotClassified,
 			ROAD_MajorCategoryUnknown,
@@ -179,7 +179,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_Glacier		// H81
 		};
 
-		enum GNISFeatures
+		enum GNISFeatures			// GNIS feature class codes
 		{
 			GNIS_Arch,
 			GNIS_Area,
@@ -226,17 +226,17 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			GNIS_Woods
 		};
 
-		class Name
+		class Name			// Feature Identifiers (Record Type 5)
 		{
 			public :
 				Name( void );
-				char /*TCHAR*/ prefix[3];
-				char /*TCHAR*/ name[41];
-				char /*TCHAR*/ type[5];
-				char /*TCHAR*/ suffix[3];
+				char /*TCHAR*/ prefix[3];		// FEDIRP
+				char /*TCHAR*/ name[41];		// FENAME
+				char /*TCHAR*/ type[5];			// FETYPE
+				char /*TCHAR*/ suffix[3];		// FEDIRS
 		};
 
-		class __declspec(dllexport) Chain : public GeoDB::Edge, public DbHashAccess
+		class __declspec(dllexport) Chain : public GeoDB::Edge, public DbHashAccess  // Tiger Chain class
 		{
 			public :
 				Chain( void );
@@ -245,26 +245,26 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 				void GetName( Name *, int ) const;
 				void SetName( Name lineNames[], int );
 
-				int is_equal(DbObject*);
+				int is_equal(DbObject*);				// DbHashAccess interface
 				long int hashKey(int nBits);
 
 				virtual void Init(void);
 
 			protected :
-		    virtual void Compress( void * );
+		    virtual void Compress( void * );					// DbBaseStore interface
 		    virtual void Decompress( void *, int );
 		    virtual unsigned DiskSize( void );
 
 			private :
-				struct TName
+				struct TName		// Links to the actual name in the SQL database
 				{
 					unsigned short nameId;
 					unsigned char prefixCode;
 					unsigned char suffixCode;
 					unsigned char typeCode;
 				};
-		//
-		//	Used only for getting/setting the records
+				//
+				//	Used only for getting/setting the records (these are stored on disk)
 				unsigned char nNames;
 				TName names[5];
 		};
@@ -302,20 +302,20 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			std::string name;
 		};
 
-		TigerDB( CDatabase * );
-		~TigerDB( void );
+		TigerDB(CDatabase *);		// Connection to a SQL database using ODBC
+		~TigerDB(void);
 		int Close( void );
 
 	private :
-		DbObject *CreateDbObject( DbObject::ClassCode );
+		DbObject *CreateDbObject( DbObject::ClassCode );			// Override method to create objects
 		void DeleteDbObject( DbObject::ClassCode, DbObject * );
 		
-		Chain *lines;
+		//Chain *lines;
 		unsigned nLines;
 		CDatabase *db;
-		DistNames *names;
-		DistNames *nameById;
-		GNISName *nameByFeatureId;
+		DistNames *names;						// CRecordset used to query the DistNames table by name
+		DistNames *nameById;				// CRecordset used to query the DistNames table by Id
+		GNISName *nameByFeatureId;	// CRecordset used to query the GNISNames table
 		friend Chain;
 };
 

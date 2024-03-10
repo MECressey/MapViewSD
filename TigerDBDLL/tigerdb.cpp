@@ -27,8 +27,8 @@ const int MAX_TIGER_LINES		= 700;
 TigerDB::TigerDB(CDatabase *rDB) : GeoDB()
 {
 	this->nLines = 0;
-  this->lines = new Chain[ MAX_TIGER_LINES ];
-  assert( this->lines != 0 );
+  /*this->lines = new Chain[MAX_TIGER_LINES];
+  assert( this->lines != 0 );*/
 	this->db = rDB;
   assert( this->db != 0 );
 
@@ -62,10 +62,10 @@ TigerDB::~TigerDB()
 	{
 		this->Close();
 	}
-
+/*
 	if( this->lines != 0 )
     delete [] this->lines;
-
+*/
 	assert( this->names != 0 );
 	delete this->names;
 
@@ -90,6 +90,7 @@ int TigerDB::Close( void )
 	return( this->GeoDB::Close() );
 }
 
+// Override this method when you have extended GeoDB base classes such as Node, Edge, Point or Poly
 DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 {
 	DbObject* object = 0;
@@ -97,7 +98,6 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
   {
     default :
 		  return( this->GeoDB::CreateDbObject( code ) );
-      break;
 
 		case DB_EDGE:
 			object = new Chain;
@@ -129,7 +129,7 @@ DbObject *TigerDB::CreateDbObject( DbObject::ClassCode code )
 			break;
   }
 
-  return( object );
+  return object;
 }
 
 void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
