@@ -24,11 +24,9 @@ using namespace NodeEdgePoly;
 
 const int MAX_TIGER_LINES		= 700;
 
-TigerDB::TigerDB(CDatabase *rDB) : GeoDB()
+TigerDB::TigerDB(CDatabase *rDB) : GeoDB(1 << 11, 400, /*SEQUENTIAL*/PAGES)
 {
 	this->nLines = 0;
-  /*this->lines = new Chain[MAX_TIGER_LINES];
-  assert( this->lines != 0 );*/
 	this->db = rDB;
   assert( this->db != 0 );
 
