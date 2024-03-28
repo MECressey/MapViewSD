@@ -93,7 +93,8 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 	std::string version;
 	if (this->db->Open(TString(lpszPathName), version, 0/*1*/, 0) != 0)
 		return(FALSE);
-	this->range = this->db->getRange();
+	//this->range = this->db->getDBRange();
+	this->db->getDataRange(&this->range);
 
 	this->isOpen = TRUE;
 	return TRUE;
