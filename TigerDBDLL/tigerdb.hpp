@@ -176,7 +176,8 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_WaterBoundaryInlandVsCoastal,	// H74?
 			HYDRO_ArtificialPath,
 			HYDRO_SpecialWaterFeature, // H80
-			HYDRO_Glacier		// H81
+			HYDRO_Glacier,		// H81
+			ROAD_Runway_Taxiway // Tiger 2022
 		};
 
 		enum GNISFeatures			// GNIS feature class codes
