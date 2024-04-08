@@ -124,7 +124,7 @@ static FieldDef types[] =
 	{ _T("DRIVE"),			_T("Dr") },
 	{ _T("DRIVEWAY"),		_T("Drwy") },		// MEC
 	{ _T("ENTRANCE"),		_T("Entr") },		// MEC
-	{ _T("ESTATES"),		_T("Est") },
+	{ _T("ESTATES"),		_T("Ests") },
 	{ _T("EXPRESSWAY"),	_T("Expy") },
 	{ _T("EXTENSION"),	_T("Ext") },
 	{ _T("FAIRGROUNDS"),	_T("Frgd") },		// MEC
@@ -229,6 +229,7 @@ static FieldDef types[] =
 	{ _T("SHORES"),			_T("Shrs") },
 	{ _T("SIDING"),			_T("Sdg") },		// MEC
 	{ _T("SKYWAY"),			_T("Skwy") },		// Tiger
+	{ _T("SLOUG"),			_T("Sloug") },		// 2023
 	{ _T("SPRING"),			_T("Spg") },
 	{ _T("SPRINGS"),		_T("Spgs") },
 	{ _T("STRIP"),			_T("Strp") },		// MEC
