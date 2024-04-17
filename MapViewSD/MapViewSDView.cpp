@@ -319,6 +319,101 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 	if (!this->layerDlg->doLines)
 		return pen;
 
+	// Tiger 2023 codes
+	switch (code)
+	{
+	default:
+		assert(false);
+		// pen = &this->pens[DASH_2DOTS_PEN];
+		break;
+
+	case TigerDB::ROAD_Stairway:
+	case TigerDB::ROAD_Alley:
+	case TigerDB::ROAD_PrivateRoad:
+	case TigerDB::ROAD_InternalCensusBureau:
+	case TigerDB::ROAD_Ramp:
+	case TigerDB::ROAD_ServiceDrive:
+	case TigerDB::ROAD_ParkingLotRd:
+	case TigerDB::ROAD_Walkway:
+	case TigerDB::TRANS_RunwayTaxiWay:
+		if (this->layerDlg->doOtherRds)
+			pen = &this->pens[OTHER_ROAD];
+		break;
+
+	case TigerDB::ROAD_PrimaryRoad:
+		if (this->layerDlg->doPrimaryRds)
+			pen = &this->pens[INTERSTATE_ROAD];
+		break;
+/*
+	case TigerDB::ROAD_PrimaryUnlimitedAccess:
+		if (this->layerDlg->doPrimaryRds)
+			pen = &this->pens[PRIMARY_ROAD];
+		break;
+*/
+	case TigerDB::ROAD_SecondaryRoad:
+		if (this->layerDlg->doSecondaryRds)
+			pen = &this->pens[SECONDARY_ROAD];
+		break;
+
+	case TigerDB::ROAD_LocalNeighborhoodRoad:
+		if (this->layerDlg->doLocalRds)
+			pen = &this->pens[LOCAL_ROAD];
+		break;
+
+	case TigerDB::ROAD_VehicularTrail4WD:
+	case TigerDB::ROAD_WinterTrail:
+	case TigerDB::ROAD_BikePath:
+	case TigerDB::ROAD_BridlePath:
+		if (this->layerDlg->doTrails)
+			pen = &this->pens[TRAIL];
+		break;
+
+	case TigerDB::RAIL_Rail:
+	case TigerDB::MISC_FerryCrossing:
+		pen = 0;
+		break;
+
+	case TigerDB::MISC_Pipeline:
+	case TigerDB::MISC_Powerline:
+		if (this->layerDlg->doGroundTransportation)
+			pen = &this->pens[DASH_DOT_PEN];
+		break;
+/*
+	case TigerDB::GOV_Park:
+	case TigerDB::PARK_NationalParkService:
+	case TigerDB::PARK_NationalForest:
+	case TigerDB::PARK_TribalPark:
+	case TigerDB::PARK_StateParkForest:
+	case TigerDB::PARK_RegionalParkForest:
+	case TigerDB::PARK_RegionalParkForest:
+		pen = &this->pens[PARK];
+		break;
+*/
+	case TigerDB::EDGE_NonvisibleLinearBoundary:
+	case TigerDB::EDGE_OtherNonVisible:
+		if (this->layerDlg->doBoundary)
+			pen = &this->pens[BOUNDARY];
+		break;
+
+	case TigerDB::MISC_PropertyLine:
+		if (this->layerDlg->doOtherFeatures)
+			pen = &this->pens[PARK];
+		break;
+
+	case TigerDB::EDGE_PerennialShoreline:
+	case TigerDB::EDGE_IntermittentShoreline:
+	case TigerDB::MISC_Coastline:
+		if (this->layerDlg->doShoreline)
+			pen = &this->pens[SHORELINE];
+		break;
+
+	case TigerDB::HYDRO_StreamRiver:
+	case TigerDB::HYDRO_CanalDitchAqeduct:
+		if (this->layerDlg->doStreams)
+			pen = &this->pens[STREAM];
+		break;
+	}
+#if defined(TIGER_2006)
 	switch (code)
 	{
 	default:
@@ -330,7 +425,7 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 	case TigerDB::ROAD_Cul_de_sac:
 	case TigerDB::ROAD_TrafficCircle:
 	case TigerDB::ROAD_AccessRamp:
-	case TigerDB::ROAD_ServiceDrive:
+	case TigerDB::ROAD_ServiceDr:
 	case TigerDB::ROAD_FerryCrossing:
 	case TigerDB::ROAD_OtherThoroughfare:
 		if (this->layerDlg->doOtherRds)
@@ -423,6 +518,7 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 			pen = &this->pens[STREAM];
 		break;
 	}
+#endif
 
 	return(pen);
 }
@@ -1386,81 +1482,80 @@ static const char* LineStr(int code)
 		str = "Feature unknown";
 		break;
 
-	case TigerDB::NotClassified:
+	case TigerDB::FeatureNotClassified:
 		str = "Feature not classified";
 		break;
-
-	case TigerDB::ROAD_MajorCategoryUnknown:
-		str = "Road: categories unknown";
-		break;
-
-	case TigerDB::ROAD_PrimaryLimitedAccess:
+	case TigerDB::ROAD_PrimaryRoad:
 		str = "Primary Road: Interstate highway";
 		break;
-
+/*
 	case TigerDB::ROAD_PrimaryUnlimitedAccess:
 		str = "Primary Road: US/State highway";
 		break;
-
-	case TigerDB::ROAD_SecondaryAndConnecting:
+*/
+	case TigerDB::ROAD_SecondaryRoad:
 		str = "Secondary Road: State/county highway";
 		break;
-
-	case TigerDB::ROAD_LocalNeighborhoodAndRural:
+	case TigerDB::ROAD_LocalNeighborhoodRoad:
 		str = "Local Road: city street/rural road";
 		break;
-
-	case TigerDB::ROAD_VehicularTrail:
-		str = "Trail";
+	case TigerDB::ROAD_VehicularTrail4WD:
+		str = "Vehicular Trail";
 		break;
-
-	case TigerDB::ROAD_AccessRamp:
+	case TigerDB::ROAD_Ramp:
 		str = "Access ramp";
 		break;
-
-	case TigerDB::ROAD_SpecialCharacteristics:
-	case TigerDB::ROAD_Cul_de_sac:
-	case TigerDB::ROAD_TrafficCircle:
-	case TigerDB::ROAD_OtherThoroughfare:
 	case TigerDB::ROAD_ServiceDrive:
-		str = "Road: other";
+		str = "Road: Service drive";
 		break;
-
-	case TigerDB::ROAD_FerryCrossing:
+	case TigerDB::ROAD_Walkway:
+		str = "Road: Walkway";
+		break;
+	case TigerDB::ROAD_Stairway:
+		str = "Road: Stairway";
+		break;
+	case TigerDB::ROAD_Alley:
+		str = "Road: Alley";
+		break;
+	case TigerDB::ROAD_PrivateRoad:
+		str = "Road: Private road";
+		break;
+	case TigerDB::ROAD_InternalCensusBureau:
+		str = "Road: internal Census Bureau";
+		break;
+	case TigerDB::ROAD_ParkingLotRd:
+		str = "Road: parking lot road";
+		break;
+	case TigerDB::ROAD_WinterTrail:
+		str = "Road: winter trail";
+		break;
+	case TigerDB::ROAD_BikePath:
+		str = "Road: bike path";
+		break;
+	case TigerDB::ROAD_BridlePath:
+		str = "Road: bridle path";
+		break;
+	case TigerDB::MISC_FerryCrossing:
 		str = "Ferry crossing";
 		break;
-
-	case TigerDB::RR_MajorCategoryUnknown:
-	case TigerDB::RR_MainLine:
-	case TigerDB::RR_Spur:
+	case TigerDB::RAIL_Rail:
 		str = "Railroad";
 		break;
 
-	case TigerDB::RR_Yard:
-	case TigerDB::RR_FerryCrossing:
-	case TigerDB::RR_OtherThoroughfare:
-		str = "Railroad: other";
-		break;
-
-	case TigerDB::MGT_CategoryUnknown:
-		str = "Ground transportation Unknown";
-		break;
-	case TigerDB::MGT_Pipeline:
+	case TigerDB::MISC_Pipeline:
 		str = "Pipeline";
 		break;
-	case TigerDB::MGT_PowerLine:
+	case TigerDB::MISC_Powerline:
 		str = "Power Line";
 		break;
-	case TigerDB::MGT_Other:
-		str = "Other Ground transportation";
-		break;
-	case TigerDB::MGT_AerialTramway:
+
+	case TigerDB::MISC_AerialTramway:
 		str = "Aerial Tramway";
 		break;
-	case TigerDB::MGT_PierDock:
+	case TigerDB::TRANS_PierDock:
 		str = "Pier or Dock";
 		break;
-
+/*
 	case TigerDB::LM_CategoryUnknown:
 	case TigerDB::LM_MilitaryInstallation:
 	case TigerDB::LM_MultihouseholdOrTransientQuarters:
@@ -1527,89 +1622,47 @@ static const char* LineStr(int code)
 	case TigerDB::LM_InternalUSCensusBureau:
 		str = "Land Mark features";
 		break;
-
-	case TigerDB::PF_CategoryUnknown:
-	case TigerDB::PF_Fenceline:
-	case TigerDB::PF_TopographicFeature:
-	case TigerDB::PF_RidgeLine:
-	case TigerDB::PF_MountainPeak:
-	case TigerDB::PF_Levee:
-	case TigerDB::PF_MarshSwamp:
-	case TigerDB::PF_QuarryMine:
-	case TigerDB::PF_Dam:
-		str = "Physical features";
+*/
+	case TigerDB::MISC_FenceLine:
+		str = "Fence line";
+		break;
+	case TigerDB::MISC_RidgeLine:
+		str = "Ridge line";
 		break;
 
-	case TigerDB::NVF_BoundaryClassificationUnknown:
-	case TigerDB::NVF_LegalOrAdministrativeBoundary:
-		str = "Jurisdictional boundary";
+	case TigerDB::EDGE_NonvisibleLinearBoundary:
+		str = "Non-visible Linear boundary";
 		break;
 
-	case TigerDB::NVF_ClosureExtension:
-	case TigerDB::NVF_SeparationLine:
-	case TigerDB::NVF_Centerline:
-		str = "Closure extension";
-		break;
-
-	case TigerDB::NVF_PropertyLine:
+	case TigerDB::MISC_PropertyLine:
 		str = "Property line";
 		break;
 
-	case TigerDB::NVF_ZIPCodeBoundary:
-		str = "ZIP Code Boundary";
+	case TigerDB::TAB_ZIPCodeArea:
+		str = "ZIP Code Area";
 		break;
 
-	case TigerDB::NVF_StatisticalBoundary:
-		str = "Statistical Boundary";
+	case TigerDB::HYDRO_Connector:
+		str = "Hydro: connector";
 		break;
 
-	case TigerDB::NVF_OtherTabulationBoundary:
-		str = "Other Tabulation Boundary";
-		break;
-
-	case TigerDB::HYDRO_WaterAreaDefinitionBoundary:
-		str = "Water Area Definition Boundary";
-		break;
-
-	case TigerDB::HYDRO_USGSClosureLine:
-		str = "USGS Closure line";
-		break;
-
-	case TigerDB::HYDRO_CensusWaterCenterLine:
-		str = "Census Water Centerline";
-		break;
-
-	case TigerDB::HYDRO_ArtificialPath:
-		str = "Artificial Path";
-		break;
-
-	case TigerDB::HYDRO_CensusWaterBoundary3Mile:
-		str = "3 Mile Water Boundary";
-		break;
-	case TigerDB::HYDRO_CensusWaterBoundary12Mile:
-		str = "12 Mile Water Boundary";
-		break;
-
-	case TigerDB::HYDRO_ClassificationUnknown:
-	case TigerDB::HYDRO_PerennialShoreline:
-	case TigerDB::HYDRO_IntermittentShoreline:
+	case TigerDB::EDGE_PerennialShoreline:
+	case TigerDB::EDGE_IntermittentShoreline:
+	case TigerDB::MISC_Coastline:
 		str = "Shoreline";
 		break;
 
-	case TigerDB::HYDRO_PerennialStream:
-	case TigerDB::HYDRO_IntermittentStream:
-		str = "Streams";
+	case TigerDB::HYDRO_StreamRiver:
+	//case TigerDB::HYDRO_IntermittentStream:
+		str = "Stream/River";
 		break;
 
-	case TigerDB::HYDRO_PerennialCanalDitchOrAqueduct:
-	case TigerDB::HYDRO_IntermittentCanalDitchOrAqueduct:
-	case TigerDB::HYDRO_PerennialLakeOrPond:
-	case TigerDB::HYDRO_IntermittentLakeOrPond:
-	case TigerDB::HYDRO_PerennialReservoir:
-	case TigerDB::HYDRO_IntermittentReservoir:
-	case TigerDB::HYDRO_BayEstuaryGulfOrSound:
-	case TigerDB::HYDRO_SeaOrOcean:
-	case TigerDB::HYDRO_GravelPitOrQuarry:
+	case TigerDB::HYDRO_LakePond:
+	case TigerDB::HYDRO_Reservoir:
+	case TigerDB::HYDRO_TreatmentPond:
+	case TigerDB::HYDRO_BayEstuaryGulfSound:
+	case TigerDB::HYDRO_OceanSea:
+	case TigerDB::HYDRO_BraidedStream:
 	case TigerDB::HYDRO_Glacier:
 		str = "Hydrography";
 		break;

@@ -28,6 +28,174 @@ using namespace NodeEdgePoly;
 class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 {
 	public:
+		enum MAFTCCodes {		// 2022 MAF/TIGER Feature Class codes
+			FeatureNotClassified,
+			ROAD_PrimaryRoad,								// S1100			Linear features
+			ROAD_SecondaryRoad,							// S1200
+			ROAD_LocalNeighborhoodRoad,			// S1400
+			ROAD_VehicularTrail4WD,					// S1500
+			ROAD_Ramp,											// S1630
+			ROAD_ServiceDrive,							// S1640
+			ROAD_Walkway,										// S1710
+			ROAD_Stairway,									// S1720
+			ROAD_Alley,											// S1730
+			ROAD_PrivateRoad,								// S1740
+			ROAD_InternalCensusBureau,			// S1750
+			ROAD_ParkingLotRd,							// S1780
+			ROAD_WinterTrail,								// S1810
+			ROAD_BikePath,									// S1820
+			ROAD_BridlePath,								// S1830
+			HYDRO_Connector,								// H1100
+			HYDRO_StreamRiver,							// H3010
+			HYDRO_BraidedStream,						// H3013
+			HYDRO_CanalDitchAqeduct,				// H3020
+			TRANS_PierDock,									// K2432
+      TRANS_RunwayTaxiWay,						// K2459
+			MISC_Pipeline,									// L4010
+			MISC_Powerline,									// L4020
+			MISC_AerialTramway,							// L4031
+			MISC_FenceLine,									// L4110
+			MISC_RidgeLine,									// L4121
+			MISC_Cliff,											// L4125
+			MISC_PointToPoint,							// L4130
+			MISC_PropertyLine,							// L4140
+			MISC_Coastline,									// L4150
+			MISC_FerryCrossing,							// L4165
+			EDGE_NonvisibleLinearBoundary,	// P0001
+			EDGE_PerennialShoreline,				// P0002
+			EDGE_IntermittentShoreline,			// P0003
+			EDGE_OtherNonVisible,						// P0004
+			RAIL_Rail,											// R1011
+			TOPO_Levee,											// C3024
+			TOPO_JettyBreakwater,						// C3025
+			TOPO_Dam,												// C3027
+			TOPO_Island,										// C3023   Areal Features
+			TOPO_Quarry,										// C3026
+			TOPO_Tank,											// C3075
+			TOPO_WindmillFarm,							// C3076
+			TOPO_SolarFarm,									// C3077
+			TAB_Nation,											// G1000
+			TAB_CensusRegion,								// G1100
+			TAB_CensusDivision,							// G1200
+			TAB_AIA,												// G2100
+			TAB_HH,													// G2120
+			TAB_ANVSA,											// G2130
+			TAB_OTSA,												// G2140
+			TAB_SDTSA,											// G2150
+			TAB_TDSA,												// G2160
+			TAB_AIJUA,											// G2170
+			TAB_AlaskaRegionalCorp,					// G2200
+			TAB_TribalSubdivision,					// G2300
+			TAB_TribalCensusTract,					// G2400
+			TAB_TribalBlockGroup,						// G2410
+			TAB_CombinedStatisicalArea,			// G3100
+			TAB_MetroStatisticalArea,				// G3110
+			TAB_MetropolitanDivision,				// G3120
+			TAB_NewEnglandCityTown,					// G3200
+			TAB_NewEnglandMetroStatArea,		// G3210
+			TAB_NewEngland_CityTownDiv,			// G3220
+			TAB_UrbanArea,									// G3500
+			TAB_StateFeature,								// G4000
+			TAB_CountyFeature,							// G4020
+			TAB_CountySubdivision,					// G4040
+			TAB_Estate,											// G4050
+			TAB_SubMinorCivilDivision,			// G4060
+			TAB_IncorporatedPlace,					// G4110
+			TAB_ConsolidatedCity,						// G4120
+			TAB_CensusDesignatedPlace,			// G4210
+			TAB_EconomicCensusPlace,				// G4300
+			TAB_CensusTract,								// G5020
+			TAB_CensusBlockGroup,						// G5030
+			TAB_Block,											// G5040
+			TAB_CongressionalDistrict,			// G5200
+			TAB_StateLegislativeDistrictUC,	// G5210
+			TAB_StateLegislativeDistrictLC,	// G5220
+			TAB_VotingDistrict,							// G5240
+			TAB_ElementarySchoolDistrict,		// G5400
+			TAB_SecondarySchoolDistrict,		// G5410
+			TAB_UnifiedSchoolDistrict,			// G5420
+			TAB_PUMA,												// G6120
+			TAB_UrbanGrowthArea,						// G6330
+			TAB_ZIPCodeArea,								// G6350
+			TAB_PlanningRegion,							// G6400
+			HYDRO_LakePond,									// H2030
+			HYDRO_Reservoir,								// H2040
+			HYDRO_TreatmentPond,						// H2041
+			HYDRO_BayEstuaryGulfSound,			// H2051
+			HYDRO_OceanSea,									// H2053
+			HYDRO_Glacier,									// H2081
+			LIVING_ApartmentBuilding,				// K1121
+			LIVING_TrailerCourt,						// K1223
+			LIVING_CrewOfVessel,						// K1225
+			LIVING_HousingFacility,					// K1226
+			LIVING_HotelMotelResort,				// K1227
+			LIVING_Campground,							// K1228
+			LIVING_ShelterMission,					// K1229
+			LIVING_HospitalHospice,					// K1231
+			LIVING_NursingHome,							// K1233
+			LIVING_JuvenileInstitution, 		// K1235
+			LIVING_DententionCenter,				// K1236
+			LIVING_FederalPenitentiary,			// K1237
+			LIVING_OtherCorrectional,				// K1238
+			LIVING_ConventMonasteryRectory,	// K1239
+			GOV_Governmental,								// K2100
+			GOV_MilitaryInstallation,				// K2110
+			GOV_CommunityCenter,						// K2146
+      GOV_GovermentCenter,						// K2165
+      GOV_ConventionCenter,						// K2167
+			GOV_Park,												// K2180
+			PARK_NationalParkService,				// K2181
+			PARK_NationalForest,						// K2182
+			PARK_TribalPark,								// K2183
+			PARK_StateParkForest,						// K2184
+			PARK_RegionalParkForest,				// K2185
+			PARK_CountyParkForest,					// K2186
+			PARK_CountySubdivionPark,				// K2187
+			PARK_IncorporatedPlacePark,			// K2188
+			PARK_PrivateParkForest,					// K2189
+			PARK_OtherParkForest,						// K2190
+			WORK_CommericalWorkPlace,				// K2300
+			WORK_ShoppingCenter,						// K2361
+			WORK_IndustrialBuildingPark,		// K2362
+			WORK_OfficeBuildingPark,				// K2363
+			WORK_FarmVineyardOrchard,				// K2364
+			WORK_OtherEmploymentCenter,			// K2366
+			WORK_TransportationTerminal,		// K2400
+			TT_Marina,											// K2424  Transportation Terminal
+			TT_PierDock,										// K2432
+			TT_TrainStation,								// K2452
+			TT_BusTerminal,									// K2453
+			TT_MarineTerminal,							// K2454
+			TT_SeaplaneAnchorage,						// K2455
+			TT_Airport,											// K2457
+			OTHERWP_UniversityCollege,			// K2540
+			OTHERWP_SchoolAcademy,					// K2543
+			OTHERWP_MuseumVistorCenter,			// K2545
+			OTHERWP_GolfCourse,							// K2561
+			OTHERWP_AmusementCenter,				// K2564
+			OTHERWP_Cemetery,								// K2582
+			OTHERWP_Zoo,										// K2586
+			OTHERWP_PlaceOfWorkship,				// K3544
+			TOPO_MountainPeakSummit,				// C3022	Point features
+			TOPO_CulDeSac,									// C3061
+			TOPO_TrafficCircle,							// C3062
+			TOPO_Gate,											// C3066
+			TOPO_TollBooth,									// C3067
+			TOPO_Tower,											// C3071
+			TOPO_LighthouseBeacon,					// C3074
+			TOPO_Monument,									// C3078
+			TOPO_BoundaryMonument,					// C3079
+			TOPO_SurveyControlPoint,				// C3080
+			TOPO_LocalityPoint,							// C3081
+			TOPO_AlaskaNativeVillage,				// C3085
+			GOV_PostOffice,									// K2191
+			GOV_FireDepartment,							// K2193
+			GOV_Library,										// K2195
+			GOV_CityTownHall,								// K2196
+			TRANS_AirportAirField,					// K2451
+			TT_HelicopterLandingPad					// K2460
+		};
+
 		enum Classification			// Census Feature Class Codes (CFCC) for the Tiger chains
 		{
 			NotClassified,
@@ -41,7 +209,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			ROAD_Cul_de_sac,
 			ROAD_TrafficCircle,
 			ROAD_AccessRamp,
-			ROAD_ServiceDrive,
+			ROAD_ServiceDr,
 			ROAD_FerryCrossing,
 			ROAD_BarrierToTravel,   // New 2006 codes (2/19/2024)
 			ROAD_InternalUSCensusBureau,
@@ -156,7 +324,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_IntermittentShoreline,
 			HYDRO_PerennialStream,
 			HYDRO_IntermittentStream,
-			HYDRO_BraidedStream,  // H13
+			HYDRO_BraidedStr,  // H13
 			HYDRO_CanalDitchAqeductUnknownMinor, // H20
 			HYDRO_PerennialCanalDitchOrAqueduct,  // H21
 			HYDRO_IntermittentCanalDitchOrAqueduct,
@@ -164,7 +332,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_IntermittentLakeOrPond,
 			HYDRO_PerennialReservoir,
 			HYDRO_IntermittentReservoir,
-			HYDRO_TreatmentPond,
+			HYDRO_TreatmentPd,
 			HYDRO_BayEstuaryGulfOrSound,
 			HYDRO_SeaOrOcean,
 			HYDRO_GravelPitOrQuarry,
@@ -176,7 +344,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_WaterBoundaryInlandVsCoastal,	// H74?
 			HYDRO_ArtificialPath,
 			HYDRO_SpecialWaterFeature, // H80
-			HYDRO_Glacier,		// H81
+			HYDRO_GlacierOld,		// H81
 			ROAD_Runway_Taxiway // Tiger 2022
 		};
 
