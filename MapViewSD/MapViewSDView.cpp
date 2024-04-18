@@ -239,7 +239,7 @@ void CMapViewSDView::OnInitialUpdate()
 	this->lineDlg = new LineDlg(this);
 
 	if (this->pts == 0)
-		this->pts = new XY_t[15000];
+		this->pts = new XY_t[20000];
 	ASSERT(this->pts != 0);
 
 	CRect region;
@@ -300,8 +300,8 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	default:
 		break;
 
-	case TigerDB::HYDRO_PerennialLakeOrPond :
-	case TigerDB::HYDRO_SeaOrOcean:
+	case TigerDB::HYDRO_LakePond:
+	case TigerDB::HYDRO_OceanSea:
 		return &this->hydroBrush;
 
 	case TigerDB::LM_StateOrLocalPark_Forest:
@@ -408,7 +408,8 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 		break;
 
 	case TigerDB::HYDRO_StreamRiver:
-	case TigerDB::HYDRO_CanalDitchAqeduct:
+	case TigerDB::HYDRO_CanalDitchAqueduct:
+	case TigerDB::HYDRO_Connector:
 		if (this->layerDlg->doStreams)
 			pen = &this->pens[STREAM];
 		break;
@@ -1646,10 +1647,19 @@ static const char* LineStr(int code)
 		str = "Hydro: connector";
 		break;
 
-	case TigerDB::EDGE_PerennialShoreline:
-	case TigerDB::EDGE_IntermittentShoreline:
+	case TigerDB::HYDRO_CanalDitchAqueduct:
+		str = "Canal, ditch or aqueduct";
+		break;
+
 	case TigerDB::MISC_Coastline:
+		str = "Coastline";
+		break;
+	case TigerDB::EDGE_PerennialShoreline:
 		str = "Shoreline";
+		break;
+
+	case TigerDB::EDGE_IntermittentShoreline:
+		str = "Intermittent Shoreline";
 		break;
 
 	case TigerDB::HYDRO_StreamRiver:

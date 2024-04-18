@@ -48,7 +48,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			HYDRO_Connector,								// H1100
 			HYDRO_StreamRiver,							// H3010
 			HYDRO_BraidedStream,						// H3013
-			HYDRO_CanalDitchAqeduct,				// H3020
+			HYDRO_CanalDitchAqueduct,				// H3020
 			TRANS_PierDock,									// K2432
       TRANS_RunwayTaxiWay,						// K2459
 			MISC_Pipeline,									// L4010

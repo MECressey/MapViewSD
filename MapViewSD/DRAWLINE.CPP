@@ -19,7 +19,7 @@
 
 #include "gdiplusgraphics.h"
 
-static CPoint cpts[ 10000 ];
+static CPoint cpts[ 20000 ];
 
 void DrawMarker(CPoint &pt, CDC* dc)
 {
