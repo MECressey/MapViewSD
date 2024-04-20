@@ -313,11 +313,12 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	return 0;
 }
 
-CPen* CMapViewSDView::GetPen(int code)		// Used for edges
+CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 {
 	CPen* pen = 0;
 	if (!this->layerDlg->doLines)
 		return pen;
+	int code = line->userCode;
 
 	// Tiger 2023 codes
 	switch (code)
@@ -351,6 +352,24 @@ CPen* CMapViewSDView::GetPen(int code)		// Used for edges
 		break;
 */
 	case TigerDB::ROAD_SecondaryRoad:
+		if (this->layerDlg->doPrimaryRds)  // Need to check for "US" roads
+		{
+			unsigned nNames = line->GetNumNames();
+			TigerDB::Name fn;
+			for (int i = 0; i < nNames; i++)
+			{
+				line->GetName(&fn, i);
+				const char* pos = ::strstr(fn.name, "US Hwy ");
+				if (pos == fn.name)
+				{
+					pen = &this->pens[PRIMARY_ROAD];
+					break;
+				}
+			}
+			if (pen != 0)
+				break;
+		}
+
 		if (this->layerDlg->doSecondaryRds)
 			pen = &this->pens[SECONDARY_ROAD];
 		break;
@@ -541,8 +560,8 @@ bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
 {
 	if (so->IsA() != GeoDB::LINE)
 		return false;
-	GeoDB::Edge* edge = (GeoDB::Edge*)so;
-	return this->GetPen(edge->userCode) != 0;
+	TigerDB::Chain* line = (TigerDB::Chain *)so;
+	return this->GetPen(line/*edge->userCode*/) != 0;
 }
 
 void CMapViewSDView::OnDraw(CDC* pDC)
@@ -706,7 +725,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
 					ASSERT(line != 0);
 					CPen* pen;
-					if ((pen = this->GetPen(line->userCode)) != 0)
+					if ((pen = this->GetPen(line/*line->userCode*/)) != 0)
 					{
 						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
@@ -1023,10 +1042,10 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 									f3;
 								std::vector<long> edgeIds;
 
-								f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
-								f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-								f2.push_back(TigerDB::ROAD_SecondaryAndConnecting);
-								f3.push_back(TigerDB::ROAD_LocalNeighborhoodAndRural);
+								//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
+								//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+								f2.push_back(TigerDB::ROAD_SecondaryRoad);
+								f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
 								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 								{
 									for (int i = 0; i < edgeIds.size(); i++)

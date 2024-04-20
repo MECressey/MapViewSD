@@ -90,7 +90,7 @@ protected:
 	void DisplayInfo(TigerDB::Polygon* poly);
 	void DisplayInfo(TigerDB::GNISFeature* );
 
-	CPen* GetPen(int code);
+	CPen* GetPen(TigerDB::Chain *line/*int code*/);
 	CBrush* GetBrush(int code);
 	bool drawGNISFeature(int code);
 	friend LayerDlg;
