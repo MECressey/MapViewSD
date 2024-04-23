@@ -56,7 +56,8 @@ protected:
 	CPen pens[13];
 	CBrush hydroBrush,
 				 parkBrush,
-				 isleBrush;
+				 isleBrush,
+				 placeBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;

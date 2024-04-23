@@ -140,6 +140,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
 	this->parkBrush.CreateSolidBrush(RGB(85, 255, 0)/*RGB(0, 255, 0)*RGB(27, 149, 224)*/);	// ESRI Medium Apple
 	this->isleBrush.CreateSolidBrush(RGB(205, 170, 102)/*RGB(168, 112, 0)*/);		// ESRI Light Sienna
+	this->placeBrush.CreateSolidBrush(RGB(255, 235, 175));		// ESRI Topaz Sand
 	
 	pts = 0;
 	this->pan_overlap = 50;
@@ -308,6 +309,9 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::LM_NationalParkService:
 	case TigerDB::LM_NationalForestOrOther:
 		return &this->parkBrush;
+
+	case TigerDB::TAB_IncorporatedPlace:
+		return &this->placeBrush;
 	}
 
 	return 0;
@@ -546,6 +550,7 @@ CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 struct PolySort {
 	double area;
 	DbObject::Id id;
+	unsigned char code;
 };
 
 struct greater_than_key
@@ -627,6 +632,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				PolySort ps;
 				ps.area = poly->getArea();
 				ps.id = poly->dbAddress();
+				ps.code = poly->userCode;
 				polys.push_back(ps);
 
 				po.Unlock();
@@ -638,6 +644,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			{
 				PolySort ps = polys[i];
 
+				if (ps.code == TigerDB::HYDRO_LakePond || ps.code == TigerDB::HYDRO_OceanSea)
+					continue;
 				int err = pDoc->db->Read(ps.id, po);
 				assert(err == 0);
 				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)po.Lock();
@@ -671,6 +679,47 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				}
 				po.Unlock();
 			}
+			// Draw last
+			for (int i = 0; i < polys.size(); i++)
+			{
+				PolySort ps = polys[i];
+
+				if (ps.code != TigerDB::HYDRO_LakePond && ps.code != TigerDB::HYDRO_OceanSea)
+					continue;
+				int err = pDoc->db->Read(ps.id, po);
+				assert(err == 0);
+				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)po.Lock();
+				TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
+				CBrush* brush;
+				if ((brush = this->GetBrush(poly->userCode)) != 0)
+				{
+					XY_t cen = poly->getCentroid();
+					int nPts = GeoDB::Poly::getPts(po, this->pts);
+					std::string name = poly->GetName();
+					if (poly->getArea() < 0.0)
+						brush = &this->isleBrush;
+
+					pDC->SelectObject(brush);
+					if (doThining)
+						nPts = TrendLine(this->pts, nPts, this->tDist);
+					DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+					XY_t pt;
+					CPoint cPt;
+					this->mapWin->Forward(&pt, cen);
+					cPt.x = (int)pt.x;
+					cPt.y = (int)pt.y;
+
+					if (!name.empty() && (name != "Hydro" && name != "Island"))
+					{
+						CString str(name.c_str());
+						CFont* def_font = pDC->SelectObject(&this->font);
+						pDC->TextOut(cPt.x, cPt.y, str);
+						pDC->SelectObject(def_font);
+					}
+				}
+				po.Unlock();
+			}
+
 		}
 
 		GeoDB::searchClasses_t objClasses = this->layerDlg->objClasses;
