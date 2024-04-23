@@ -37,9 +37,11 @@ public:
 	BOOL	doShoreline;
 	BOOL	doStreams;
 	BOOL	doTrails;
-	BOOL  doAreas;
+	BOOL doAreas;
 	BOOL	doLakesOrPonds;
-	BOOL	doGNISPoints;
+	BOOL  doPark;
+	BOOL  doPlaces;
+	BOOL doGNISPoints;
 	BOOL  doLandForm;
 	BOOL  doCoastal;
 	BOOL  doCultural;
@@ -48,7 +50,6 @@ public:
 	BOOL  doTopographic;
 	BOOL  doHydrology;
 	BOOL	doGroundTransportation;
-	BOOL  doPark;
 	//}}AFX_DATA
 
 // Implementation

@@ -303,15 +303,20 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 
 	case TigerDB::HYDRO_LakePond:
 	case TigerDB::HYDRO_OceanSea:
-		return &this->hydroBrush;
+		if (this->layerDlg->doLakesOrPonds)
+			return &this->hydroBrush;
+		break;
 
 	case TigerDB::LM_StateOrLocalPark_Forest:
 	case TigerDB::LM_NationalParkService:
 	case TigerDB::LM_NationalForestOrOther:
-		return &this->parkBrush;
+		if (this->layerDlg->doPark)
+			return &this->parkBrush;
+		break;
 
 	case TigerDB::TAB_IncorporatedPlace:
-		return &this->placeBrush;
+		if (this->layerDlg->doPlaces)
+			return &this->placeBrush;
 	}
 
 	return 0;
@@ -640,6 +645,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 			// Polygons need to be displayed in order of largest area first
 			std::sort(polys.begin(), polys.end(), greater_than_key());
+
+			// Draw the non-water polygons first
 			for (int i = 0; i < polys.size(); i++)
 			{
 				PolySort ps = polys[i];
@@ -679,7 +686,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				}
 				po.Unlock();
 			}
-			// Draw last
+			// Draw the hydro last to cover up any polygon extending into water and to lay water down over other polygons
 			for (int i = 0; i < polys.size(); i++)
 			{
 				PolySort ps = polys[i];
