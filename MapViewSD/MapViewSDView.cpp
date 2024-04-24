@@ -1519,7 +1519,6 @@ bool CMapViewSDView::drawGNISFeature(int code)
 		break;
 
 	case TigerDB::GNIS_Glacier:
-	case TigerDB::GNIS_Island:
 	case TigerDB::GNIS_Lake:
 	case TigerDB::GNIS_Rapids:
 	case TigerDB::GNIS_Reservoir:
@@ -1538,6 +1537,7 @@ bool CMapViewSDView::drawGNISFeature(int code)
 
 	case TigerDB::GNIS_Pillar:
 	case TigerDB::GNIS_Lava:
+	case TigerDB::GNIS_Island:
 		if (this->layerDlg->doOtherNames)
 			drawFeature = true;
 		break;

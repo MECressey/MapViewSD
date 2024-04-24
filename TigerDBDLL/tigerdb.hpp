@@ -394,7 +394,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			GNIS_Valley,
 			GNIS_Woods
 		};
-
+		
 		class Name			// Feature Identifiers (Record Type 5)
 		{
 			public :
@@ -474,6 +474,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 		TigerDB(CDatabase *);		// Connection to a SQL database using ODBC
 		~TigerDB(void);
 		int Close( void );
+		static MAFTCCodes MapMTFCC(const char* mtfcc);
 
 	private :
 		DbObject *CreateDbObject( DbObject::ClassCode );			// Override method to create objects
