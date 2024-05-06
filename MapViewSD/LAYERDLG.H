@@ -41,6 +41,7 @@ public:
 	BOOL	doLakesOrPonds;
 	BOOL  doPark;
 	BOOL  doPlaces;
+	BOOL	doTracts;
 	BOOL doGNISPoints;
 	BOOL  doLandForm;
 	BOOL  doCoastal;

@@ -141,6 +141,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->parkBrush.CreateSolidBrush(RGB(85, 255, 0)/*RGB(0, 255, 0)*RGB(27, 149, 224)*/);	// ESRI Medium Apple
 	this->isleBrush.CreateSolidBrush(RGB(205, 170, 102)/*RGB(168, 112, 0)*/);		// ESRI Light Sienna
 	this->placeBrush.CreateSolidBrush(RGB(255, 235, 175));		// ESRI Topaz Sand
+	this->tractBrush.CreateSolidBrush(RGB(199, 215, 158));		// ESRI Apple Dust
 	
 	pts = 0;
 	this->pan_overlap = 50;
@@ -317,6 +318,10 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::TAB_IncorporatedPlace:
 		if (this->layerDlg->doPlaces)
 			return &this->placeBrush;
+
+	case TigerDB::TAB_CensusTract:
+		if (this->layerDlg->doTracts)
+			return &this->tractBrush;
 	}
 
 	return 0;

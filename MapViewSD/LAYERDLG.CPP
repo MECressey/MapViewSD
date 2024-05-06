@@ -60,6 +60,7 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doGroundTransportation = FALSE;
 	doPark = FALSE;
 	doPlaces = TRUE;
+	doTracts = FALSE;
 	//}}AFX_DATA_INIT
 
 	SetUpSpatialFilter();
@@ -73,7 +74,7 @@ void LayerDlg::SetUpSpatialFilter(void)
 		this->objClasses.set(DB_EDGE);
 	if (doGNISPoints)
 		this->objClasses.set(DB_POINT);
-	if (doAreas && (doLakesOrPonds || doPark || doPlaces))
+	if (doAreas && (doLakesOrPonds || doPark || doPlaces || doTracts))
 		this->objClasses.set(DB_POLY);
 }
 
@@ -104,6 +105,7 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_GRD_TRANSPORTATION, doGroundTransportation);
 	DDX_Check(pDX, IDC_PARK_POLY, doPark);
 	DDX_Check(pDX, IDC_PLACE, doPlaces);
+	DDX_Check(pDX, IDC_TRACTS, doTracts);
 	//}}AFX_DATA_MAP
 }
 

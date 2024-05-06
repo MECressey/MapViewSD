@@ -57,7 +57,8 @@ protected:
 	CBrush hydroBrush,
 				 parkBrush,
 				 isleBrush,
-				 placeBrush;
+				 placeBrush,
+				 tractBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
