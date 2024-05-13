@@ -351,6 +351,10 @@ CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 	case TigerDB::ROAD_ParkingLotRd:
 	case TigerDB::ROAD_Walkway:
 	case TigerDB::TRANS_RunwayTaxiWay:
+	case TigerDB::TOPO_JettyBreakwater:
+	case TigerDB::MISC_PointToPoint:
+	case TigerDB::TRANS_PierDock:
+	case TigerDB::MISC_AerialTramway:
 		if (this->layerDlg->doOtherRds)
 			pen = &this->pens[OTHER_ROAD];
 		break;
@@ -672,6 +676,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						brush = &this->isleBrush;
 
 					pDC->SelectObject(brush);
+					//pDC->SelectObject(&this->pens[TRAIL]); This will draw the polygon border
 					if (doThining)
 						nPts = TrendLine(this->pts, nPts, this->tDist);
 					DrawPolygon(*this->mapWin, pDC, this->pts, nPts);

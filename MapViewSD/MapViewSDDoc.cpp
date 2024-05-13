@@ -45,8 +45,8 @@ END_MESSAGE_MAP()
 CMapViewSDDoc::CMapViewSDDoc() noexcept
 {
 	odbcDB.SetQueryTimeout(60 * 10);
-	//odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
-	odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
+	odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
+	//odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	odbcDB.SetSynchronousMode(TRUE);
 	this->db = new TigerDB(&odbcDB);
 	ASSERT(this->db != 0);
