@@ -338,7 +338,7 @@ CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 	switch (code)
 	{
 	default:
-		assert(false);
+		//assert(false);
 		// pen = &this->pens[DASH_2DOTS_PEN];
 		break;
 
@@ -355,6 +355,7 @@ CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 	case TigerDB::MISC_PointToPoint:
 	case TigerDB::TRANS_PierDock:
 	case TigerDB::MISC_AerialTramway:
+	case TigerDB::TOPO_Dam:
 		if (this->layerDlg->doOtherRds)
 			pen = &this->pens[OTHER_ROAD];
 		break;
@@ -447,6 +448,7 @@ CPen* CMapViewSDView::GetPen(TigerDB::Chain* line)		// Used for edges
 	case TigerDB::HYDRO_StreamRiver:
 	case TigerDB::HYDRO_CanalDitchAqueduct:
 	case TigerDB::HYDRO_Connector:
+	case TigerDB::HYDRO_BraidedStream:
 		if (this->layerDlg->doStreams)
 			pen = &this->pens[STREAM];
 		break;

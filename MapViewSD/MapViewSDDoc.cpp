@@ -96,7 +96,22 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 	//this->range = this->db->getDBRange();
 	Range2D dataRange;
 	this->db->getDataRange(&dataRange);		// Actual range of the stored data
-	this->range = dataRange;
+	XY_t center;
+	dataRange.Center(&center);
+	double x = dataRange.Xdiff();
+	double y = dataRange.Ydiff();
+	const double PARTIAL = 20;
+	x /= PARTIAL;
+	y /= PARTIAL;
+
+	XY_t pt = center;
+	pt.x -= x;
+	pt.y -= y;
+	this->range.Add(pt);
+	center.x += x;
+	center.y += y;
+	this->range.Add(center);
+	//this->range = dataRange;
 
 	this->isOpen = TRUE;
 	return TRUE;
