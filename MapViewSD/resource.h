@@ -123,8 +123,9 @@
 #define IDC_COASTAL                     1025
 #define IDC_PARK_POLY                   1026
 #define IDC_PLACE                       1027
-#define IDC_CHECK2                      1028
 #define IDC_TRACTS                      1028
+#define IDC_CHECK2                      1029
+#define IDC_COUNTIES                    1029
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -145,7 +146,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        315
 #define _APS_NEXT_COMMAND_VALUE         32784
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

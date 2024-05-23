@@ -142,6 +142,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->isleBrush.CreateSolidBrush(RGB(205, 170, 102)/*RGB(168, 112, 0)*/);		// ESRI Light Sienna
 	this->placeBrush.CreateSolidBrush(RGB(255, 235, 175));		// ESRI Topaz Sand
 	this->tractBrush.CreateSolidBrush(RGB(199, 215, 158));		// ESRI Apple Dust
+	this->countyBrush.CreateSolidBrush(RGB(255, 211, 127));		// ESRI Mango
 	
 	pts = 0;
 	this->pan_overlap = 50;
@@ -241,7 +242,7 @@ void CMapViewSDView::OnInitialUpdate()
 	this->lineDlg = new LineDlg(this);
 
 	if (this->pts == 0)
-		this->pts = new XY_t[20000];
+		this->pts = new XY_t[50000];		// This should not be hard-coded!
 	ASSERT(this->pts != 0);
 
 	CRect region;
@@ -322,6 +323,10 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::TAB_CensusTract:
 		if (this->layerDlg->doTracts)
 			return &this->tractBrush;
+
+	case TigerDB::TAB_CountyFeature:
+		if (this->layerDlg->doCounties)
+			return &this->countyBrush;
 	}
 
 	return 0;

@@ -42,7 +42,8 @@ public:
 	BOOL  doPark;
 	BOOL  doPlaces;
 	BOOL	doTracts;
-	BOOL doGNISPoints;
+	BOOL	doCounties;
+	BOOL  doGNISPoints;
 	BOOL  doLandForm;
 	BOOL  doCoastal;
 	BOOL  doCultural;
