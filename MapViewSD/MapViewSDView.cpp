@@ -143,6 +143,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->placeBrush.CreateSolidBrush(RGB(255, 235, 175));		// ESRI Topaz Sand
 	this->tractBrush.CreateSolidBrush(RGB(199, 215, 158));		// ESRI Apple Dust
 	this->countyBrush.CreateSolidBrush(RGB(255, 211, 127));		// ESRI Mango
+	this->faceBrush.CreateSolidBrush(RGB(204, 204, 204));		// ESRI Gray 20%
 	
 	pts = 0;
 	this->pan_overlap = 50;
@@ -743,13 +744,13 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				}
 				po.Unlock();
 			}
-
 		}
 
 		GeoDB::searchClasses_t objClasses = this->layerDlg->objClasses;
 		if (objClasses.test(DB_POLY))
 			objClasses.reset(DB_POLY);
 
+		std::map<long, DbObject::Id> faceMap;
 		pDoc->db->InitSearch(&ss, range, objClasses);
 		while (pDoc->db->getNext(&ss, &dbo) == 0)
 		{
@@ -795,11 +796,45 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				case GeoDB::LINE:
 				{
 					nLines++;
+					int nPts;
 					TigerDB::Chain* line = (TigerDB::Chain*)spatialObj;
 					ASSERT(line != 0);
 					CPen* pen;
 					if ((pen = this->GetPen(line/*line->userCode*/)) != 0)
 					{
+						if (this->layerDlg->doFaces)		// Faces are connected to edges
+						{
+							ObjHandle fh;
+							int err = line->getFace(fh, 0);
+							if (err == 0)
+							{
+								GeoDB::Face* face = (GeoDB::Face*)fh.Lock();
+								std::map<long, DbObject::Id>::iterator it = faceMap.find(face->userId);
+								if (it == faceMap.end())
+								{
+									nPts = GeoDB::Face::getPts(fh, this->pts);
+									pDC->SelectObject(this->faceBrush);
+									DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+									faceMap.insert({ face->userId, face->dbAddress() });
+								}
+								fh.Unlock();
+							}
+							err = line->getFace(fh, 1);
+							if (err == 0)
+							{
+								GeoDB::Face* face = (GeoDB::Face*)fh.Lock();
+								std::map<long, DbObject::Id>::iterator it = faceMap.find(face->userId);
+								if (it == faceMap.end())
+								{
+									nPts = GeoDB::Face::getPts(fh, this->pts);
+									pDC->SelectObject(this->faceBrush);
+									DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+									faceMap.insert({ face->userId, face->dbAddress() });
+								}
+								fh.Unlock();
+							}
+						}
+
 						int nPts = (int)line->getNumPts();
 						line->Get(this->pts);
 						/*if (pen != lastPen)  Disable - this caused a bug in symbology
@@ -812,12 +847,24 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 							nPts = TrendLine(this->pts, nPts, this->tDist);
 						DrawLine(*this->mapWin, pDC, this->pts, nPts);
 						pDC->SelectObject(oldPen);
-						
 					}
 				}
 			}
 			dbo.Unlock();
 		}
+		/*
+		pDC->SelectObject(&this->pens[TRAIL]);
+		pDC->SelectObject(this->faceBrush);
+		std::map<long, DbObject::Id>::iterator it;
+		for (it = faceMap.begin(); it != faceMap.end(); it++)
+		{
+			ObjHandle fh;
+			int err = pDoc->db->Read(it->second, fh);
+			assert(err == 0);
+			int nPts = GeoDB::Face::getPts(fh, this->pts);
+			DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+		}
+		*/
 		if (oldPen != 0)
 			pDC->SelectObject(oldPen);
 		//	app->LoadStandardCursor( IDC_ARROW );

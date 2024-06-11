@@ -37,6 +37,7 @@ public:
 	BOOL	doShoreline;
 	BOOL	doStreams;
 	BOOL	doTrails;
+	BOOL	doFaces;
 	BOOL doAreas;
 	BOOL	doLakesOrPonds;
 	BOOL  doPark;

@@ -62,6 +62,7 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doPlaces = TRUE;
 	doTracts = FALSE;
 	doCounties = FALSE;
+	doFaces = FALSE;
 	//}}AFX_DATA_INIT
 
 	SetUpSpatialFilter();
@@ -71,7 +72,7 @@ void LayerDlg::SetUpSpatialFilter(void)
 {
 	this->objClasses.reset();
 	if (doLines && (doOtherRds || doBoundary || doLocalRds || doOtherFeatures || doPrimaryRds || doSecondaryRds ||
-			doShoreline || doStreams || doTrails || doGroundTransportation))
+			doShoreline || doStreams || doTrails || doGroundTransportation || doFaces))
 		this->objClasses.set(DB_EDGE);
 	if (doGNISPoints)
 		this->objClasses.set(DB_POINT);
@@ -108,6 +109,7 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_PLACE, doPlaces);
 	DDX_Check(pDX, IDC_TRACTS, doTracts);
 	DDX_Check(pDX, IDC_COUNTIES, doCounties);
+	DDX_Check(pDX, IDC_FACES, doFaces);
 	//}}AFX_DATA_MAP
 }
 

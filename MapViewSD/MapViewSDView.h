@@ -59,7 +59,8 @@ protected:
 				 isleBrush,
 				 placeBrush,
 				 tractBrush,
-				 countyBrush;
+				 countyBrush,
+				 faceBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
