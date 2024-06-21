@@ -815,6 +815,19 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 									nPts = GeoDB::Face::getPts(fh, this->pts);
 									pDC->SelectObject(this->faceBrush);
 									DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+									XY_t cen;
+									double area;
+									TopoTools::calcCentroid(this->pts, nPts, &cen, &area);
+									CPoint cPt;
+									XY_t pt;
+									this->mapWin->Forward(&pt, cen);
+									cPt.x = (int)pt.x;
+									cPt.y = (int)pt.y;
+									
+									CString str;
+									str.Format(_T("%d"), face->userId);
+									CFont* def_font = pDC->SelectObject(&this->font);
+									pDC->TextOut(cPt.x, cPt.y, str);
 									faceMap.insert({ face->userId, face->dbAddress() });
 								}
 								fh.Unlock();
