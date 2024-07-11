@@ -19,7 +19,7 @@
 
 #include "gdiplusgraphics.h"
 
-static CPoint cpts[50000];    // This should not be hard-coded!
+static CPoint cpts[80000];    // This should not be hard-coded!
 
 void DrawMarker(CPoint &pt, CDC* dc)
 {

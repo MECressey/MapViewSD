@@ -53,10 +53,13 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doLandForm = FALSE;
 	doCoastal = FALSE;
 	doCultural = FALSE;
-	doCensus = TRUE;
+	doCensus = FALSE;
+	doCivil = TRUE;
+	doPP = FALSE;
 	doOtherNames = FALSE;
 	doTopographic = FALSE;
 	doHydrology = FALSE;
+	doIsland = FALSE;
 	doGroundTransportation = FALSE;
 	doPark = FALSE;
 	doPlaces = TRUE;
@@ -101,6 +104,9 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_COASTAL, doCoastal);
 	DDX_Check(pDX, IDC_CULTURAL, doCultural);
 	DDX_Check(pDX, IDC_CENSUS, doCensus);
+	DDX_Check(pDX, IDC_CIVIL, doCivil);
+	DDX_Check(pDX, IDC_PP, doPP);
+	DDX_Check(pDX, IDC_ISLAND, doIsland);
 	DDX_Check(pDX, IDC_OTHER_NAMES, doOtherNames);
 	DDX_Check(pDX, IDC_TOPOGRAPHIC, doTopographic);
 	DDX_Check(pDX, IDC_HYDROLOGY, doHydrology);

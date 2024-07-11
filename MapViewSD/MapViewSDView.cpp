@@ -243,7 +243,7 @@ void CMapViewSDView::OnInitialUpdate()
 	this->lineDlg = new LineDlg(this);
 
 	if (this->pts == 0)
-		this->pts = new XY_t[50000];		// This should not be hard-coded!
+		this->pts = new XY_t[80000];		// This should not be hard-coded!
 	ASSERT(this->pts != 0);
 
 	CRect region;
@@ -1589,9 +1589,15 @@ bool CMapViewSDView::drawGNISFeature(int code)
 		break;
 
 	case TigerDB::GNIS_Census:
-	case TigerDB::GNIS_Civil:
-	case TigerDB::GNIS_PopulatedPlace:
 		if (this->layerDlg->doCensus)
+			drawFeature = true;
+		break;
+	case TigerDB::GNIS_Civil:
+		if (this->layerDlg->doCivil)
+			drawFeature = true;
+		break;
+	case TigerDB::GNIS_PopulatedPlace:
+		if (this->layerDlg->doPP)
 			drawFeature = true;
 		break;
 
@@ -1612,9 +1618,13 @@ bool CMapViewSDView::drawGNISFeature(int code)
 			drawFeature = true;
 		break;
 
+	case TigerDB::GNIS_Island:
+		if (this->layerDlg->doIsland)
+			drawFeature = true;
+		break;
+
 	case TigerDB::GNIS_Pillar:
 	case TigerDB::GNIS_Lava:
-	case TigerDB::GNIS_Island:
 		if (this->layerDlg->doOtherNames)
 			drawFeature = true;
 		break;

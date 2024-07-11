@@ -44,12 +44,15 @@ public:
 	BOOL  doPlaces;
 	BOOL	doTracts;
 	BOOL	doCounties;
-	BOOL  doGNISPoints;
+	BOOL doGNISPoints;
 	BOOL  doLandForm;
 	BOOL  doCoastal;
 	BOOL  doCultural;
 	BOOL  doCensus;
+	BOOL  doCivil;
+	BOOL  doPP;
 	BOOL  doOtherNames;
+	BOOL  doIsland;
 	BOOL  doTopographic;
 	BOOL  doHydrology;
 	BOOL	doGroundTransportation;
