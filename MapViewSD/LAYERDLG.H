@@ -44,6 +44,7 @@ public:
 	BOOL  doPlaces;
 	BOOL	doTracts;
 	BOOL	doCounties;
+	BOOL  doBlkGroups;
 	BOOL doGNISPoints;
 	BOOL  doLandForm;
 	BOOL  doCoastal;

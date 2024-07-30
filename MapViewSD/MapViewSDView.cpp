@@ -144,6 +144,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->tractBrush.CreateSolidBrush(RGB(199, 215, 158));		// ESRI Apple Dust
 	this->countyBrush.CreateSolidBrush(RGB(255, 211, 127));		// ESRI Mango
 	this->faceBrush.CreateSolidBrush(RGB(204, 204, 204));		// ESRI Gray 20%
+	this->bgBrush.CreateSolidBrush(RGB(214, 157, 188));		// ESRI Tudor Rose Dust
 	
 	pts = 0;
 	this->pan_overlap = 50;
@@ -324,6 +325,10 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::TAB_CensusTract:
 		if (this->layerDlg->doTracts)
 			return &this->tractBrush;
+
+	case TigerDB::TAB_CensusBlockGroup:
+		if (this->layerDlg->doBlkGroups)
+			return &this->bgBrush;
 
 	case TigerDB::TAB_CountyFeature:
 		if (this->layerDlg->doCounties)

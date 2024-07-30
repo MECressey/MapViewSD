@@ -128,8 +128,9 @@
 #define IDC_FACES                       1030
 #define IDC_CIVIL                       1031
 #define IDC_PP                          1032
-#define IDC_CHECK2                      1033
 #define IDC_ISLAND                      1033
+#define IDC_CHECK2                      1034
+#define IDC_BLKGRP                      1034
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -150,7 +151,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        315
 #define _APS_NEXT_COMMAND_VALUE         32784
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

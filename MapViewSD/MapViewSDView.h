@@ -59,6 +59,7 @@ protected:
 				 isleBrush,
 				 placeBrush,
 				 tractBrush,
+				 bgBrush,
 				 countyBrush,
 				 faceBrush;
 	CFont font;
