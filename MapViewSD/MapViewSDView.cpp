@@ -124,14 +124,14 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->doThining = FALSE;
 	this->doProj = 0;
 	this->mapWin = 0;
-	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+	this->pens[INTERSTATE_ROAD].CreatePen(PS_SOLID, 2, RGB(230, 230, 0)/*RGB(0, 0, 255)*/);  // Citroen Yellow
 	this->pens[PRIMARY_ROAD].CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
 	this->pens[SECONDARY_ROAD].CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
 	this->pens[LOCAL_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 0, 255));
 	this->pens[SHORELINE].CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
 	this->pens[STREAM].CreatePen(PS_SOLID/*PS_DASHDOTDOT*/, 1, RGB(115, 223, 255)/*RGB(0, 255, 255)*/);
 	this->pens[TRAIL].CreatePen(PS_DOT, 1, RGB(0, 0, 0));
-	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(230, 230, 0)/*RGB(255, 0, 0)*/);	// Citroen Yellow
+	this->pens[BOUNDARY].CreatePen(PS_DASH, 1, RGB(247, 215, 138)/*RGB(255, 255, 115)*/);	// Midday (Autunite)  Yellow
 	this->pens[PARK].CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
 	this->pens[OTHER_ROAD].CreatePen(PS_SOLID, 1, RGB(255, 255, 0));
 	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
