@@ -132,6 +132,7 @@ public:
 	afx_msg void OnToolsShortpath();
 	afx_msg void OnUpdateToolsThining(CCmdUI* pCmdUI);
 	afx_msg void OnToolsThining();
+	afx_msg void OnZoomDataextent();
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

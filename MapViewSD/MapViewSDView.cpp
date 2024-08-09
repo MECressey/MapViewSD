@@ -84,6 +84,7 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_COMMAND(ID_TOOLS_SHORTPATH, &CMapViewSDView::OnToolsShortpath)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_THINING, &CMapViewSDView::OnUpdateToolsThining)
 	ON_COMMAND(ID_TOOLS_THINING, &CMapViewSDView::OnToolsThining)
+	ON_COMMAND(ID_ZOOM_DATAEXTENT, &CMapViewSDView::OnZoomDataextent)
 END_MESSAGE_MAP()
 
 static const char* LineStr(int code);
@@ -321,18 +322,22 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::TAB_IncorporatedPlace:
 		if (this->layerDlg->doPlaces)
 			return &this->placeBrush;
+		break;
 
 	case TigerDB::TAB_CensusTract:
 		if (this->layerDlg->doTracts)
 			return &this->tractBrush;
+		break;
 
 	case TigerDB::TAB_CensusBlockGroup:
 		if (this->layerDlg->doBlkGroups)
 			return &this->bgBrush;
+		break;
 
 	case TigerDB::TAB_CountyFeature:
 		if (this->layerDlg->doCounties)
 			return &this->countyBrush;
+		break;
 	}
 
 	return 0;
@@ -2053,4 +2058,16 @@ void CMapViewSDView::OnToolsThining()
 		if (doInvalid)
 			this->Invalidate();
 	}
+}
+
+
+void CMapViewSDView::OnZoomDataextent()
+{
+	CMapViewSDDoc* pDoc = GetDocument();
+
+	Range2D dataRange;
+	pDoc->db->getDataRange(&dataRange);		// Actual range of the stored data
+
+	this->mapWin->Set(dataRange);
+	this->Invalidate();
 }

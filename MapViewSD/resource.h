@@ -144,13 +144,14 @@
 #define ID_SEARCH_USERID                32781
 #define ID_TOOLS_SHORTPATH              32782
 #define ID_TOOLS_THINING                32783
+#define ID_ZOOM_DATAEXTENT              32784
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        315
-#define _APS_NEXT_COMMAND_VALUE         32784
+#define _APS_NEXT_COMMAND_VALUE         32785
 #define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
