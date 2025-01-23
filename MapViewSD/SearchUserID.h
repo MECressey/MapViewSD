@@ -40,4 +40,7 @@ public:
 	CString m_UserIDStr;
 	CEdit m_DatabaseID;
 	CString m_DatabaseIDStr;
+	afx_msg void OnBnClickedRadio1();
+	afx_msg void OnBnClickedRadio2();
+	int m_searchType;
 };

@@ -19,6 +19,7 @@
 #include "layerdlg.h"
 #include "linedlg.h"
 #include "GEODB.HPP"
+#include "AcsSexAgeDialog.h"
 
 class CMapViewSDView : public CView, protected GeoDB::SpatialObjectFilter
 {
@@ -89,6 +90,7 @@ protected:
 	XY_t startPt;
 	int startDir;
 	double startDist;
+	AcsSexAgeDialog *acsSexAgeDlg;
 
 	void DoPan(double horizontal, double vertical);
 	void DisplayInfo(TigerDB::Chain* line);
@@ -133,6 +135,8 @@ public:
 	afx_msg void OnUpdateToolsThining(CCmdUI* pCmdUI);
 	afx_msg void OnToolsThining();
 	afx_msg void OnZoomDataextent();
+	afx_msg void OnAcsSex();
+	afx_msg void OnUpdateAcsSex(CCmdUI* pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

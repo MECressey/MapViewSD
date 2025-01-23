@@ -90,6 +90,8 @@
 #define IDS_EDIT_MENU                   306
 #define ID_COORD_PAGE                   310
 #define IDD_SEARCH_USERID               312
+#define IDD_ACS_DIALOG                  315
+#define IDD_ACS_AGESEX_QUERY            317
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
 #define IDC_PRIMARD_RDS                 1002
@@ -131,6 +133,46 @@
 #define IDC_ISLAND                      1033
 #define IDC_CHECK2                      1034
 #define IDC_BLKGRP                      1034
+#define IDC_CHECK_FEMALE                1034
+#define IDC_RADIO_EDGE                  1035
+#define IDC_RADIO_FACE                  1036
+#define IDC_GRID                        1037
+#define IDC_CHECK_MALE                  1038
+#define IDC_CHECK_COMBINED              1039
+#define IDC_CHECK_TOTALS                1040
+#define IDC_UNDER5                      1041
+#define IDC_5TO9                        1042
+#define IDC_10TO14                      1043
+#define IDC_15TO17                      1044
+#define IDC_18TO19                      1045
+#define IDC_20                          1046
+#define IDC_21                          1047
+#define IDC_22TO24                      1048
+#define IDC_25TO29                      1049
+#define IDC_30TO34                      1050
+#define IDC_35TO39                      1051
+#define IDC_40TO44                      1052
+#define IDC_45TO49                      1053
+#define IDC_50TO54                      1054
+#define IDC_50TO59                      1055
+#define IDC_60TO61                      1056
+#define IDC_62TO64                      1057
+#define IDC_65TO66                      1058
+#define IDC_67TO69                      1059
+#define IDC_70TO74                      1060
+#define IDC_75TO79                      1061
+#define IDC_80TO84                      1062
+#define IDC_85AndOVER                   1063
+#define IDC_ALL_RACES                   1064
+#define IDC_WHITE_ALONE                 1065
+#define IDC_BLACK_ALONE                 1066
+#define IDC_INDIAN_ALASKIAN             1067
+#define IDC_ASIAN_ALONE                 1068
+#define IDC_HAWAIIAN_ALONE              1069
+#define IDC_OTHER_RACE                  1070
+#define IDC_TWO_RACES                   1071
+#define IDC_NOT_HISPANIC                1072
+#define IDC_HISPANIC_LATINO             1073
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -145,14 +187,15 @@
 #define ID_TOOLS_SHORTPATH              32782
 #define ID_TOOLS_THINING                32783
 #define ID_ZOOM_DATAEXTENT              32784
+#define ID_ACS_SEX                      32785
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        315
-#define _APS_NEXT_COMMAND_VALUE         32785
-#define _APS_NEXT_CONTROL_VALUE         1035
+#define _APS_NEXT_RESOURCE_VALUE        319
+#define _APS_NEXT_COMMAND_VALUE         32786
+#define _APS_NEXT_CONTROL_VALUE         1074
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

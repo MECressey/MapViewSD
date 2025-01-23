@@ -72,6 +72,12 @@
     <ClInclude Include="SearchUserID.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ACSDataDisplay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AcsSexAgeDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapViewSD.cpp">
@@ -120,6 +126,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SearchUserID.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ACSDataDisplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AcsSexAgeDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -223,5 +235,7 @@
     <Library Include="..\..\lib\TigerDBDLL.lib" />
     <Library Include="..\..\lib\TopoToolsDLL.lib" />
     <Library Include="..\..\lib\SetsDLL.lib" />
+    <Library Include="..\..\lib\GridCtrl.lib" />
+    <Library Include="..\..\lib\ACSSurveyData.lib" />
   </ItemGroup>
 </Project>

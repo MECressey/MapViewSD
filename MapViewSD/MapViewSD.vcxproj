@@ -186,6 +186,8 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ACSDataDisplay.h" />
+    <ClInclude Include="AcsSexAgeDialog.h" />
     <ClInclude Include="ClassView.h" />
     <ClInclude Include="DRAWLINE.HPP" />
     <ClInclude Include="FileView.h" />
@@ -207,6 +209,8 @@
     <ClInclude Include="ViewTree.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ACSDataDisplay.cpp" />
+    <ClCompile Include="AcsSexAgeDialog.cpp" />
     <ClCompile Include="ClassView.cpp" />
     <ClCompile Include="DRAWLINE.CPP" />
     <ClCompile Include="FileView.cpp" />
@@ -266,10 +270,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Library Include="..\..\lib\ACSSurveyData.lib" />
     <Library Include="..\..\lib\CxxToolsLib.lib" />
     <Library Include="..\..\lib\DbOMDLL.lib" />
     <Library Include="..\..\lib\GeoDBDLL.lib" />
     <Library Include="..\..\lib\GeoToolsDLL.lib" />
+    <Library Include="..\..\lib\GridCtrl.lib" />
     <Library Include="..\..\lib\MapProjDLL.lib" />
     <Library Include="..\..\lib\MapWinDLL.lib" />
     <Library Include="..\..\lib\SetsDLL.lib" />

@@ -40,6 +40,9 @@
 #include <algorithm>
 #include "TString.h"
 #include <assert.h>
+//#include "GridCtrl.h"
+#include "ACSDataDisplay.h"
+#include "ACSSurveyData.h"
 
 #define DO_SHORT_PATH
 
@@ -85,6 +88,8 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_THINING, &CMapViewSDView::OnUpdateToolsThining)
 	ON_COMMAND(ID_TOOLS_THINING, &CMapViewSDView::OnToolsThining)
 	ON_COMMAND(ID_ZOOM_DATAEXTENT, &CMapViewSDView::OnZoomDataextent)
+	ON_COMMAND(ID_ACS_SEX, &CMapViewSDView::OnAcsSex)
+	ON_UPDATE_COMMAND_UI(ID_ACS_SEX, &CMapViewSDView::OnUpdateAcsSex)
 END_MESSAGE_MAP()
 
 static const char* LineStr(int code);
@@ -121,6 +126,7 @@ const int DASH_2DOTS_PEN = 12;
 CMapViewSDView::CMapViewSDView() noexcept
 {
 	this->layerDlg = new LayerDlg(this);
+	this->acsSexAgeDlg = new AcsSexAgeDialog(this);
 	this->doThining = FALSE;
 	this->doProj = 0;
 	this->mapWin = 0;
@@ -150,7 +156,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
-	this->sDist = .001;
+	this->sDist = .01 /*.001*/;
 	this->tDist = 0.0;
 	this->pts = 0;
 	this->doWindow = FALSE;
@@ -211,6 +217,8 @@ CMapViewSDView::~CMapViewSDView()
 	this->hPen.DeleteObject();
 	if (this->lineDlg)
 		delete this->lineDlg;
+
+	delete this->acsSexAgeDlg;
 }
 
 BOOL CMapViewSDView::PreCreateWindow(CREATESTRUCT& cs)
@@ -595,10 +603,18 @@ struct greater_than_key
 
 bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
 {
-	if (so->IsA() != GeoDB::LINE)
-		return false;
-	TigerDB::Chain* line = (TigerDB::Chain *)so;
-	return this->GetPen(line/*edge->userCode*/) != 0;
+	if (so->IsA() == GeoDB::LINE)
+	{
+		TigerDB::Chain* line = (TigerDB::Chain*)so;
+		return this->GetPen(line/*edge->userCode*/) != 0;
+	}
+	else if (so->IsA() == GeoDB::AREA)
+	{
+		GeoDB::Poly* poly = (GeoDB::Poly*)so;
+		return GetBrush(poly->userCode) != 0;
+	}
+
+	return false;
 }
 
 void CMapViewSDView::OnDraw(CDC* pDC)
@@ -1104,7 +1120,40 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				case GeoDB::AREA:
 				{
 					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
-					DisplayInfo(poly);
+					CMapViewSDDoc* pDoc = GetDocument();
+
+					std::vector<int> geoids;
+					std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
+						femaleRecords;
+
+					geoids.push_back(poly->userId);
+					ACSSurveyData::StateFIPSCodes fipsCode = ACSSurveyData::ME;
+					ACSSurveyData::SummaryLevels summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+					bool returnMOS = false;
+					int sex = 0;
+					if (this->acsSexAgeDlg->m_sexesCombined)
+						sex = ACSSurveyData::BOTH_SEXES;
+					else {
+						if (this->acsSexAgeDlg->m_maleSex)
+							sex |= ACSSurveyData::MALE;
+						if (this->acsSexAgeDlg->m_maleSex)
+							sex |= ACSSurveyData::FEMALE;
+					}
+					int ageCategories = 0;
+					if (this->acsSexAgeDlg->m_ageCatTotals)
+						ageCategories = ACSSurveyData::TOTAL_POPULATION;
+					int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, summaryLevel, geoids, maleRecords, femaleRecords,
+						returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
+
+					std::vector<CString> headers;
+					std::vector<int> data;
+
+					if (err == 0)
+					{
+						ACSDataDisplay acsDialog(this);
+						acsDialog.DoModal();
+					}
+					//DisplayInfo(poly);
 					break;
 				}
 				case GeoDB::LINE:
@@ -1523,14 +1572,25 @@ void CMapViewSDView::OnSearchUserid()
 	if (retVal == IDOK)
 	{
 		int err = -1;
+		DbObject::ClassCode cc = DB_EDGE;
 		CMapViewSDDoc* pDoc = GetDocument();
 		if (!searchDlg.m_UserIDStr.IsEmpty())
 		{
 			DbObject::Id key = atoi(TString(searchDlg.m_UserIDStr));
-			GeoDB::Edge::Hash dbHash;
-			dbHash.id = key;
 
-			err = pDoc->db->dacSearch(DB_EDGE, &dbHash, oh);
+			if (searchDlg.m_searchType == 0)
+			{
+				GeoDB::Edge::Hash dbHash;
+				dbHash.id = key;
+				err = pDoc->db->dacSearch(cc/*DB_EDGE*/, &dbHash, oh);
+			}
+			else
+			{
+				cc = DB_FACE;
+				GeoDB::Face::Hash dbHash;
+				dbHash.id = key;
+				err = pDoc->db->dacSearch(cc/*DB_EDGE*/, &dbHash, oh);
+			}
 		}
 		else if (!searchDlg.m_DatabaseIDStr.IsEmpty())
 		{
@@ -1540,10 +1600,23 @@ void CMapViewSDView::OnSearchUserid()
 		}
 		if (err == 0)
 		{
-			TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
-			DisplayInfo(line);
-			const Range2D& range = line->getMBR();
-			oh.Unlock();
+			Range2D range;
+			if (cc == DB_EDGE)
+			{
+				TigerDB::Chain* line = (TigerDB::Chain*)oh.Lock();
+				DisplayInfo(line);
+				range = line->getMBR();
+				oh.Unlock();
+			}
+			else
+			{
+				//GeoDB::Face *face = (GeoDB::Face*)oh.Lock();
+				int nPts = GeoDB::Face::getPts(oh, this->pts);
+				//range = face->getMBR();
+				//oh.Unlock();
+				for (int i = 0; i < nPts; i++)
+					range.Envelope(this->pts[i]);
+			}
 			this->mapWin->Set(range);
 			this->Invalidate();
 		}
@@ -1848,6 +1921,14 @@ static const char* LineStr(int code)
 	case TigerDB::HYDRO_Glacier:
 		str = "Hydrography";
 		break;
+
+	case TigerDB::TAB_CensusTract:
+		str = "Census Tract";
+		break;
+
+	case TigerDB::TAB_CensusBlockGroup:
+		str = "Census Block Group";
+		break;
 	}
 
 	return(str);
@@ -2070,4 +2151,16 @@ void CMapViewSDView::OnZoomDataextent()
 
 	this->mapWin->Set(dataRange);
 	this->Invalidate();
+}
+
+
+void CMapViewSDView::OnAcsSex()
+{
+	INT_PTR retVal = this->acsSexAgeDlg->DoModal();
+}
+
+
+void CMapViewSDView::OnUpdateAcsSex(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(this->mapWin != 0);
 }

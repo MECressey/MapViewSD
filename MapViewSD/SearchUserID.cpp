@@ -25,6 +25,7 @@ IMPLEMENT_DYNAMIC(SearchUserID, CDialogEx)
 
 SearchUserID::SearchUserID(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SEARCH_USERID, pParent)
+	, m_searchType(0)
 {
 
 }
@@ -40,11 +41,26 @@ void SearchUserID::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_USERID, m_UserIDStr);
 	DDX_Control(pDX, IDC_EDIT_USERID2, m_DatabaseID);
 	DDX_Text(pDX, IDC_EDIT_USERID2, m_DatabaseIDStr);
+	DDX_Radio(pDX, IDC_RADIO_EDGE, m_searchType);
 }
 
 
 BEGIN_MESSAGE_MAP(SearchUserID, CDialogEx)
+	ON_BN_CLICKED(IDC_RADIO_EDGE, &SearchUserID::OnBnClickedRadio1)
+	ON_BN_CLICKED(IDC_RADIO_FACE, &SearchUserID::OnBnClickedRadio2)
 END_MESSAGE_MAP()
 
 
 // SearchUserID message handlers
+
+
+void SearchUserID::OnBnClickedRadio1()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void SearchUserID::OnBnClickedRadio2()
+{
+	// TODO: Add your control notification handler code here
+}
