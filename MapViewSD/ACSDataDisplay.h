@@ -1,6 +1,8 @@
 #pragma once
 #include "afxdialogex.h"
 
+#include <vector>
+#include <map>
 #include "GridCtrl.h"
 
 // ACSDataDisplay dialog
@@ -10,7 +12,7 @@ class ACSDataDisplay : public CDialogEx
 	DECLARE_DYNAMIC(ACSDataDisplay)
 
 public:
-	ACSDataDisplay(CWnd* pParent = nullptr);   // standard constructor
+	ACSDataDisplay(std::vector<CString> &headers, std::multimap<int, std::vector<int>> &rows, CWnd* pParent = nullptr);   // standard constructor
 	virtual ~ACSDataDisplay();
 
 // Dialog Data
@@ -21,8 +23,11 @@ public:
 	CGridCtrl m_Grid;
 
 protected:
+	std::vector<CString>& m_headers;
+	std::multimap<int, std::vector<int>>& m_rows;
+
 	HICON m_hIcon;
-	//CImageList m_ImageList;
+	CImageList m_ImageList;
 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();

@@ -32,7 +32,7 @@ public:
 	BOOL m_ageCat15To17;
 	BOOL m_ageCat18To19;
 	BOOL m_ageCat20;
-	CButton m_ageCat21;
+	BOOL m_ageCat21;
 	BOOL m_ageCat22To24;
 	BOOL m_ageCat25To29;
 	BOOL m_ageCat30To34;
@@ -40,7 +40,7 @@ public:
 	BOOL m_ageCat40To44;
 	BOOL m_ageCat45To49;
 	BOOL m_ageCat50To54;
-	BOOL m_ageCat50To59;
+	BOOL m_ageCat55To59;
 	BOOL m_ageCat60To61;
 	BOOL m_ageCat62To64;
 	BOOL m_ageCat65To66;

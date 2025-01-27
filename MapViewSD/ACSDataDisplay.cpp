@@ -11,8 +11,8 @@
 
 IMPLEMENT_DYNAMIC(ACSDataDisplay, CDialogEx)
 
-ACSDataDisplay::ACSDataDisplay(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_ACS_DIALOG, pParent)
+ACSDataDisplay::ACSDataDisplay(std::vector<CString>& headers, std::multimap<int, std::vector<int>>& rows, CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_ACS_DIALOG, pParent), m_rows(rows), m_headers(headers)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -33,14 +33,69 @@ BOOL ACSDataDisplay::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	
-	/*m_ImageList.Create(MAKEINTRESOURCE(IDB_MENU_IMAGES_24), 16, 1, RGB(255, 255, 255));
-	m_Grid.SetImageList(&m_ImageList);*/
+	m_ImageList.Create(MAKEINTRESOURCE(IDB_MENU_IMAGES_24), 16, 1, RGB(255, 255, 255));
+	m_Grid.SetImageList(&m_ImageList);
 
 	m_Grid.SetVirtualMode(FALSE);
+
+	auto it = m_rows.begin();
+	int rowCount = m_rows.size() /*it->second.size()*/ + 1 /* header row */;
+
+	m_Grid.SetRowCount(rowCount);
+	m_Grid.SetColumnCount(m_headers.size());
+	m_Grid.SetFixedRowCount(1);
+	m_Grid.SetFixedColumnCount(0/*m_headers.size()*/);
+
+	//COLORREF clr = RGB(128, 128, 128);
+
+	int row = 0;
+	for (int pos = 0; pos < m_Grid.GetColumnCount(); pos++)
+	{
+		GV_ITEM Item;
+
+		Item.mask = GVIF_TEXT;
+		Item.row = row;
+		Item.col = pos;
+
+		//Item.iImage = rand() % m_ImageList.GetImageCount();
+		//Item.mask |= (GVIF_IMAGE);
+		Item.crBkClr = RGB(211, 211, 211);             // or - m_Grid.SetItemBkColour(row, col, clr);
+		Item.crFgClr = RGB(255, 0, 0);    // or - m_Grid.SetItemFgColour(row, col, RGB(255,0,0));				    
+		Item.mask |= (GVIF_BKCLR | GVIF_FGCLR);
+
+		Item.strText = m_headers[pos];
+		m_Grid.SetItem(&Item);
+	}
+
+	for (; it != m_rows.end(); it++)
+	{
+		row += 1;
+		int col = 0;
+		GV_ITEM Item;
+		Item.mask = GVIF_TEXT;
+		CString str;
+		Item.row = row;
+		Item.col = col++;
+		str.Format(_T("%d"), it->first);
+		Item.strText = str;
+		m_Grid.SetItem(&Item);
+		for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+		{
+			Item.row = row;
+			Item.col = col++;
+
+			str.Format(_T("%d"), *it2);
+			Item.strText = str;
+			m_Grid.SetItem(&Item);
+		}
+	}
+
+#ifdef SAVE_FOR_NOW
 	m_Grid.SetRowCount(3);
 	m_Grid.SetColumnCount(5);
 	m_Grid.SetFixedRowCount(2);
 	m_Grid.SetFixedColumnCount(2);
+
 	TRY{
 	for (int row = 0; row < m_Grid.GetRowCount(); row++)
 	{
@@ -86,7 +141,7 @@ BOOL ACSDataDisplay::OnInitDialog()
 		e->ReportError();
 	}
 	END_CATCH
-
+#endif
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }

@@ -85,6 +85,7 @@ protected:
 	BOOL doTest;
 	BOOL doThining;
 	BOOL doShortPath;
+	BOOL doACSAgeSex;
 	int pickCount;
 	long startId;
 	XY_t startPt;
@@ -132,6 +133,7 @@ public:
 	afx_msg void OnUpdateSearchUserid(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateToolsShortpath(CCmdUI* pCmdUI);
 	afx_msg void OnToolsShortpath();
+	afx_msg void OnACSAgeSexQuery();
 	afx_msg void OnUpdateToolsThining(CCmdUI* pCmdUI);
 	afx_msg void OnToolsThining();
 	afx_msg void OnZoomDataextent();

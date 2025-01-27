@@ -155,6 +155,7 @@
 #define IDC_45TO49                      1053
 #define IDC_50TO54                      1054
 #define IDC_50TO59                      1055
+#define IDC_55TO59                      1055
 #define IDC_60TO61                      1056
 #define IDC_62TO64                      1057
 #define IDC_65TO66                      1058

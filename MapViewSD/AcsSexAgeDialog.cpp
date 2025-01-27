@@ -30,7 +30,7 @@ AcsSexAgeDialog::AcsSexAgeDialog(CWnd* pParent /*=nullptr*/)
 	, m_ageCat40To44(FALSE)
 	, m_ageCat45To49(FALSE)
 	, m_ageCat50To54(FALSE)
-	, m_ageCat50To59(FALSE)
+	, m_ageCat55To59(FALSE)
 	, m_ageCat60To61(FALSE)
 	, m_ageCat62To64(FALSE)
 	, m_ageCat65To66(FALSE)
@@ -61,7 +61,7 @@ void AcsSexAgeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_15TO17, m_ageCat15To17);
 	DDX_Check(pDX, IDC_18TO19, m_ageCat18To19);
 	DDX_Check(pDX, IDC_20, m_ageCat20);
-	DDX_Control(pDX, IDC_21, m_ageCat21);
+	DDX_Check(pDX, IDC_21, m_ageCat21);
 	DDX_Check(pDX, IDC_22TO24, m_ageCat22To24);
 	DDX_Check(pDX, IDC_25TO29, m_ageCat25To29);
 	DDX_Check(pDX, IDC_30TO34, m_ageCat30To34);
@@ -69,7 +69,7 @@ void AcsSexAgeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_40TO44, m_ageCat40To44);
 	DDX_Check(pDX, IDC_45TO49, m_ageCat45To49);
 	DDX_Check(pDX, IDC_50TO54, m_ageCat50To54);
-	DDX_Check(pDX, IDC_50TO59, m_ageCat50To59);
+	DDX_Check(pDX, IDC_50TO59, m_ageCat55To59);
 	DDX_Check(pDX, IDC_60TO61, m_ageCat60To61);
 	DDX_Check(pDX, IDC_62TO64, m_ageCat62To64);
 	DDX_Check(pDX, IDC_65TO66, m_ageCat65To66);

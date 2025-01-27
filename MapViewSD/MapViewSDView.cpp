@@ -177,6 +177,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->lineDlg = 0;
 	this->doTest = FALSE;
 	this->doShortPath = FALSE;
+	this->doACSAgeSex = FALSE;
 	this->pickCount = 0;
 	this->startId = 0;
 	this->startDir = 0;
@@ -1122,13 +1123,37 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
 					CMapViewSDDoc* pDoc = GetDocument();
 
+					DisplayInfo(poly);
+					if (!this->doACSAgeSex)
+						break;
+
+					ACSSurveyData::SummaryLevels summaryLevel;
+					switch (poly->userCode)
+					{
+					default:
+						summaryLevel = (ACSSurveyData::SummaryLevels)0;
+						break;
+
+					case TigerDB::TAB_CountyFeature:
+						summaryLevel = ACSSurveyData::STATE_COUNTY;
+						break;
+
+					case TigerDB::TAB_CensusTract:
+						summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+						break;
+
+					case TigerDB::TAB_CensusBlockGroup:
+						summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
+						break;
+					}
+
 					std::vector<int> geoids;
 					std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
 						femaleRecords;
 
 					geoids.push_back(poly->userId);
 					ACSSurveyData::StateFIPSCodes fipsCode = ACSSurveyData::ME;
-					ACSSurveyData::SummaryLevels summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+
 					bool returnMOS = false;
 					int sex = 0;
 					if (this->acsSexAgeDlg->m_sexesCombined)
@@ -1142,18 +1167,160 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					int ageCategories = 0;
 					if (this->acsSexAgeDlg->m_ageCatTotals)
 						ageCategories = ACSSurveyData::TOTAL_POPULATION;
+					else
+					{
+						if (this->acsSexAgeDlg->m_ageCatUnder5)
+							ageCategories |= ACSSurveyData::TUNDER5;
+						if (this->acsSexAgeDlg->m_ageCat5To9)
+							ageCategories |= ACSSurveyData::T5TO9;
+						if (this->acsSexAgeDlg->m_ageCat10To14)
+							ageCategories |= ACSSurveyData::T10TO14;
+						if (this->acsSexAgeDlg->m_ageCat15To17)
+							ageCategories |= ACSSurveyData::T15TO17;
+						if (this->acsSexAgeDlg->m_ageCat18To19)
+							ageCategories |= ACSSurveyData::T18TO19;
+						if (this->acsSexAgeDlg->m_ageCat20)
+							ageCategories |= ACSSurveyData::T20;
+						if (this->acsSexAgeDlg->m_ageCat21)
+							ageCategories |= ACSSurveyData::T21;
+						if (this->acsSexAgeDlg->m_ageCat22To24)
+							ageCategories |= ACSSurveyData::T22TO24;
+						if (this->acsSexAgeDlg->m_ageCat25To29)
+							ageCategories |= ACSSurveyData::T25TO29;
+						if (this->acsSexAgeDlg->m_ageCat30To34)
+							ageCategories |= ACSSurveyData::T30TO34;
+						if (this->acsSexAgeDlg->m_ageCat35To39)
+							ageCategories |= ACSSurveyData::T35TO39;
+						if (this->acsSexAgeDlg->m_ageCat40To44)
+							ageCategories |= ACSSurveyData::T40TO44;
+						if (this->acsSexAgeDlg->m_ageCat45To49)
+							ageCategories |= ACSSurveyData::T45TO49;
+						if (this->acsSexAgeDlg->m_ageCat50To54)
+							ageCategories |= ACSSurveyData::T50TO54;
+						if (this->acsSexAgeDlg->m_ageCat55To59)
+							ageCategories |= ACSSurveyData::T55TO59;
+						if (this->acsSexAgeDlg->m_ageCat60To61)
+							ageCategories |= ACSSurveyData::T60TO61;
+						if (this->acsSexAgeDlg->m_ageCat62To64)
+							ageCategories |= ACSSurveyData::T62TO64;
+						if (this->acsSexAgeDlg->m_ageCat65To66)
+							ageCategories |= ACSSurveyData::T65TO66;
+						if (this->acsSexAgeDlg->m_ageCat67To69)
+							ageCategories |= ACSSurveyData::T67TO69;
+						if (this->acsSexAgeDlg->m_ageCat70To74)
+							ageCategories |= ACSSurveyData::T70TO74;
+						if (this->acsSexAgeDlg->m_ageCat75To79)
+							ageCategories |= ACSSurveyData::T75TO79;
+						if (this->acsSexAgeDlg->m_ageCat80To84)
+							ageCategories |= ACSSurveyData::T80TO84;
+						if (this->acsSexAgeDlg->m_ageCat85AndOver)
+							ageCategories |= ACSSurveyData::T85ANDOVER;
+					}
+
 					int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, summaryLevel, geoids, maleRecords, femaleRecords,
 						returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
 
-					std::vector<CString> headers;
-					std::vector<int> data;
-
 					if (err == 0)
 					{
-						ACSDataDisplay acsDialog(this);
+						std::vector<CString> headers;
+						headers.push_back(_T("GEOID"));
+						if (sex != ACSSurveyData::BOTH_SEXES)
+							headers.push_back(_T("SEX"));
+						if (this->acsSexAgeDlg->m_ageCatTotals)
+							headers.push_back(_T("TOTAL"));
+						else
+						{
+							if (this->acsSexAgeDlg->m_ageCatUnder5)
+								headers.push_back(_T("TUNDER5"));
+							if (this->acsSexAgeDlg->m_ageCat5To9)
+								headers.push_back(_T("T5TO9"));
+							if (this->acsSexAgeDlg->m_ageCat10To14)
+								headers.push_back(_T("T10TO14"));
+							if (this->acsSexAgeDlg->m_ageCat15To17)
+								headers.push_back(_T("T15TO17"));
+							if (this->acsSexAgeDlg->m_ageCat18To19)
+								headers.push_back(_T("T18TO19"));
+							if (this->acsSexAgeDlg->m_ageCat20)
+								headers.push_back(_T("T20"));
+							if (this->acsSexAgeDlg->m_ageCat21)
+								headers.push_back(_T("T21"));
+							if (this->acsSexAgeDlg->m_ageCat22To24)
+								headers.push_back(_T("T22TO24"));
+							if (this->acsSexAgeDlg->m_ageCat25To29)
+								headers.push_back(_T("T25TO29"));
+							if (this->acsSexAgeDlg->m_ageCat30To34)
+								headers.push_back(_T("T30TO34"));
+							if (this->acsSexAgeDlg->m_ageCat35To39)
+								headers.push_back(_T("T35TO39"));
+							if (this->acsSexAgeDlg->m_ageCat40To44)
+								headers.push_back(_T("T40TO44"));
+							if (this->acsSexAgeDlg->m_ageCat45To49)
+								headers.push_back(_T("T45TO49"));
+							if (this->acsSexAgeDlg->m_ageCat50To54)
+								headers.push_back(_T("T50TO54"));
+							if (this->acsSexAgeDlg->m_ageCat55To59)
+								headers.push_back(_T("T55TO59"));
+							if (this->acsSexAgeDlg->m_ageCat60To61)
+								headers.push_back(_T("T60TO61"));
+							if (this->acsSexAgeDlg->m_ageCat62To64)
+								headers.push_back(_T("T62TO64"));
+							if (this->acsSexAgeDlg->m_ageCat65To66)
+								headers.push_back(_T("T65TO66"));
+							if (this->acsSexAgeDlg->m_ageCat67To69)
+								headers.push_back(_T("T67TO69"));
+							if (this->acsSexAgeDlg->m_ageCat70To74)
+								headers.push_back(_T("T70TO74"));
+							if (this->acsSexAgeDlg->m_ageCat75To79)
+								headers.push_back(_T("T75TO79"));
+							if (this->acsSexAgeDlg->m_ageCat80To84)
+								headers.push_back(_T("T80TO84"));
+							if (this->acsSexAgeDlg->m_ageCat85AndOver)
+								headers.push_back(_T("T85ANDOVER"));
+						}
+
+						std::multimap<int, std::vector<int>> data;
+
+						for (auto it = maleRecords.begin(); it != maleRecords.end(); it++)
+						{
+							std::vector<int> list;
+							if (sex != ACSSurveyData::BOTH_SEXES)
+								list.push_back(0);  // Male
+							std::vector<ACSSurveyData::AgeRec>::iterator it2;
+							for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+							{
+								list.push_back(it2->total);
+							}
+
+							data.insert({ it->first, list });
+						}
+
+						for (auto it = femaleRecords.begin(); it != femaleRecords.end(); it++)
+						{
+							std::vector<int> list;
+							if (sex != ACSSurveyData::BOTH_SEXES)
+								list.push_back(1);  // Female
+							std::vector<ACSSurveyData::AgeRec>::iterator it2;
+							for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+							{
+								list.push_back(it2->total);
+							}
+
+							data.insert({ it->first, list });
+						}
+						/*
+						data.push_back(poly->userId);
+
+						auto it = maleRecords.find(poly->userId);
+						assert(it != maleRecords.end());
+						std::vector<ACSSurveyData::AgeRec>::iterator it2;
+						it2 = it->second.begin();
+						data.push_back(it2->total);
+						assert(headers.size() == data.size());
+*/
+						ACSDataDisplay acsDialog(headers, data, this);
 						acsDialog.DoModal();
 					}
-					//DisplayInfo(poly);
+
 					break;
 				}
 				case GeoDB::LINE:
@@ -2092,7 +2259,6 @@ void CMapViewSDView::OnUpdateToolsShortpath(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(this->mapWin != 0);
 	pCmdUI->SetCheck(this->doShortPath);
-
 }
 
 
@@ -2156,11 +2322,17 @@ void CMapViewSDView::OnZoomDataextent()
 
 void CMapViewSDView::OnAcsSex()
 {
+	//this->doACSAgeSex = !this->doACSAgeSex;
 	INT_PTR retVal = this->acsSexAgeDlg->DoModal();
+	if (retVal == IDOK)
+		this->doACSAgeSex = TRUE;
+	else
+		this->doACSAgeSex = FALSE;
 }
 
 
 void CMapViewSDView::OnUpdateAcsSex(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(this->mapWin != 0);
+	pCmdUI->SetCheck(this->doACSAgeSex);
 }
