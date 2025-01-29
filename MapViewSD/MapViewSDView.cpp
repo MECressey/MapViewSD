@@ -1179,103 +1179,112 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 							ageCategories |= ACSSurveyData::T15TO17;
 						if (this->acsSexAgeDlg->m_ageCat18To19)
 							ageCategories |= ACSSurveyData::T18TO19;
-						if (this->acsSexAgeDlg->m_ageCat20)
-							ageCategories |= ACSSurveyData::T20;
-						if (this->acsSexAgeDlg->m_ageCat21)
-							ageCategories |= ACSSurveyData::T21;
 						if (this->acsSexAgeDlg->m_ageCat22To24)
-							ageCategories |= ACSSurveyData::T22TO24;
+							ageCategories |= ACSSurveyData::T22TO24;		// Also 20 to 24
 						if (this->acsSexAgeDlg->m_ageCat25To29)
 							ageCategories |= ACSSurveyData::T25TO29;
 						if (this->acsSexAgeDlg->m_ageCat30To34)
 							ageCategories |= ACSSurveyData::T30TO34;
 						if (this->acsSexAgeDlg->m_ageCat35To39)
-							ageCategories |= ACSSurveyData::T35TO39;
-						if (this->acsSexAgeDlg->m_ageCat40To44)
-							ageCategories |= ACSSurveyData::T40TO44;
+							ageCategories |= ACSSurveyData::T35TO39;		// Also 35 to 44
 						if (this->acsSexAgeDlg->m_ageCat45To49)
-							ageCategories |= ACSSurveyData::T45TO49;
-						if (this->acsSexAgeDlg->m_ageCat50To54)
-							ageCategories |= ACSSurveyData::T50TO54;
+							ageCategories |= ACSSurveyData::T45TO49;		// also 45 to 54
 						if (this->acsSexAgeDlg->m_ageCat55To59)
-							ageCategories |= ACSSurveyData::T55TO59;
-						if (this->acsSexAgeDlg->m_ageCat60To61)
-							ageCategories |= ACSSurveyData::T60TO61;
-						if (this->acsSexAgeDlg->m_ageCat62To64)
-							ageCategories |= ACSSurveyData::T62TO64;
+							ageCategories |= ACSSurveyData::T55TO59;		// also 55 to 64
 						if (this->acsSexAgeDlg->m_ageCat65To66)
-							ageCategories |= ACSSurveyData::T65TO66;
-						if (this->acsSexAgeDlg->m_ageCat67To69)
-							ageCategories |= ACSSurveyData::T67TO69;
-						if (this->acsSexAgeDlg->m_ageCat70To74)
-							ageCategories |= ACSSurveyData::T70TO74;
+							ageCategories |= ACSSurveyData::T65TO66;		// also 65 to 74
 						if (this->acsSexAgeDlg->m_ageCat75To79)
-							ageCategories |= ACSSurveyData::T75TO79;
-						if (this->acsSexAgeDlg->m_ageCat80To84)
-							ageCategories |= ACSSurveyData::T80TO84;
+							ageCategories |= ACSSurveyData::T75TO79;		// also 74 to 84
 						if (this->acsSexAgeDlg->m_ageCat85AndOver)
 							ageCategories |= ACSSurveyData::T85ANDOVER;
+						if (this->acsSexAgeDlg->m_raceIteration == 0)
+						{
+							if (this->acsSexAgeDlg->m_ageCat20)
+								ageCategories |= ACSSurveyData::T20;
+							if (this->acsSexAgeDlg->m_ageCat21)
+								ageCategories |= ACSSurveyData::T21;
+							if (this->acsSexAgeDlg->m_ageCat40To44)
+								ageCategories |= ACSSurveyData::T40TO44;
+							if (this->acsSexAgeDlg->m_ageCat50To54)
+								ageCategories |= ACSSurveyData::T50TO54;
+							if (this->acsSexAgeDlg->m_ageCat60To61)
+								ageCategories |= ACSSurveyData::T60TO61;
+							if (this->acsSexAgeDlg->m_ageCat62To64)
+								ageCategories |= ACSSurveyData::T62TO64;
+							if (this->acsSexAgeDlg->m_ageCat67To69)
+								ageCategories |= ACSSurveyData::T67TO69;
+							if (this->acsSexAgeDlg->m_ageCat70To74)
+								ageCategories |= ACSSurveyData::T70TO74;
+							if (this->acsSexAgeDlg->m_ageCat80To84)
+								ageCategories |= ACSSurveyData::T80TO84;
+						}
 					}
 
-					int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, summaryLevel, geoids, maleRecords, femaleRecords,
-						returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
+					int err;
+					
+					if (this->acsSexAgeDlg->m_raceIteration == 0)
+						err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, summaryLevel, geoids, maleRecords, femaleRecords,
+							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
+					else
+						err = ACSSurveyData::ACSSexByAgeRace(pDoc->odbcDB, fipsCode, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration + 1), summaryLevel, geoids, maleRecords, femaleRecords,
+							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
 
 					if (err == 0)
 					{
 						std::vector<CString> headers;
-						headers.push_back(_T("GEOID"));
+						headers.push_back(_T("Geo ID"));
 						if (sex != ACSSurveyData::BOTH_SEXES)
-							headers.push_back(_T("SEX"));
+							headers.push_back(_T("Sex"));
 						if (this->acsSexAgeDlg->m_ageCatTotals)
-							headers.push_back(_T("TOTAL"));
+							headers.push_back(_T("Totals"));
 						else
 						{
 							if (this->acsSexAgeDlg->m_ageCatUnder5)
-								headers.push_back(_T("TUNDER5"));
+								headers.push_back(_T("Under 5"));
 							if (this->acsSexAgeDlg->m_ageCat5To9)
-								headers.push_back(_T("T5TO9"));
+								headers.push_back(_T("5 - 9"));
 							if (this->acsSexAgeDlg->m_ageCat10To14)
-								headers.push_back(_T("T10TO14"));
+								headers.push_back(_T("10 - 14"));
 							if (this->acsSexAgeDlg->m_ageCat15To17)
-								headers.push_back(_T("T15TO17"));
+								headers.push_back(_T("15 - 17"));
 							if (this->acsSexAgeDlg->m_ageCat18To19)
-								headers.push_back(_T("T18TO19"));
+								headers.push_back(_T("18 - 19"));
 							if (this->acsSexAgeDlg->m_ageCat20)
-								headers.push_back(_T("T20"));
+								headers.push_back(_T("20"));
 							if (this->acsSexAgeDlg->m_ageCat21)
-								headers.push_back(_T("T21"));
+								headers.push_back(_T("21"));
 							if (this->acsSexAgeDlg->m_ageCat22To24)
-								headers.push_back(_T("T22TO24"));
+								headers.push_back(_T("22 - 24"));
 							if (this->acsSexAgeDlg->m_ageCat25To29)
-								headers.push_back(_T("T25TO29"));
+								headers.push_back(_T("25 - 29"));
 							if (this->acsSexAgeDlg->m_ageCat30To34)
-								headers.push_back(_T("T30TO34"));
+								headers.push_back(_T("30 - 34"));
 							if (this->acsSexAgeDlg->m_ageCat35To39)
-								headers.push_back(_T("T35TO39"));
+								headers.push_back(_T("35 - 39"));
 							if (this->acsSexAgeDlg->m_ageCat40To44)
-								headers.push_back(_T("T40TO44"));
+								headers.push_back(_T("40 - 44"));
 							if (this->acsSexAgeDlg->m_ageCat45To49)
-								headers.push_back(_T("T45TO49"));
+								headers.push_back(_T("45 - 49"));
 							if (this->acsSexAgeDlg->m_ageCat50To54)
-								headers.push_back(_T("T50TO54"));
+								headers.push_back(_T("50 - 54"));
 							if (this->acsSexAgeDlg->m_ageCat55To59)
-								headers.push_back(_T("T55TO59"));
+								headers.push_back(_T("55 - 59"));
 							if (this->acsSexAgeDlg->m_ageCat60To61)
-								headers.push_back(_T("T60TO61"));
+								headers.push_back(_T("60 - 61"));
 							if (this->acsSexAgeDlg->m_ageCat62To64)
-								headers.push_back(_T("T62TO64"));
+								headers.push_back(_T("62 - 64"));
 							if (this->acsSexAgeDlg->m_ageCat65To66)
-								headers.push_back(_T("T65TO66"));
+								headers.push_back(_T("65 - 66"));
 							if (this->acsSexAgeDlg->m_ageCat67To69)
-								headers.push_back(_T("T67TO69"));
+								headers.push_back(_T("67 - 69"));
 							if (this->acsSexAgeDlg->m_ageCat70To74)
-								headers.push_back(_T("T70TO74"));
+								headers.push_back(_T("70 - 74"));
 							if (this->acsSexAgeDlg->m_ageCat75To79)
-								headers.push_back(_T("T75TO79"));
+								headers.push_back(_T("75 - 79"));
 							if (this->acsSexAgeDlg->m_ageCat80To84)
-								headers.push_back(_T("T80TO84"));
+								headers.push_back(_T("80  84"));
 							if (this->acsSexAgeDlg->m_ageCat85AndOver)
-								headers.push_back(_T("T85ANDOVER"));
+								headers.push_back(_T("85+"));
 						}
 
 						std::multimap<int, std::vector<int>> data;

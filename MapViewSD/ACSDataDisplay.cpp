@@ -44,7 +44,7 @@ BOOL ACSDataDisplay::OnInitDialog()
 	m_Grid.SetRowCount(rowCount);
 	m_Grid.SetColumnCount(m_headers.size());
 	m_Grid.SetFixedRowCount(1);
-	m_Grid.SetFixedColumnCount(0/*m_headers.size()*/);
+	m_Grid.SetFixedColumnCount(1/*m_headers.size()*/);
 
 	//COLORREF clr = RGB(128, 128, 128);
 

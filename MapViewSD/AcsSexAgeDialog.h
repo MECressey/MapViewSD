@@ -33,20 +33,26 @@ public:
 	BOOL m_ageCat18To19;
 	BOOL m_ageCat20;
 	BOOL m_ageCat21;
+	BOOL m_ageCat20To24;	// Race iteration
 	BOOL m_ageCat22To24;
 	BOOL m_ageCat25To29;
 	BOOL m_ageCat30To34;
 	BOOL m_ageCat35To39;
+	BOOL m_ageCat35To44;	// Race Iteration
 	BOOL m_ageCat40To44;
 	BOOL m_ageCat45To49;
+	BOOL m_ageCat45To54;	// Race iteration
 	BOOL m_ageCat50To54;
 	BOOL m_ageCat55To59;
+	BOOL m_ageCat55To64;	// Race iteration
 	BOOL m_ageCat60To61;
 	BOOL m_ageCat62To64;
 	BOOL m_ageCat65To66;
+	BOOL m_ageCat65To74;	// Race iteration
 	BOOL m_ageCat67To69;
 	BOOL m_ageCat70To74;
 	BOOL m_ageCat75To79;
+	BOOL m_ageCat75To84;	// Race iteration
 	BOOL m_ageCat80To84;
 	BOOL m_ageCat85AndOver;
 	int m_raceIteration;
@@ -60,4 +66,12 @@ public:
 	afx_msg void OnBnClickedNotHispanic();
 	afx_msg void OnBnClickedHispanicLatino();
 	afx_msg void OnBnClickedTwoRaces();
+
+private:
+	void SwitchToAllRaces();
+	void SwitchToRaceIteration();
+public:
+	afx_msg void OnBnClickedCheckCombined();
+	afx_msg void OnBnClickedCheckFemale();
+	afx_msg void OnBnClickedCheckMale();
 };

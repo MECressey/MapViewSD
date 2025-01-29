@@ -23,20 +23,27 @@ AcsSexAgeDialog::AcsSexAgeDialog(CWnd* pParent /*=nullptr*/)
 	, m_ageCat15To17(FALSE)
 	, m_ageCat18To19(FALSE)
 	, m_ageCat20(FALSE)
+	, m_ageCat21(FALSE)
+	, m_ageCat20To24(FALSE) 	// Race iteration
 	, m_ageCat22To24(FALSE)
 	, m_ageCat25To29(FALSE)
 	, m_ageCat30To34(FALSE)
 	, m_ageCat35To39(FALSE)
+	, m_ageCat35To44(FALSE) 	// Race Iteration
 	, m_ageCat40To44(FALSE)
 	, m_ageCat45To49(FALSE)
+	, m_ageCat45To54(FALSE) 	// Race Iteration
 	, m_ageCat50To54(FALSE)
 	, m_ageCat55To59(FALSE)
+	, m_ageCat55To64(FALSE) 	// Race iteration
 	, m_ageCat60To61(FALSE)
 	, m_ageCat62To64(FALSE)
 	, m_ageCat65To66(FALSE)
+	, m_ageCat65To74(FALSE) 	// Race iteration
 	, m_ageCat67To69(FALSE)
 	, m_ageCat70To74(FALSE)
 	, m_ageCat75To79(FALSE)
+	, m_ageCat75To84(FALSE) 	// Race iteration
 	, m_ageCat80To84(FALSE)
 	, m_ageCat85AndOver(FALSE)
 	, m_raceIteration(0)
@@ -93,67 +100,224 @@ BEGIN_MESSAGE_MAP(AcsSexAgeDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_NOT_HISPANIC, &AcsSexAgeDialog::OnBnClickedNotHispanic)
 	ON_BN_CLICKED(IDC_HISPANIC_LATINO, &AcsSexAgeDialog::OnBnClickedHispanicLatino)
 	ON_BN_CLICKED(IDC_TWO_RACES, &AcsSexAgeDialog::OnBnClickedTwoRaces)
+	ON_BN_CLICKED(IDC_CHECK_COMBINED, &AcsSexAgeDialog::OnBnClickedCheckCombined)
+	ON_BN_CLICKED(IDC_CHECK_FEMALE, &AcsSexAgeDialog::OnBnClickedCheckFemale)
+	ON_BN_CLICKED(IDC_CHECK_MALE, &AcsSexAgeDialog::OnBnClickedCheckMale)
 END_MESSAGE_MAP()
 
+void AcsSexAgeDialog::SwitchToAllRaces()
+{
+	CWnd* button = GetDlgItem(IDC_20);
+	assert(button != nullptr);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_21);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_35TO39);
+	button->SetWindowText(_T("35 to 39"));
+
+	button = GetDlgItem(IDC_40TO44);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_45TO49);
+	button->SetWindowText(_T("45 to 49"));
+
+	button = GetDlgItem(IDC_50TO54);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_55TO59);
+	button->SetWindowText(_T("55 to 59"));
+
+	button = GetDlgItem(IDC_60TO61);
+	button->EnableWindow();
+	button = GetDlgItem(IDC_62TO64);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_65TO66);
+	button->SetWindowText(_T("65 to 66"));
+
+	button = GetDlgItem(IDC_67TO69);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_75TO79);
+	button->SetWindowText(_T("75 to 79"));
+
+	button = GetDlgItem(IDC_70TO74);
+	button->EnableWindow();
+}
+
+void AcsSexAgeDialog::SwitchToRaceIteration()
+{
+	CWnd* button = GetDlgItem(IDC_20);
+	assert(button != nullptr);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_21);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_22TO24);
+	button->SetWindowText(_T("20 to 24"));
+
+	button = GetDlgItem(IDC_21);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_35TO39);
+	button->SetWindowText(_T("35 to 44"));
+
+	button = GetDlgItem(IDC_40TO44);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_45TO49);
+	button->SetWindowText(_T("45 to 54"));
+
+	button = GetDlgItem(IDC_50TO54);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_55TO59);
+	button->SetWindowText(_T("55 to 64"));
+
+	button = GetDlgItem(IDC_60TO61);
+	button->EnableWindow(0);
+	button = GetDlgItem(IDC_62TO64);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_65TO66);
+	button->SetWindowText(_T("65 to 74"));
+
+	button = GetDlgItem(IDC_67TO69);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_75TO79);
+	button->SetWindowText(_T("75 to 84"));
+
+	button = GetDlgItem(IDC_70TO74);
+	button->EnableWindow(0);
+}
 
 // AcsSexAgeDialog message handlers
 
 
 void AcsSexAgeDialog::OnBnClickedAllRaces()
 {
+	if (m_raceIteration != 0)
+		SwitchToAllRaces();
 	m_raceIteration = 0;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedWhiteAlone()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 1;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedBlackAlone()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 2;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedIndianAlaskian()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 3;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedAsianAlone()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 4;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedHawaiianAlone()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 5;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedOtherRace()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 6;
 }
 
 void AcsSexAgeDialog::OnBnClickedTwoRaces()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 7;
 }
 
 void AcsSexAgeDialog::OnBnClickedNotHispanic()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 8;
 }
 
 
 void AcsSexAgeDialog::OnBnClickedHispanicLatino()
 {
+	if (m_raceIteration == 0)
+		SwitchToRaceIteration();
 	m_raceIteration = 9;
 }
 
 
+
+
+void AcsSexAgeDialog::OnBnClickedCheckCombined()
+{
+	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
+	UINT nCheck = button->GetState();
+
+	button = (CButton*)GetDlgItem(IDC_CHECK_MALE);
+	if ((nCheck & BST_CHECKED) != 0)
+	{
+		button->SetCheck(BST_UNCHECKED);
+
+		//button->EnableWindow(0);
+		button = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
+		button->SetCheck(BST_UNCHECKED);
+		//button->EnableWindow(0);
+	}
+	else
+	{
+/*		button->EnableWindow();
+		button = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
+		button->EnableWindow();*/
+	}
+	/*
+	CButton* button = (CButton *)GetDlgItem(IDC_CHECK_MALE);
+
+
+	button = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
+	button->SetCheck(BST_UNCHECKED);
+	*/
+}
+
+
+void AcsSexAgeDialog::OnBnClickedCheckFemale()
+{
+	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
+	button->SetCheck(BST_UNCHECKED);
+}
+
+
+void AcsSexAgeDialog::OnBnClickedCheckMale()
+{
+	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
+	button->SetCheck(BST_UNCHECKED);
+}
