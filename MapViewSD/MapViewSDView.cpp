@@ -1194,7 +1194,9 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						if (this->acsSexAgeDlg->m_ageCat65To66)
 							ageCategories |= ACSSurveyData::T65TO66;		// also 65 to 74
 						if (this->acsSexAgeDlg->m_ageCat75To79)
-							ageCategories |= ACSSurveyData::T75TO79;		// also 74 to 84
+							ageCategories |= ACSSurveyData::T75TO79;		// also 75 to 84
+						if (this->acsSexAgeDlg->m_ageCat80To84)
+							ageCategories |= ACSSurveyData::T80TO84;
 						if (this->acsSexAgeDlg->m_ageCat85AndOver)
 							ageCategories |= ACSSurveyData::T85ANDOVER;
 						if (this->acsSexAgeDlg->m_raceIteration == 0)
@@ -1215,18 +1217,12 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 								ageCategories |= ACSSurveyData::T67TO69;
 							if (this->acsSexAgeDlg->m_ageCat70To74)
 								ageCategories |= ACSSurveyData::T70TO74;
-							if (this->acsSexAgeDlg->m_ageCat80To84)
-								ageCategories |= ACSSurveyData::T80TO84;
+							/*if (this->acsSexAgeDlg->m_ageCat80To84)
+								ageCategories |= ACSSurveyData::T80TO84;*/
 						}
 					}
 
-					int err;
-					
-					if (this->acsSexAgeDlg->m_raceIteration == 0)
-						err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, summaryLevel, geoids, maleRecords, femaleRecords,
-							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
-					else
-						err = ACSSurveyData::ACSSexByAgeRace(pDoc->odbcDB, fipsCode, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration + 1), summaryLevel, geoids, maleRecords, femaleRecords,
+					int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoids, maleRecords, femaleRecords,
 							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
 
 					if (err == 0)
@@ -1254,35 +1250,67 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 							if (this->acsSexAgeDlg->m_ageCat21)
 								headers.push_back(_T("21"));
 							if (this->acsSexAgeDlg->m_ageCat22To24)
-								headers.push_back(_T("22 - 24"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("22 - 24"));
+								else
+									headers.push_back(_T("20 - 24"));
+							}
 							if (this->acsSexAgeDlg->m_ageCat25To29)
 								headers.push_back(_T("25 - 29"));
 							if (this->acsSexAgeDlg->m_ageCat30To34)
 								headers.push_back(_T("30 - 34"));
 							if (this->acsSexAgeDlg->m_ageCat35To39)
-								headers.push_back(_T("35 - 39"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("35 - 39"));
+								else
+									headers.push_back(_T("35 - 44"));
+							}
+
 							if (this->acsSexAgeDlg->m_ageCat40To44)
 								headers.push_back(_T("40 - 44"));
 							if (this->acsSexAgeDlg->m_ageCat45To49)
-								headers.push_back(_T("45 - 49"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("45 - 49"));
+								else
+									headers.push_back(_T("45 - 54"));
+							}
+
 							if (this->acsSexAgeDlg->m_ageCat50To54)
 								headers.push_back(_T("50 - 54"));
 							if (this->acsSexAgeDlg->m_ageCat55To59)
-								headers.push_back(_T("55 - 59"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("55 - 59"));
+								else
+									headers.push_back(_T("55 - 64"));
+							}
 							if (this->acsSexAgeDlg->m_ageCat60To61)
 								headers.push_back(_T("60 - 61"));
 							if (this->acsSexAgeDlg->m_ageCat62To64)
 								headers.push_back(_T("62 - 64"));
 							if (this->acsSexAgeDlg->m_ageCat65To66)
-								headers.push_back(_T("65 - 66"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("65 - 66"));
+								else
+									headers.push_back(_T("65 - 74"));
+							}
 							if (this->acsSexAgeDlg->m_ageCat67To69)
 								headers.push_back(_T("67 - 69"));
 							if (this->acsSexAgeDlg->m_ageCat70To74)
 								headers.push_back(_T("70 - 74"));
 							if (this->acsSexAgeDlg->m_ageCat75To79)
-								headers.push_back(_T("75 - 79"));
+							{
+								if (this->acsSexAgeDlg->m_raceIteration == 0)
+									headers.push_back(_T("75 - 79"));
+								else
+									headers.push_back(_T("75 - 84"));
+							}
 							if (this->acsSexAgeDlg->m_ageCat80To84)
-								headers.push_back(_T("80  84"));
+								headers.push_back(_T("80 - 84"));
 							if (this->acsSexAgeDlg->m_ageCat85AndOver)
 								headers.push_back(_T("85+"));
 						}

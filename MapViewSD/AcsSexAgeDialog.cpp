@@ -88,6 +88,18 @@ void AcsSexAgeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_ALL_RACES, m_raceIteration);
 }
 
+BOOL AcsSexAgeDialog::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	// This is required to get the checkboxes in their correct state
+	if (m_raceIteration == 0)
+		SwitchToAllRaces();
+	else
+		SwitchToRaceIteration();
+
+	return TRUE;  // return TRUE  unless you set the focus to a control
+}
 
 BEGIN_MESSAGE_MAP(AcsSexAgeDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_ALL_RACES, &AcsSexAgeDialog::OnBnClickedAllRaces)
@@ -113,6 +125,9 @@ void AcsSexAgeDialog::SwitchToAllRaces()
 
 	button = GetDlgItem(IDC_21);
 	button->EnableWindow();
+
+	button = GetDlgItem(IDC_22TO24);
+	button->SetWindowText(_T("22 to 24"));
 
 	button = GetDlgItem(IDC_35TO39);
 	button->SetWindowText(_T("35 to 39"));
@@ -144,6 +159,9 @@ void AcsSexAgeDialog::SwitchToAllRaces()
 	button->SetWindowText(_T("75 to 79"));
 
 	button = GetDlgItem(IDC_70TO74);
+	button->EnableWindow();
+
+	button = GetDlgItem(IDC_80TO84);
 	button->EnableWindow();
 }
 
@@ -192,6 +210,9 @@ void AcsSexAgeDialog::SwitchToRaceIteration()
 	button->SetWindowText(_T("75 to 84"));
 
 	button = GetDlgItem(IDC_70TO74);
+	button->EnableWindow(0);
+
+	button = GetDlgItem(IDC_80TO84);
 	button->EnableWindow(0);
 }
 
@@ -274,8 +295,6 @@ void AcsSexAgeDialog::OnBnClickedHispanicLatino()
 		SwitchToRaceIteration();
 	m_raceIteration = 9;
 }
-
-
 
 
 void AcsSexAgeDialog::OnBnClickedCheckCombined()
