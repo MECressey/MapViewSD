@@ -93,9 +93,7 @@ BOOL AcsSexAgeDialog::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// This is required to get the checkboxes in their correct state
-	if (m_raceIteration == 0)
-		SwitchToAllRaces();
-	else
+	if (m_raceIteration != 0)
 		SwitchToRaceIteration();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control

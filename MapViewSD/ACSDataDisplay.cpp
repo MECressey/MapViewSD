@@ -37,7 +37,8 @@ BOOL ACSDataDisplay::OnInitDialog()
 	m_Grid.SetImageList(&m_ImageList);
 
 	m_Grid.SetVirtualMode(FALSE);
-	m_Grid.SetColumnResize(TRUE);
+	//m_Grid.SetColumnResize(TRUE);
+	m_Grid.SetAutoSizeStyle();
 
 	auto it = m_rows.begin();
 	int rowCount = m_rows.size() /*it->second.size()*/ + 1 /* header row */;

@@ -1086,399 +1086,474 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
 
-		ASSERT(doc->db != 0);
-		if (doc->db->IsOpen())
+		if (this->pt.x == point.x && this->pt.y == point.y)   // Point select
 		{
-			CDC* dc = GetDC();
-			HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
-			ObjHandle dbo;
-			GeoDB::Search ss;
-
-			// Note - testing different search methods
-			//doc->db->Init(range, &ss);
-			/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
-			DbSearchByPt so(*doc->db);
-			//DbSearchByRange so(*doc->db);
-			DbSearch::Found fo;
-
-			//so.Init(range);
-			so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
-			if (so.FindBest(&fo) == 0)/**/
+			ASSERT(doc->db != 0);
+			if (doc->db->IsOpen())
 			{
-				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
-				GeoDB::SpatialClass sc = sObj->IsA();
-				switch (sc)
+				CDC* dc = GetDC();
+				HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+				ObjHandle dbo;
+				GeoDB::Search ss;
+
+				// Note - testing different search methods
+				//doc->db->Init(range, &ss);
+				/*if (doc->db->GetNext(&ss, &dbo) == 0)*/
+				DbSearchByPt so(*doc->db);
+				//DbSearchByRange so(*doc->db);
+				DbSearch::Found fo;
+
+				//so.Init(range);
+				so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
+				if (so.FindBest(&fo) == 0)/**/
 				{
-				case GeoDB::POINT:
-				{
-					if (sObj->getClassCode() == DB_POINT)
+					GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+					GeoDB::SpatialClass sc = sObj->IsA();
+					switch (sc)
 					{
-						TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
-						DisplayInfo(feat);
-					}
-					break;
-				}
-				case GeoDB::AREA:
-				{
-					TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
-					CMapViewSDDoc* pDoc = GetDocument();
-
-					DisplayInfo(poly);
-					if (!this->doACSAgeSex)
-						break;
-
-					ACSSurveyData::SummaryLevels summaryLevel;
-					switch (poly->userCode)
+					case GeoDB::POINT:
 					{
-					default:
-						summaryLevel = (ACSSurveyData::SummaryLevels)0;
-						break;
-
-					case TigerDB::TAB_CountyFeature:
-						summaryLevel = ACSSurveyData::STATE_COUNTY;
-						break;
-
-					case TigerDB::TAB_CensusTract:
-						summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
-						break;
-
-					case TigerDB::TAB_CensusBlockGroup:
-						summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
-						break;
-					}
-
-					std::vector<int> geoids;
-					std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
-						femaleRecords;
-
-					geoids.push_back(poly->userId);
-					ACSSurveyData::StateFIPSCodes fipsCode = ACSSurveyData::ME;
-
-					bool returnMOS = false;
-					int sex = 0;
-					if (this->acsSexAgeDlg->m_sexesCombined)
-						sex = ACSSurveyData::BOTH_SEXES;
-					else {
-						if (this->acsSexAgeDlg->m_maleSex)
-							sex |= ACSSurveyData::MALE;
-						if (this->acsSexAgeDlg->m_maleSex)
-							sex |= ACSSurveyData::FEMALE;
-					}
-					int ageCategories = 0;
-					if (this->acsSexAgeDlg->m_ageCatTotals)
-						ageCategories = ACSSurveyData::TOTAL_POPULATION;
-					else
-					{
-						if (this->acsSexAgeDlg->m_ageCatUnder5)
-							ageCategories |= ACSSurveyData::TUNDER5;
-						if (this->acsSexAgeDlg->m_ageCat5To9)
-							ageCategories |= ACSSurveyData::T5TO9;
-						if (this->acsSexAgeDlg->m_ageCat10To14)
-							ageCategories |= ACSSurveyData::T10TO14;
-						if (this->acsSexAgeDlg->m_ageCat15To17)
-							ageCategories |= ACSSurveyData::T15TO17;
-						if (this->acsSexAgeDlg->m_ageCat18To19)
-							ageCategories |= ACSSurveyData::T18TO19;
-						if (this->acsSexAgeDlg->m_ageCat22To24)
-							ageCategories |= ACSSurveyData::T22TO24;		// Also 20 to 24
-						if (this->acsSexAgeDlg->m_ageCat25To29)
-							ageCategories |= ACSSurveyData::T25TO29;
-						if (this->acsSexAgeDlg->m_ageCat30To34)
-							ageCategories |= ACSSurveyData::T30TO34;
-						if (this->acsSexAgeDlg->m_ageCat35To39)
-							ageCategories |= ACSSurveyData::T35TO39;		// Also 35 to 44
-						if (this->acsSexAgeDlg->m_ageCat45To49)
-							ageCategories |= ACSSurveyData::T45TO49;		// also 45 to 54
-						if (this->acsSexAgeDlg->m_ageCat55To59)
-							ageCategories |= ACSSurveyData::T55TO59;		// also 55 to 64
-						if (this->acsSexAgeDlg->m_ageCat65To66)
-							ageCategories |= ACSSurveyData::T65TO66;		// also 65 to 74
-						if (this->acsSexAgeDlg->m_ageCat75To79)
-							ageCategories |= ACSSurveyData::T75TO79;		// also 75 to 84
-						if (this->acsSexAgeDlg->m_ageCat80To84)
-							ageCategories |= ACSSurveyData::T80TO84;
-						if (this->acsSexAgeDlg->m_ageCat85AndOver)
-							ageCategories |= ACSSurveyData::T85ANDOVER;
-						if (this->acsSexAgeDlg->m_raceIteration == 0)
+						if (sObj->getClassCode() == DB_POINT)
 						{
-							if (this->acsSexAgeDlg->m_ageCat20)
-								ageCategories |= ACSSurveyData::T20;
-							if (this->acsSexAgeDlg->m_ageCat21)
-								ageCategories |= ACSSurveyData::T21;
-							if (this->acsSexAgeDlg->m_ageCat40To44)
-								ageCategories |= ACSSurveyData::T40TO44;
-							if (this->acsSexAgeDlg->m_ageCat50To54)
-								ageCategories |= ACSSurveyData::T50TO54;
-							if (this->acsSexAgeDlg->m_ageCat60To61)
-								ageCategories |= ACSSurveyData::T60TO61;
-							if (this->acsSexAgeDlg->m_ageCat62To64)
-								ageCategories |= ACSSurveyData::T62TO64;
-							if (this->acsSexAgeDlg->m_ageCat67To69)
-								ageCategories |= ACSSurveyData::T67TO69;
-							if (this->acsSexAgeDlg->m_ageCat70To74)
-								ageCategories |= ACSSurveyData::T70TO74;
-							/*if (this->acsSexAgeDlg->m_ageCat80To84)
-								ageCategories |= ACSSurveyData::T80TO84;*/
+							TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
+							DisplayInfo(feat);
 						}
+						break;
 					}
-
-					int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoids, maleRecords, femaleRecords,
-							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
-
-					if (err == 0)
+					case GeoDB::AREA:
 					{
-						std::vector<CString> headers;
-						headers.push_back(_T("Geo ID"));
-						if (sex != ACSSurveyData::BOTH_SEXES)
-							headers.push_back(_T("Sex"));
+						TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+						CMapViewSDDoc* pDoc = GetDocument();
+
+						DisplayInfo(poly);
+						if (this->doACSAgeSex)
+						{
+							std::vector<int> geoids;
+							geoids.push_back(poly->userId);
+							doACSAgeAndSex(pDoc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, ACSSurveyData::ME, geoids);
+						//	break;
+						}
+
+#ifdef SAVE_FOR_NOW
+						ACSSurveyData::SummaryLevels summaryLevel;
+						switch (poly->userCode)
+						{
+						default:
+							summaryLevel = (ACSSurveyData::SummaryLevels)0;
+							break;
+
+						case TigerDB::TAB_CountyFeature:
+							summaryLevel = ACSSurveyData::STATE_COUNTY;
+							break;
+
+						case TigerDB::TAB_CensusTract:
+							summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+							break;
+
+						case TigerDB::TAB_CensusBlockGroup:
+							summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
+							break;
+						}
+
+						std::vector<int> geoids;
+						std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
+							femaleRecords;
+
+						geoids.push_back(poly->userId);
+						ACSSurveyData::StateFIPSCodes fipsCode = ACSSurveyData::ME;
+
+						bool returnMOS = false;
+						int sex = 0;
+						if (this->acsSexAgeDlg->m_sexesCombined)
+							sex = ACSSurveyData::BOTH_SEXES;
+						else {
+							if (this->acsSexAgeDlg->m_maleSex)
+								sex |= ACSSurveyData::MALE;
+							if (this->acsSexAgeDlg->m_maleSex)
+								sex |= ACSSurveyData::FEMALE;
+						}
+						int ageCategories = 0;
 						if (this->acsSexAgeDlg->m_ageCatTotals)
-							headers.push_back(_T("Totals"));
+							ageCategories = ACSSurveyData::TOTAL_POPULATION;
 						else
 						{
 							if (this->acsSexAgeDlg->m_ageCatUnder5)
-								headers.push_back(_T("Under 5"));
+								ageCategories |= ACSSurveyData::TUNDER5;
 							if (this->acsSexAgeDlg->m_ageCat5To9)
-								headers.push_back(_T("5 - 9"));
+								ageCategories |= ACSSurveyData::T5TO9;
 							if (this->acsSexAgeDlg->m_ageCat10To14)
-								headers.push_back(_T("10 - 14"));
+								ageCategories |= ACSSurveyData::T10TO14;
 							if (this->acsSexAgeDlg->m_ageCat15To17)
-								headers.push_back(_T("15 - 17"));
+								ageCategories |= ACSSurveyData::T15TO17;
 							if (this->acsSexAgeDlg->m_ageCat18To19)
-								headers.push_back(_T("18 - 19"));
-							if (this->acsSexAgeDlg->m_ageCat20)
-								headers.push_back(_T("20"));
-							if (this->acsSexAgeDlg->m_ageCat21)
-								headers.push_back(_T("21"));
+								ageCategories |= ACSSurveyData::T18TO19;
 							if (this->acsSexAgeDlg->m_ageCat22To24)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("22 - 24"));
-								else
-									headers.push_back(_T("20 - 24"));
-							}
+								ageCategories |= ACSSurveyData::T22TO24;		// Also 20 to 24
 							if (this->acsSexAgeDlg->m_ageCat25To29)
-								headers.push_back(_T("25 - 29"));
+								ageCategories |= ACSSurveyData::T25TO29;
 							if (this->acsSexAgeDlg->m_ageCat30To34)
-								headers.push_back(_T("30 - 34"));
+								ageCategories |= ACSSurveyData::T30TO34;
 							if (this->acsSexAgeDlg->m_ageCat35To39)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("35 - 39"));
-								else
-									headers.push_back(_T("35 - 44"));
-							}
-
-							if (this->acsSexAgeDlg->m_ageCat40To44)
-								headers.push_back(_T("40 - 44"));
+								ageCategories |= ACSSurveyData::T35TO39;		// Also 35 to 44
 							if (this->acsSexAgeDlg->m_ageCat45To49)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("45 - 49"));
-								else
-									headers.push_back(_T("45 - 54"));
-							}
-
-							if (this->acsSexAgeDlg->m_ageCat50To54)
-								headers.push_back(_T("50 - 54"));
+								ageCategories |= ACSSurveyData::T45TO49;		// also 45 to 54
 							if (this->acsSexAgeDlg->m_ageCat55To59)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("55 - 59"));
-								else
-									headers.push_back(_T("55 - 64"));
-							}
-							if (this->acsSexAgeDlg->m_ageCat60To61)
-								headers.push_back(_T("60 - 61"));
-							if (this->acsSexAgeDlg->m_ageCat62To64)
-								headers.push_back(_T("62 - 64"));
+								ageCategories |= ACSSurveyData::T55TO59;		// also 55 to 64
 							if (this->acsSexAgeDlg->m_ageCat65To66)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("65 - 66"));
-								else
-									headers.push_back(_T("65 - 74"));
-							}
-							if (this->acsSexAgeDlg->m_ageCat67To69)
-								headers.push_back(_T("67 - 69"));
-							if (this->acsSexAgeDlg->m_ageCat70To74)
-								headers.push_back(_T("70 - 74"));
+								ageCategories |= ACSSurveyData::T65TO66;		// also 65 to 74
 							if (this->acsSexAgeDlg->m_ageCat75To79)
-							{
-								if (this->acsSexAgeDlg->m_raceIteration == 0)
-									headers.push_back(_T("75 - 79"));
-								else
-									headers.push_back(_T("75 - 84"));
-							}
+								ageCategories |= ACSSurveyData::T75TO79;		// also 75 to 84
 							if (this->acsSexAgeDlg->m_ageCat80To84)
-								headers.push_back(_T("80 - 84"));
+								ageCategories |= ACSSurveyData::T80TO84;
 							if (this->acsSexAgeDlg->m_ageCat85AndOver)
-								headers.push_back(_T("85+"));
+								ageCategories |= ACSSurveyData::T85ANDOVER;
+							if (this->acsSexAgeDlg->m_raceIteration == 0)
+							{
+								if (this->acsSexAgeDlg->m_ageCat20)
+									ageCategories |= ACSSurveyData::T20;
+								if (this->acsSexAgeDlg->m_ageCat21)
+									ageCategories |= ACSSurveyData::T21;
+								if (this->acsSexAgeDlg->m_ageCat40To44)
+									ageCategories |= ACSSurveyData::T40TO44;
+								if (this->acsSexAgeDlg->m_ageCat50To54)
+									ageCategories |= ACSSurveyData::T50TO54;
+								if (this->acsSexAgeDlg->m_ageCat60To61)
+									ageCategories |= ACSSurveyData::T60TO61;
+								if (this->acsSexAgeDlg->m_ageCat62To64)
+									ageCategories |= ACSSurveyData::T62TO64;
+								if (this->acsSexAgeDlg->m_ageCat67To69)
+									ageCategories |= ACSSurveyData::T67TO69;
+								if (this->acsSexAgeDlg->m_ageCat70To74)
+									ageCategories |= ACSSurveyData::T70TO74;
+								/*if (this->acsSexAgeDlg->m_ageCat80To84)
+									ageCategories |= ACSSurveyData::T80TO84;*/
+							}
 						}
 
-						std::multimap<int, std::vector<int>> data;
+						int err = ACSSurveyData::ACSSexByAge(pDoc->odbcDB, fipsCode, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoids, maleRecords, femaleRecords,
+							returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
 
-						for (auto it = maleRecords.begin(); it != maleRecords.end(); it++)
+						if (err == 0)
 						{
-							std::vector<int> list;
+							std::vector<CString> headers;
+							headers.push_back(_T("Geo ID"));
 							if (sex != ACSSurveyData::BOTH_SEXES)
-								list.push_back(0);  // Male
-							std::vector<ACSSurveyData::AgeRec>::iterator it2;
-							for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-							{
-								list.push_back(it2->total);
-							}
-
-							data.insert({ it->first, list });
-						}
-
-						for (auto it = femaleRecords.begin(); it != femaleRecords.end(); it++)
-						{
-							std::vector<int> list;
-							if (sex != ACSSurveyData::BOTH_SEXES)
-								list.push_back(1);  // Female
-							std::vector<ACSSurveyData::AgeRec>::iterator it2;
-							for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-							{
-								list.push_back(it2->total);
-							}
-
-							data.insert({ it->first, list });
-						}
-						/*
-						data.push_back(poly->userId);
-
-						auto it = maleRecords.find(poly->userId);
-						assert(it != maleRecords.end());
-						std::vector<ACSSurveyData::AgeRec>::iterator it2;
-						it2 = it->second.begin();
-						data.push_back(it2->total);
-						assert(headers.size() == data.size());
-*/
-						ACSDataDisplay acsDialog(headers, data, this);
-						acsDialog.DoModal();
-					}
-
-					break;
-				}
-				case GeoDB::LINE:
-				{
-					TigerDB::Chain* line = (TigerDB::Chain*)sObj;
-					ASSERT(line != 0);
-					CPen* pen;
-					int code = line->userCode/*GetCode()*/;
-
-					if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
-					{
-						//pen = &this->hPen;
-						int nPts = (int)line->getNumPts();
-						line->Get(this->pts);
-
-						CPen* oldPen = dc->SelectObject(pen);
-						int old_rop2 = dc->SetROP2(R2_XORPEN);
-
-						if (this->doThining)
-							nPts = TrendLine(this->pts, nPts, this->tDist);
-						DrawLine(*this->mapWin, dc, this->pts, nPts, true);
-						DisplayInfo(line);
-
-#if defined(DO_SHORT_PATH)
-						if (this->doShortPath)
-						{
-							double distSq;
-							XY_t tempPt;
-							int dir;
-
-							distSq = fo.pt.DistSqr(this->pts[0]);
-							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
-							{
-								tempPt = this->pts[0];
-								dir = -1;
-							}
+								headers.push_back(_T("Sex"));
+							if (this->acsSexAgeDlg->m_ageCatTotals)
+								headers.push_back(_T("Totals"));
 							else
 							{
-								tempPt = this->pts[nPts - 1];
-								dir = 1;
-							}
-
-							if (++this->pickCount == 1)
-							{
-								this->startId = line->dbAddress();
-								this->startPt = tempPt;
-								this->startDir = dir;
-								this->startDist = line->Length();
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
-							}
-							else if (this->pickCount == 2)
-							{
-								ShortPath sPath;
-								ObjHandle handle;
-								double dist;
-								int nIds;
-
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
-
-								int err = doc->db->Read(this->startId, handle);
-								assert(err == 0);
-								line = (TigerDB::Chain*)handle.Lock();
-								XY_t sPt, ePt;
-								line->getNodes(&sPt, &ePt);
-								double length = line->Length();
-								handle.Unlock();
-								double d1 = this->pts[0].DistSqr(sPt),
-											 d2 = this->pts[0].DistSqr(ePt);
-								if (d1 < d2)
-									dir = 1;
-								else
-									dir = 0;
-								sPath.Init(handle, fo.handle, 0, this->startPt);
-								sPath.putEdge(handle, dir, length);
-	
-								ShortPath::filter_t f1,
-									f2,
-									f3;
-								std::vector<long> edgeIds;
-
-								//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
-								//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-								f2.push_back(TigerDB::ROAD_SecondaryRoad);
-								f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
-								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
+								if (this->acsSexAgeDlg->m_ageCatUnder5)
+									headers.push_back(_T("Under 5"));
+								if (this->acsSexAgeDlg->m_ageCat5To9)
+									headers.push_back(_T("5 - 9"));
+								if (this->acsSexAgeDlg->m_ageCat10To14)
+									headers.push_back(_T("10 - 14"));
+								if (this->acsSexAgeDlg->m_ageCat15To17)
+									headers.push_back(_T("15 - 17"));
+								if (this->acsSexAgeDlg->m_ageCat18To19)
+									headers.push_back(_T("18 - 19"));
+								if (this->acsSexAgeDlg->m_ageCat20)
+									headers.push_back(_T("20"));
+								if (this->acsSexAgeDlg->m_ageCat21)
+									headers.push_back(_T("21"));
+								if (this->acsSexAgeDlg->m_ageCat22To24)
 								{
-									for (int i = 0; i < edgeIds.size(); i++)
-									{
-										DbObject::Id id = edgeIds[i];
-										if (id < 0)
-											id = -id;
-										err = doc->db->Read(id, handle);
-										line = (TigerDB::Chain*)handle.Lock();
-										nPts = (int)line->getNumPts();
-										line->Get(this->pts);
-										DrawLine(*this->mapWin, dc, this->pts, nPts);
-										handle.Unlock();
-									}
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("22 - 24"));
+									else
+										headers.push_back(_T("20 - 24"));
+								}
+								if (this->acsSexAgeDlg->m_ageCat25To29)
+									headers.push_back(_T("25 - 29"));
+								if (this->acsSexAgeDlg->m_ageCat30To34)
+									headers.push_back(_T("30 - 34"));
+								if (this->acsSexAgeDlg->m_ageCat35To39)
+								{
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("35 - 39"));
+									else
+										headers.push_back(_T("35 - 44"));
 								}
 
-								this->pickCount = 0;
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
+								if (this->acsSexAgeDlg->m_ageCat40To44)
+									headers.push_back(_T("40 - 44"));
+								if (this->acsSexAgeDlg->m_ageCat45To49)
+								{
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("45 - 49"));
+									else
+										headers.push_back(_T("45 - 54"));
+								}
+
+								if (this->acsSexAgeDlg->m_ageCat50To54)
+									headers.push_back(_T("50 - 54"));
+								if (this->acsSexAgeDlg->m_ageCat55To59)
+								{
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("55 - 59"));
+									else
+										headers.push_back(_T("55 - 64"));
+								}
+								if (this->acsSexAgeDlg->m_ageCat60To61)
+									headers.push_back(_T("60 - 61"));
+								if (this->acsSexAgeDlg->m_ageCat62To64)
+									headers.push_back(_T("62 - 64"));
+								if (this->acsSexAgeDlg->m_ageCat65To66)
+								{
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("65 - 66"));
+									else
+										headers.push_back(_T("65 - 74"));
+								}
+								if (this->acsSexAgeDlg->m_ageCat67To69)
+									headers.push_back(_T("67 - 69"));
+								if (this->acsSexAgeDlg->m_ageCat70To74)
+									headers.push_back(_T("70 - 74"));
+								if (this->acsSexAgeDlg->m_ageCat75To79)
+								{
+									if (this->acsSexAgeDlg->m_raceIteration == 0)
+										headers.push_back(_T("75 - 79"));
+									else
+										headers.push_back(_T("75 - 84"));
+								}
+								if (this->acsSexAgeDlg->m_ageCat80To84)
+									headers.push_back(_T("80 - 84"));
+								if (this->acsSexAgeDlg->m_ageCat85AndOver)
+									headers.push_back(_T("85+"));
 							}
+
+							std::multimap<int, std::vector<int>> data;
+
+							for (auto it = maleRecords.begin(); it != maleRecords.end(); it++)
+							{
+								std::vector<int> list;
+								if (sex != ACSSurveyData::BOTH_SEXES)
+									list.push_back(0);  // Male
+								std::vector<ACSSurveyData::AgeRec>::iterator it2;
+								for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+								{
+									list.push_back(it2->total);
+								}
+
+								data.insert({ it->first, list });
+							}
+
+							for (auto it = femaleRecords.begin(); it != femaleRecords.end(); it++)
+							{
+								std::vector<int> list;
+								if (sex != ACSSurveyData::BOTH_SEXES)
+									list.push_back(1);  // Female
+								std::vector<ACSSurveyData::AgeRec>::iterator it2;
+								for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+								{
+									list.push_back(it2->total);
+								}
+
+								data.insert({ it->first, list });
+							}
+							/*
+							data.push_back(poly->userId);
+
+							auto it = maleRecords.find(poly->userId);
+							assert(it != maleRecords.end());
+							std::vector<ACSSurveyData::AgeRec>::iterator it2;
+							it2 = it->second.begin();
+							data.push_back(it2->total);
+							assert(headers.size() == data.size());
+	*/
+							ACSDataDisplay acsDialog(headers, data, this);
+							acsDialog.DoModal();
 						}
 #endif
-						dc->SelectObject(oldPen);
-						dc->SetROP2(old_rop2);
+						break;
 					}
-					break;
+					case GeoDB::LINE:
+					{
+						TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+						ASSERT(line != 0);
+						CPen* pen;
+						int code = line->userCode/*GetCode()*/;
+
+						if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
+						{
+							//pen = &this->hPen;
+							int nPts = (int)line->getNumPts();
+							line->Get(this->pts);
+
+							CPen* oldPen = dc->SelectObject(pen);
+							int old_rop2 = dc->SetROP2(R2_XORPEN);
+
+							if (this->doThining)
+								nPts = TrendLine(this->pts, nPts, this->tDist);
+							DrawLine(*this->mapWin, dc, this->pts, nPts, true);
+							DisplayInfo(line);
+
+	#if defined(DO_SHORT_PATH)
+							if (this->doShortPath)
+							{
+								double distSq;
+								XY_t tempPt;
+								int dir;
+
+								distSq = fo.pt.DistSqr(this->pts[0]);
+								if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
+								{
+									tempPt = this->pts[0];
+									dir = -1;
+								}
+								else
+								{
+									tempPt = this->pts[nPts - 1];
+									dir = 1;
+								}
+
+								if (++this->pickCount == 1)
+								{
+									this->startId = line->dbAddress();
+									this->startPt = tempPt;
+									this->startDir = dir;
+									this->startDist = line->Length();
+									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
+								}
+								else if (this->pickCount == 2)
+								{
+									ShortPath sPath;
+									ObjHandle handle;
+									double dist;
+									int nIds;
+
+									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
+
+									int err = doc->db->Read(this->startId, handle);
+									assert(err == 0);
+									line = (TigerDB::Chain*)handle.Lock();
+									XY_t sPt, ePt;
+									line->getNodes(&sPt, &ePt);
+									double length = line->Length();
+									handle.Unlock();
+									double d1 = this->pts[0].DistSqr(sPt),
+										d2 = this->pts[0].DistSqr(ePt);
+									if (d1 < d2)
+										dir = 1;
+									else
+										dir = 0;
+									sPath.Init(handle, fo.handle, 0, this->startPt);
+									sPath.putEdge(handle, dir, length);
+
+									ShortPath::filter_t f1,
+										f2,
+										f3;
+									std::vector<long> edgeIds;
+
+									//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
+									//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+									f2.push_back(TigerDB::ROAD_SecondaryRoad);
+									f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
+									nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
+									{
+										for (int i = 0; i < edgeIds.size(); i++)
+										{
+											DbObject::Id id = edgeIds[i];
+											if (id < 0)
+												id = -id;
+											err = doc->db->Read(id, handle);
+											line = (TigerDB::Chain*)handle.Lock();
+											nPts = (int)line->getNumPts();
+											line->Get(this->pts);
+											DrawLine(*this->mapWin, dc, this->pts, nPts);
+											handle.Unlock();
+										}
+									}
+
+									this->pickCount = 0;
+									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
+								}
+							}
+	#endif
+							dc->SelectObject(oldPen);
+							dc->SetROP2(old_rop2);
+						}
+						break;
 					}
+					}
+
+					fo.handle.Unlock();
 				}
+				SetCursor(cursor);
+				ReleaseDC(dc);
+			}
+		}
+		else     // Range select
+		{
+			pt0.x = (double)point.x;
+			pt0.y = (double)point.y;
+			this->mapWin->Reverse(&pt0, pt0);
+			range.Add(pt0);
+
+			CDC* dc = GetDC();
+
+			DbSearchByRange so(*doc->db);
+			DbSearch::Found fo;
+			std::vector<int> geoids;
+			TigerDB::MAFTCCodes polyCode;
+
+			GeoDB::searchClasses_t polyClass;
+			polyClass.set(DB_POLY);
+			so.Init(range, polyClass, this);
+
+			while (so.FindNext(&fo) == 0)
+			{
+				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+				GeoDB::SpatialClass sc = spatialObj->IsA();
+				assert(sc == GeoDB::AREA);
+				GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
+
+				geoids.push_back(poly->userId);
+				polyCode = (TigerDB::MAFTCCodes)poly->userCode;
+				int nPts = GeoDB::Poly::getPts(fo.handle, pts);
+
+				//CPen* oldPen = dc->SelectObject(&this->pens[2]);
+				//int old_rop2 = dc->SetROP2(R2_XORPEN);
+				dc->SelectObject(&this->pens[PRIMARY_ROAD]);
+
+				DrawLine(*this->mapWin, dc, this->pts, nPts);
+
+				//dc->SelectObject(oldPen);
+				//dc->SetROP2(old_rop2);
 
 				fo.handle.Unlock();
 			}
-			SetCursor(cursor);
+
+			RemoveRectangle(dc);
+
+			if (this->doACSAgeSex)
+			{
+				doACSAgeAndSex(doc->odbcDB, polyCode, ACSSurveyData::ME, geoids);
+			}
 			ReleaseDC(dc);
 		}
 	}
 
 	this->doPick = FALSE;
 	CView::OnRButtonUp(nFlags, point);
+}
+
+void CMapViewSDView::RemoveRectangle(CDC* dc)
+{
+	this->brush.Attach(GetStockObject(NULL_BRUSH));
+
+	CPen* old_pen = (CPen*)dc->SelectStockObject(WHITE_PEN /*&this->pen*/);
+	CBrush* old_brush = dc->SelectObject(&this->brush);
+	int old_rop2 = dc->SetROP2(R2_XORPEN);
+
+	if (!this->rect.IsRectEmpty())
+		dc->Rectangle(this->rect);
+
+	dc->SelectObject(old_pen);
+	dc->SelectObject(old_brush);
+	dc->SetROP2(old_rop2);
+	this->brush.Detach();
 }
 
 void CMapViewSDView::OnMouseMove(UINT nFlags, CPoint point)
@@ -2372,4 +2447,240 @@ void CMapViewSDView::OnUpdateAcsSex(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(this->mapWin != 0);
 	pCmdUI->SetCheck(this->doACSAgeSex);
+}
+
+int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyCode, ACSSurveyData::StateFIPSCodes stateFips, std::vector<int> &geoIDs)
+{
+	ACSSurveyData::SummaryLevels summaryLevel;
+	switch (polyCode)
+	{
+	default:
+		summaryLevel = (ACSSurveyData::SummaryLevels)0;
+		break;
+
+	case TigerDB::TAB_CountyFeature:
+		summaryLevel = ACSSurveyData::STATE_COUNTY;
+		break;
+
+	case TigerDB::TAB_CensusTract:
+		summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+		break;
+
+	case TigerDB::TAB_CensusBlockGroup:
+		summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
+		break;
+	}
+
+	std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
+		femaleRecords;
+
+
+	//ACSSurveyData::StateFIPSCodes fipsCode = ACSSurveyData::ME;
+
+	bool returnMOS = false;
+	int sex = 0;
+	if (this->acsSexAgeDlg->m_sexesCombined)
+		sex = ACSSurveyData::BOTH_SEXES;
+	else {
+		if (this->acsSexAgeDlg->m_maleSex)
+			sex |= ACSSurveyData::MALE;
+		if (this->acsSexAgeDlg->m_maleSex)
+			sex |= ACSSurveyData::FEMALE;
+	}
+	int ageCategories = 0;
+	if (this->acsSexAgeDlg->m_ageCatTotals)
+		ageCategories = ACSSurveyData::TOTAL_POPULATION;
+	else
+	{
+		if (this->acsSexAgeDlg->m_ageCatUnder5)
+			ageCategories |= ACSSurveyData::TUNDER5;
+		if (this->acsSexAgeDlg->m_ageCat5To9)
+			ageCategories |= ACSSurveyData::T5TO9;
+		if (this->acsSexAgeDlg->m_ageCat10To14)
+			ageCategories |= ACSSurveyData::T10TO14;
+		if (this->acsSexAgeDlg->m_ageCat15To17)
+			ageCategories |= ACSSurveyData::T15TO17;
+		if (this->acsSexAgeDlg->m_ageCat18To19)
+			ageCategories |= ACSSurveyData::T18TO19;
+		if (this->acsSexAgeDlg->m_ageCat22To24)
+			ageCategories |= ACSSurveyData::T22TO24;		// Also 20 to 24
+		if (this->acsSexAgeDlg->m_ageCat25To29)
+			ageCategories |= ACSSurveyData::T25TO29;
+		if (this->acsSexAgeDlg->m_ageCat30To34)
+			ageCategories |= ACSSurveyData::T30TO34;
+		if (this->acsSexAgeDlg->m_ageCat35To39)
+			ageCategories |= ACSSurveyData::T35TO39;		// Also 35 to 44
+		if (this->acsSexAgeDlg->m_ageCat45To49)
+			ageCategories |= ACSSurveyData::T45TO49;		// also 45 to 54
+		if (this->acsSexAgeDlg->m_ageCat55To59)
+			ageCategories |= ACSSurveyData::T55TO59;		// also 55 to 64
+		if (this->acsSexAgeDlg->m_ageCat65To66)
+			ageCategories |= ACSSurveyData::T65TO66;		// also 65 to 74
+		if (this->acsSexAgeDlg->m_ageCat75To79)
+			ageCategories |= ACSSurveyData::T75TO79;		// also 75 to 84
+		if (this->acsSexAgeDlg->m_ageCat80To84)
+			ageCategories |= ACSSurveyData::T80TO84;
+		if (this->acsSexAgeDlg->m_ageCat85AndOver)
+			ageCategories |= ACSSurveyData::T85ANDOVER;
+		if (this->acsSexAgeDlg->m_raceIteration == 0)
+		{
+			if (this->acsSexAgeDlg->m_ageCat20)
+				ageCategories |= ACSSurveyData::T20;
+			if (this->acsSexAgeDlg->m_ageCat21)
+				ageCategories |= ACSSurveyData::T21;
+			if (this->acsSexAgeDlg->m_ageCat40To44)
+				ageCategories |= ACSSurveyData::T40TO44;
+			if (this->acsSexAgeDlg->m_ageCat50To54)
+				ageCategories |= ACSSurveyData::T50TO54;
+			if (this->acsSexAgeDlg->m_ageCat60To61)
+				ageCategories |= ACSSurveyData::T60TO61;
+			if (this->acsSexAgeDlg->m_ageCat62To64)
+				ageCategories |= ACSSurveyData::T62TO64;
+			if (this->acsSexAgeDlg->m_ageCat67To69)
+				ageCategories |= ACSSurveyData::T67TO69;
+			if (this->acsSexAgeDlg->m_ageCat70To74)
+				ageCategories |= ACSSurveyData::T70TO74;
+			/*if (this->acsSexAgeDlg->m_ageCat80To84)
+				ageCategories |= ACSSurveyData::T80TO84;*/
+		}
+	}
+
+	int err = ACSSurveyData::ACSSexByAge(odbcDB, stateFips, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoIDs, maleRecords, femaleRecords,
+		returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
+
+	if (err == 0)
+	{
+		std::vector<CString> headers;
+		headers.push_back(_T("Geo ID"));
+		if (sex != ACSSurveyData::BOTH_SEXES)
+			headers.push_back(_T("Sex"));
+		if (this->acsSexAgeDlg->m_ageCatTotals)
+			headers.push_back(_T("Totals"));
+		else
+		{
+			if (this->acsSexAgeDlg->m_ageCatUnder5)
+				headers.push_back(_T("Under 5"));
+			if (this->acsSexAgeDlg->m_ageCat5To9)
+				headers.push_back(_T("5 - 9"));
+			if (this->acsSexAgeDlg->m_ageCat10To14)
+				headers.push_back(_T("10 - 14"));
+			if (this->acsSexAgeDlg->m_ageCat15To17)
+				headers.push_back(_T("15 - 17"));
+			if (this->acsSexAgeDlg->m_ageCat18To19)
+				headers.push_back(_T("18 - 19"));
+			if (this->acsSexAgeDlg->m_ageCat20)
+				headers.push_back(_T("20"));
+			if (this->acsSexAgeDlg->m_ageCat21)
+				headers.push_back(_T("21"));
+			if (this->acsSexAgeDlg->m_ageCat22To24)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("22 - 24"));
+				else
+					headers.push_back(_T("20 - 24"));
+			}
+			if (this->acsSexAgeDlg->m_ageCat25To29)
+				headers.push_back(_T("25 - 29"));
+			if (this->acsSexAgeDlg->m_ageCat30To34)
+				headers.push_back(_T("30 - 34"));
+			if (this->acsSexAgeDlg->m_ageCat35To39)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("35 - 39"));
+				else
+					headers.push_back(_T("35 - 44"));
+			}
+
+			if (this->acsSexAgeDlg->m_ageCat40To44)
+				headers.push_back(_T("40 - 44"));
+			if (this->acsSexAgeDlg->m_ageCat45To49)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("45 - 49"));
+				else
+					headers.push_back(_T("45 - 54"));
+			}
+
+			if (this->acsSexAgeDlg->m_ageCat50To54)
+				headers.push_back(_T("50 - 54"));
+			if (this->acsSexAgeDlg->m_ageCat55To59)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("55 - 59"));
+				else
+					headers.push_back(_T("55 - 64"));
+			}
+			if (this->acsSexAgeDlg->m_ageCat60To61)
+				headers.push_back(_T("60 - 61"));
+			if (this->acsSexAgeDlg->m_ageCat62To64)
+				headers.push_back(_T("62 - 64"));
+			if (this->acsSexAgeDlg->m_ageCat65To66)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("65 - 66"));
+				else
+					headers.push_back(_T("65 - 74"));
+			}
+			if (this->acsSexAgeDlg->m_ageCat67To69)
+				headers.push_back(_T("67 - 69"));
+			if (this->acsSexAgeDlg->m_ageCat70To74)
+				headers.push_back(_T("70 - 74"));
+			if (this->acsSexAgeDlg->m_ageCat75To79)
+			{
+				if (this->acsSexAgeDlg->m_raceIteration == 0)
+					headers.push_back(_T("75 - 79"));
+				else
+					headers.push_back(_T("75 - 84"));
+			}
+			if (this->acsSexAgeDlg->m_ageCat80To84)
+				headers.push_back(_T("80 - 84"));
+			if (this->acsSexAgeDlg->m_ageCat85AndOver)
+				headers.push_back(_T("85+"));
+		}
+
+		std::multimap<int, std::vector<int>> data;
+
+		for (auto it = maleRecords.begin(); it != maleRecords.end(); it++)
+		{
+			std::vector<int> list;
+			if (sex != ACSSurveyData::BOTH_SEXES)
+				list.push_back(0);  // Male
+			std::vector<ACSSurveyData::AgeRec>::iterator it2;
+			for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+			{
+				list.push_back(it2->total);
+			}
+
+			data.insert({ it->first, list });
+		}
+
+		for (auto it = femaleRecords.begin(); it != femaleRecords.end(); it++)
+		{
+			std::vector<int> list;
+			if (sex != ACSSurveyData::BOTH_SEXES)
+				list.push_back(1);  // Female
+			std::vector<ACSSurveyData::AgeRec>::iterator it2;
+			for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+			{
+				list.push_back(it2->total);
+			}
+
+			data.insert({ it->first, list });
+		}
+		/*
+		data.push_back(poly->userId);
+
+		auto it = maleRecords.find(poly->userId);
+		assert(it != maleRecords.end());
+		std::vector<ACSSurveyData::AgeRec>::iterator it2;
+		it2 = it->second.begin();
+		data.push_back(it2->total);
+		assert(headers.size() == data.size());
+*/
+		ACSDataDisplay acsDialog(headers, data, this);
+		acsDialog.DoModal();
+	}
+
+
+	return 0;
 }

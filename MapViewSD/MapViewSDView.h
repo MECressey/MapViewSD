@@ -20,6 +20,7 @@
 #include "linedlg.h"
 #include "GEODB.HPP"
 #include "AcsSexAgeDialog.h"
+#include "ACSSurveyData.h"
 
 class CMapViewSDView : public CView, protected GeoDB::SpatialObjectFilter
 {
@@ -104,6 +105,9 @@ protected:
 	friend LayerDlg;
 
 	virtual bool filter(GeoDB::SpatialObj *so);  // SpatialObjectFilter
+
+	int doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyCode, ACSSurveyData::StateFIPSCodes stateFips, std::vector<int>& geoIDs);
+	void RemoveRectangle(CDC* dc);
 
 // Generated message map functions
 protected:
