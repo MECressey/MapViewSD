@@ -18,6 +18,7 @@
 #include "range.hpp"
 #include "geodb.hpp"
 #include "tigerdb.hpp"
+#include "ACSSurveyData.h"
 #include <afxdb.h>
 
 class CMapViewSDDoc : public CDocument
@@ -36,6 +37,7 @@ public:
 	int nPts;
 	XY_t points[3000];
 #endif
+	int stateFips;
 
 // Operations
 public:
