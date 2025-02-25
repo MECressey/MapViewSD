@@ -112,7 +112,7 @@ enum LineDisplayTypes
 };
 
 const int BLCK_PEN = 1;
-const int RED_PEN = 0;
+const int RED_PEN = 13;
 const int GREEN_PEN = 7;
 const int BLUE_PEN = 3;
 const int YELLOW_PEN = 4;		// RGB(255,255,0)
@@ -143,6 +143,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->pens[DASH_PEN].CreatePen(PS_DASH, 1, RGB(255, 0, 255));
 	this->pens[DASH_DOT_PEN].CreatePen(PS_DASHDOT, 1, RGB(255, 0, 255));
 	this->pens[DASH_2DOTS_PEN].CreatePen(PS_DASHDOTDOT, 1, RGB(255, 0, 255));
+	this->pens[RED_PEN].CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
 
 	this->hydroBrush.CreateSolidBrush(RGB(0, 145, 255)/*RGB(27, 149, 224)*/);
 	this->parkBrush.CreateSolidBrush(RGB(85, 255, 0)/*RGB(0, 255, 0)*RGB(27, 149, 224)*/);	// ESRI Medium Apple
@@ -701,7 +702,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				assert(err == 0);
 				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)po.Lock();
 				TigerDB::Polygon* poly = (TigerDB::Polygon *)spatialObj;
-				CBrush* brush;
+				DrawPoly(pDC, poly, po);
+				/*CBrush* brush;
 				if ((brush = this->GetBrush(poly->userCode)) != 0)
 				{
 					XY_t cen = poly->getCentroid();
@@ -728,7 +730,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						pDC->TextOut(cPt.x, cPt.y, str);
 						pDC->SelectObject(def_font);
 					}
-				}
+				}*/
 				po.Unlock();
 			}
 			// Draw the hydro last to cover up any polygon extending into water and to lay water down over other polygons
@@ -913,6 +915,37 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 	SetCursor(cursor);
 }
 
+void CMapViewSDView::DrawPoly(CDC* pDC, TigerDB::Polygon* poly, ObjHandle &po)
+{
+	CBrush* brush;
+	if ((brush = this->GetBrush(poly->userCode)) != 0)
+	{
+		XY_t cen = poly->getCentroid();
+		int nPts = GeoDB::Poly::getPts(po, this->pts);
+		std::string name = poly->GetName();
+		if (poly->getArea() < 0.0)
+			brush = &this->isleBrush;
+
+		pDC->SelectObject(brush);
+		if (doThining)
+			nPts = TrendLine(this->pts, nPts, this->tDist);
+		DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+		XY_t pt;
+		CPoint cPt;
+		this->mapWin->Forward(&pt, cen);
+		cPt.x = (int)pt.x;
+		cPt.y = (int)pt.y;
+
+		if (!name.empty() && (name != "Hydro" && name != "Island"))
+		{
+			CString str(name.c_str());
+			CFont* def_font = pDC->SelectObject(&this->font);
+			pDC->TextOut(cPt.x, cPt.y, str);
+			pDC->SelectObject(def_font);
+		}
+	}
+}
+
 void CMapViewSDView::DoPan(double horizontal, double vertical)
 {
 	if (this->mapWin != 0)
@@ -1080,18 +1113,50 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		Range2D range;
 
 		CMainFrame* frame = (CMainFrame*)AfxGetApp()->m_pMainWnd;
+		CDC* dc = GetDC();
 
 		pt0.x = (double)this->pt.x;
 		pt0.y = (double)this->pt.y;
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
 
+		if (!this->selectionIDs.empty())
+		{
+			for (int i = 0; i < this->selectionIDs.size(); i++)
+			{
+				ObjHandle oh;
+				int err = doc->db->Read(this->selectionIDs[i], oh);
+				assert(err == 0);
+				GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
+				GeoDB::SpatialClass sc = obj->IsA();
+				switch (sc)
+				{
+				case GeoDB::AREA:
+				{
+					TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
+					DrawPoly(dc, poly, oh);
+					break;
+				}
+				case GeoDB::LINE:
+				{
+					TigerDB::Chain* line = (TigerDB::Chain*)obj;
+
+					break;
+				}
+				default:
+					assert(false);
+					break;
+				}
+				oh.Unlock();
+			}
+			this->selectionIDs.clear();
+		}
+
 		if (this->pt.x == point.x && this->pt.y == point.y)   // Point select
 		{
 			ASSERT(doc->db != 0);
 			if (doc->db->IsOpen())
 			{
-				CDC* dc = GetDC();
 				HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 				ObjHandle dbo;
 				GeoDB::Search ss;
@@ -1104,6 +1169,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				DbSearch::Found fo;
 
 				//so.Init(range);
+
 				so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
 				if (so.FindBest(&fo) == 0)/**/
 				{
@@ -1124,15 +1190,30 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					{
 						TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
 
+						CPen* oldPen = dc->SelectObject(&this->pens[RED_PEN]);
+						/*if (!this->geoIDs.empty())
+						{
+							int old_rop2 = dc->SetROP2(R2_XORPEN);
+						}*/
+
+						int nPts = GeoDB::Poly::getPts(fo.handle, pts);
+						DrawLine(*this->mapWin, dc, this->pts, nPts);
 						DisplayInfo(poly);
+						this->selectionIDs.push_back(poly->dbAddress());
 						if (this->doACSAgeSex)
 						{
-							std::vector<int> geoids;
-							geoids.push_back(poly->userId);
+							std::vector<int> geoIDs;
+							/*if (!this->geoIDs.empty())
+							{
+								this->geoIDs.clear();
+							}*/
+							geoIDs.push_back(poly->userId);
+
 							assert(doc->stateFips != 0);
-							doACSAgeAndSex(doc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoids);
+							doACSAgeAndSex(doc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
 						//	break;
 						}
+						dc->SelectObject(oldPen);
 						break;
 					}
 					case GeoDB::LINE:
@@ -1248,7 +1329,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 					fo.handle.Unlock();
 				}
 				SetCursor(cursor);
-				ReleaseDC(dc);
+				//ReleaseDC(dc);
 			}
 		}
 		else     // Range select
@@ -1258,35 +1339,46 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			this->mapWin->Reverse(&pt0, pt0);
 			range.Add(pt0);
 
-			CDC* dc = GetDC();
+			//CDC* dc = GetDC();
 
 			DbSearchByRange so(*doc->db);
 			DbSearch::Found fo;
-			std::vector<int> geoids;
+			std::vector<int> geoIDs;
 			TigerDB::MAFTCCodes polyCode;
 
 			GeoDB::searchClasses_t polyClass;
 			polyClass.set(DB_POLY);
 			so.Init(range, polyClass, this);
 
+			/*if (!this->geoIDs.empty())
+			{
+				this->geoIDs.clear();
+			}*/
+			bool first = true;
 			while (so.FindNext(&fo) == 0)
 			{
 				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)fo.handle.Lock();
 				GeoDB::SpatialClass sc = spatialObj->IsA();
 				assert(sc == GeoDB::AREA);
-				GeoDB::Poly* poly = (GeoDB::Poly*)spatialObj;
+				TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
 
-				geoids.push_back(poly->userId);
+				geoIDs.push_back(poly->userId);
+				this->selectionIDs.push_back(poly->dbAddress());
 				polyCode = (TigerDB::MAFTCCodes)poly->userCode;
 				int nPts = GeoDB::Poly::getPts(fo.handle, pts);
 
 				//CPen* oldPen = dc->SelectObject(&this->pens[2]);
 				//int old_rop2 = dc->SetROP2(R2_XORPEN);
-				dc->SelectObject(&this->pens[PRIMARY_ROAD]);
+				CPen *oldPen = dc->SelectObject(&this->pens[RED_PEN]);
 
+				if (first)
+				{
+					DisplayInfo(poly);
+					first = false;
+				}
 				DrawLine(*this->mapWin, dc, this->pts, nPts);
 
-				//dc->SelectObject(oldPen);
+				dc->SelectObject(oldPen);
 				//dc->SetROP2(old_rop2);
 
 				fo.handle.Unlock();
@@ -1296,10 +1388,11 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 
 			if (this->doACSAgeSex)
 			{
-				doACSAgeAndSex(doc->odbcDB, polyCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoids);
+				doACSAgeAndSex(doc->odbcDB, polyCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
 			}
-			ReleaseDC(dc);
+			//ReleaseDC(dc);
 		}
+		ReleaseDC(dc);
 	}
 
 	this->doPick = FALSE;

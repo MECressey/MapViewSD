@@ -55,7 +55,7 @@ public:
 #endif
 
 protected:
-	CPen pens[13];
+	CPen pens[14];
 	CBrush hydroBrush,
 				 parkBrush,
 				 isleBrush,
@@ -87,6 +87,8 @@ protected:
 	BOOL doThining;
 	BOOL doShortPath;
 	BOOL doACSAgeSex;
+	std::vector<DbObject::Id> selectionIDs;
+	//std::vector<int> geoIDs;
 	int pickCount;
 	long startId;
 	XY_t startPt;
@@ -108,6 +110,8 @@ protected:
 
 	int doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyCode, ACSSurveyData::StateFIPSCodes stateFips, std::vector<int>& geoIDs);
 	void RemoveRectangle(CDC* dc);
+
+	void DrawPoly(CDC* dc, TigerDB::Polygon* poly, ObjHandle& po);
 
 // Generated message map functions
 protected:
