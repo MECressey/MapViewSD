@@ -56,6 +56,7 @@ public:
 	BOOL m_ageCat75To84;	// Race iteration
 	BOOL m_ageCat80To84;
 	BOOL m_ageCat85AndOver;
+	BOOL m_showMOE;
 	int m_raceIteration;
 	afx_msg void OnBnClickedAllRaces();
 	afx_msg void OnBnClickedWhiteAlone();

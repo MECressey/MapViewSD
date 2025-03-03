@@ -46,6 +46,7 @@ AcsSexAgeDialog::AcsSexAgeDialog(CWnd* pParent /*=nullptr*/)
 	, m_ageCat75To84(FALSE) 	// Race iteration
 	, m_ageCat80To84(FALSE)
 	, m_ageCat85AndOver(FALSE)
+	, m_showMOE(FALSE)
 	, m_raceIteration(0)
 {
 
@@ -85,6 +86,7 @@ void AcsSexAgeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_75TO79, m_ageCat75To79);
 	DDX_Check(pDX, IDC_80TO84, m_ageCat80To84);
 	DDX_Check(pDX, IDC_85AndOVER, m_ageCat85AndOver);
+	DDX_Check(pDX, IDC_MOE, m_showMOE);
 	DDX_Radio(pDX, IDC_ALL_RACES, m_raceIteration);
 }
 
@@ -312,6 +314,7 @@ void AcsSexAgeDialog::OnBnClickedCheckCombined()
 	}
 	else
 	{
+		button->SetCheck(BST_CHECKED);			// Enable just Male for now (could do Female as well?)
 /*		button->EnableWindow();
 		button = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
 		button->EnableWindow();*/
@@ -328,13 +331,35 @@ void AcsSexAgeDialog::OnBnClickedCheckCombined()
 
 void AcsSexAgeDialog::OnBnClickedCheckFemale()
 {
-	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
-	button->SetCheck(BST_UNCHECKED);
+	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
+	UINT nCheck = button->GetState();
+
+	button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
+	if ((nCheck & BST_CHECKED) != 0)
+		button->SetCheck(BST_UNCHECKED);
+	else
+	{
+		CButton* button2 = (CButton*)GetDlgItem(IDC_CHECK_MALE);
+		nCheck = button2->GetState();
+		if ((nCheck & BST_CHECKED) == 0)
+			button->SetCheck(BST_CHECKED);
+	}
 }
 
 
 void AcsSexAgeDialog::OnBnClickedCheckMale()
 {
-	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
-	button->SetCheck(BST_UNCHECKED);
+	CButton* button = (CButton*)GetDlgItem(IDC_CHECK_MALE);
+	UINT nCheck = button->GetState();
+
+	button = (CButton*)GetDlgItem(IDC_CHECK_COMBINED);
+	if ((nCheck & BST_CHECKED) != 0)
+		button->SetCheck(BST_UNCHECKED);
+	else
+	{
+		CButton* button2 = (CButton*)GetDlgItem(IDC_CHECK_FEMALE);
+		nCheck = button2->GetState();
+		if ((nCheck & BST_CHECKED) == 0)
+			button->SetCheck(BST_CHECKED);
+	}
 }

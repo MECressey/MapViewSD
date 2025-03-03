@@ -12,8 +12,11 @@ class ACSDataDisplay : public CDialogEx
 	DECLARE_DYNAMIC(ACSDataDisplay)
 
 public:
-	ACSDataDisplay(std::vector<CString> &headers, std::multimap<int, std::vector<int>> &rows, CWnd* pParent = nullptr);   // standard constructor
+  ACSDataDisplay(CString &title, std::vector<CString> &headers, std::multimap<int, std::vector<int>> &rows, CWnd* pParent = nullptr);   // standard constructor
+	//ACSDataDisplay(CWnd* pParent = nullptr);   // standard constructor
 	virtual ~ACSDataDisplay();
+
+	//void setGridData(std::vector<CString>& headers, std::multimap<int, std::vector<int>>& rows);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -25,6 +28,7 @@ public:
 protected:
 	std::vector<CString>& m_headers;
 	std::multimap<int, std::vector<int>>& m_rows;
+	CString m_title;
 
 	HICON m_hIcon;
 	CImageList m_ImageList;

@@ -127,6 +127,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 {
 	this->layerDlg = new LayerDlg(this);
 	this->acsSexAgeDlg = new AcsSexAgeDialog(this);
+	//this->acsGridDialog = new ACSDataDisplay(acsAgeSexHeaders, acsAgeSexRows, this);
 	this->doThining = FALSE;
 	this->doProj = 0;
 	this->mapWin = 0;
@@ -221,6 +222,7 @@ CMapViewSDView::~CMapViewSDView()
 		delete this->lineDlg;
 
 	delete this->acsSexAgeDlg;
+	//delete this->acsGridDialog;
 }
 
 BOOL CMapViewSDView::PreCreateWindow(CREATESTRUCT& cs)
@@ -253,6 +255,7 @@ void CMapViewSDView::OnInitialUpdate()
 	}
 
 	this->lineDlg = new LineDlg(this);
+	//this->acsGridDialog = new ACSDataDisplay(acsAgeSexHeaders, acsAgeSexRows, this);
 
 	if (this->pts == 0)
 		this->pts = new XY_t[80000];		// This should not be hard-coded!
@@ -2297,9 +2300,15 @@ void CMapViewSDView::OnAcsSex()
 	//this->doACSAgeSex = !this->doACSAgeSex;
 	INT_PTR retVal = this->acsSexAgeDlg->DoModal();
 	if (retVal == IDOK)
+	{
 		this->doACSAgeSex = TRUE;
+		//this->acsGridDialog->ShowWindow(SW_NORMAL);
+	}
 	else
+	{
 		this->doACSAgeSex = FALSE;
+		//this->acsGridDialog->ShowWindow(SW_HIDE);
+	}
 }
 
 
@@ -2334,14 +2343,16 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 	std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
 		femaleRecords;
 
-	bool returnMOS = false;
+	bool returnMOE = false;
+	if (this->acsSexAgeDlg->m_showMOE)
+		returnMOE = true;
 	int sex = 0;
 	if (this->acsSexAgeDlg->m_sexesCombined)
 		sex = ACSSurveyData::BOTH_SEXES;
 	else {
 		if (this->acsSexAgeDlg->m_maleSex)
 			sex |= ACSSurveyData::MALE;
-		if (this->acsSexAgeDlg->m_maleSex)
+		if (this->acsSexAgeDlg->m_femaleSex)
 			sex |= ACSSurveyData::FEMALE;
 	}
 	int ageCategories = 0;
@@ -2403,99 +2414,185 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 	}
 
 	int err = ACSSurveyData::ACSSexByAge(odbcDB, stateFips, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoIDs, maleRecords, femaleRecords,
-		returnMOS, (ACSSurveyData::Sex)sex, ageCategories);
+		returnMOE, (ACSSurveyData::Sex)sex, ageCategories);
 
 	if (err == 0)
 	{
-		std::vector<CString> headers;
+		std::vector<CString> /*&*/ headers/* = this->acsAgeSexHeaders*/;
+		/*this->acsAgeSexHeaders.clear();*/
 		headers.push_back(_T("Geo ID"));
 		if (sex != ACSSurveyData::BOTH_SEXES)
 			headers.push_back(_T("Sex"));
 		if (this->acsSexAgeDlg->m_ageCatTotals)
+		{
 			headers.push_back(_T("Totals"));
+			if (returnMOE)
+				headers.push_back(_T("MOE"));
+		}
 		else
 		{
 			if (this->acsSexAgeDlg->m_ageCatUnder5)
+			{
 				headers.push_back(_T("Under 5"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat5To9)
+			{
 				headers.push_back(_T("5 - 9"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat10To14)
+			{
 				headers.push_back(_T("10 - 14"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat15To17)
+			{
 				headers.push_back(_T("15 - 17"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat18To19)
+			{
 				headers.push_back(_T("18 - 19"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat20)
+			{
 				headers.push_back(_T("20"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat21)
+			{
 				headers.push_back(_T("21"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat22To24)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("22 - 24"));
 				else
 					headers.push_back(_T("20 - 24"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 			if (this->acsSexAgeDlg->m_ageCat25To29)
+			{
 				headers.push_back(_T("25 - 29"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat30To34)
+			{
 				headers.push_back(_T("30 - 34"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat35To39)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("35 - 39"));
 				else
 					headers.push_back(_T("35 - 44"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 
 			if (this->acsSexAgeDlg->m_ageCat40To44)
+			{
 				headers.push_back(_T("40 - 44"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat45To49)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("45 - 49"));
 				else
 					headers.push_back(_T("45 - 54"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 
 			if (this->acsSexAgeDlg->m_ageCat50To54)
+			{
 				headers.push_back(_T("50 - 54"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat55To59)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("55 - 59"));
 				else
 					headers.push_back(_T("55 - 64"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 			if (this->acsSexAgeDlg->m_ageCat60To61)
+			{
 				headers.push_back(_T("60 - 61"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat62To64)
+			{
 				headers.push_back(_T("62 - 64"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat65To66)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("65 - 66"));
 				else
 					headers.push_back(_T("65 - 74"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 			if (this->acsSexAgeDlg->m_ageCat67To69)
+			{
 				headers.push_back(_T("67 - 69"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat70To74)
+			{
 				headers.push_back(_T("70 - 74"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat75To79)
 			{
 				if (this->acsSexAgeDlg->m_raceIteration == 0)
 					headers.push_back(_T("75 - 79"));
 				else
 					headers.push_back(_T("75 - 84"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
 			}
 			if (this->acsSexAgeDlg->m_ageCat80To84)
+			{
 				headers.push_back(_T("80 - 84"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 			if (this->acsSexAgeDlg->m_ageCat85AndOver)
+			{
 				headers.push_back(_T("85+"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
 		}
 
-		std::multimap<int, std::vector<int>> data;
+		std::multimap<int, std::vector<int>>/*&*/ data/* = this->acsAgeSexRows*/;
+		/*this->acsAgeSexRows.clear();*/
 
 		for (auto it = maleRecords.begin(); it != maleRecords.end(); it++)
 		{
@@ -2506,6 +2603,8 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 			for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
 			{
 				list.push_back(it2->total);
+				if (returnMOE)
+					list.push_back(it2->moe);
 			}
 
 			data.insert({ it->first, list });
@@ -2520,6 +2619,8 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 			for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
 			{
 				list.push_back(it2->total);
+				if (returnMOE)
+					list.push_back(it2->moe);
 			}
 
 			data.insert({ it->first, list });
@@ -2534,7 +2635,47 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 		data.push_back(it2->total);
 		assert(headers.size() == data.size());
 */
-		ACSDataDisplay acsDialog(headers, data, this);
+		//this->acsGridDialog->DoModal()/*ShowWindow(SW_NORMAL)*/;
+		CString title = _T("ACS Sex and Age Data: ");
+		switch (this->acsSexAgeDlg->m_raceIteration)
+		{
+		case ACSSurveyData::ALL_RACES:
+			title += _T("All Races");
+			break;
+
+		case ACSSurveyData::WHITE_ALONE:
+			title += _T("White");
+			break;
+
+		case ACSSurveyData::BLACK_AFRICAN_ALONE:
+			title += _T("Black African");
+			break;
+
+		case ACSSurveyData::AMERICAN_INDIAN_ALASKA_NATIVE_ALONE:
+			title += _T("American Indian/Alaska Native");
+			break;
+
+		case ACSSurveyData::ASIAN_ALONE:
+			title += _T("American Indian/Alaska Native");
+			break;
+
+		case ACSSurveyData::NATIVE_HAWAIIAN_ALONE:
+			title += _T("Native Hawaiian");
+			break;
+		case ACSSurveyData::OTHER_RACE_ALONE:
+			title += _T("Other Race");
+			break;
+		case ACSSurveyData::TWO_OR_MORE_RACES:
+			title += _T("Two or More Races");
+			break;
+		case ACSSurveyData::WHITE_ALONE_NOT_HISPANICorLATINO:
+			title += _T("White (not Hispanic or Latino)");
+			break;
+		case ACSSurveyData::HISPANIC_OR_LATINO:
+			title += _T("Hispanic or Latino");
+			break;
+		}
+		ACSDataDisplay acsDialog(title, headers, data, this);
 		acsDialog.DoModal();
 	}
 

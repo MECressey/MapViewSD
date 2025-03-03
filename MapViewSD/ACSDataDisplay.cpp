@@ -5,16 +5,19 @@
 #include "MapViewSD.h"
 #include "afxdialogex.h"
 #include "ACSDataDisplay.h"
+#include <algorithm>
 
 
 // ACSDataDisplay dialog
 
 IMPLEMENT_DYNAMIC(ACSDataDisplay, CDialogEx)
 
-ACSDataDisplay::ACSDataDisplay(std::vector<CString>& headers, std::multimap<int, std::vector<int>>& rows, CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_ACS_DIALOG, pParent), m_rows(rows), m_headers(headers)
+ACSDataDisplay::ACSDataDisplay(CString& title, std::vector<CString>& headers, std::multimap<int, std::vector<int>>& rows, CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_ACS_DIALOG, pParent), m_rows(rows), m_headers(headers), m_title(title)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	//this->SetWindowText(title);
+	//this->Create(ACSDataDisplay::IDD, pParent);
 }
 
 ACSDataDisplay::~ACSDataDisplay()
@@ -33,6 +36,8 @@ BOOL ACSDataDisplay::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	
+	this->SetWindowText(m_title);
+
 	m_ImageList.Create(MAKEINTRESOURCE(IDB_MENU_IMAGES_24), 16, 1, RGB(255, 255, 255));
 	m_Grid.SetImageList(&m_ImageList);
 
@@ -51,6 +56,7 @@ BOOL ACSDataDisplay::OnInitDialog()
 	//COLORREF clr = RGB(128, 128, 128);
 
 	int row = 0;
+	int sexCol = -1;
 	for (int pos = 0; pos < m_Grid.GetColumnCount(); pos++)
 	{
 		GV_ITEM Item;
@@ -66,6 +72,12 @@ BOOL ACSDataDisplay::OnInitDialog()
 		Item.mask |= (GVIF_BKCLR | GVIF_FGCLR);
 
 		Item.strText = m_headers[pos];
+		// 2/26/25: this is sort of a hack.  The sex is passed in as 0 or 1 for male/female but I want it be M or F in the grid
+		if (sexCol == -1)
+		{
+			if (Item.strText == _T("Sex"))
+				sexCol = pos;
+		}
 		m_Grid.SetItem(&Item);
 	}
 
@@ -78,6 +90,7 @@ BOOL ACSDataDisplay::OnInitDialog()
 		CString str;
 		Item.row = row;
 		Item.col = col++;
+
 		str.Format(_T("%d"), it->first);
 		Item.strText = str;
 		m_Grid.SetItem(&Item);
@@ -86,7 +99,15 @@ BOOL ACSDataDisplay::OnInitDialog()
 			Item.row = row;
 			Item.col = col++;
 
-			str.Format(_T("%d"), *it2);
+			if (Item.col == sexCol)
+			{
+				if (*it2 == 0)
+					str = _T("M");
+				else
+					str = _T("F");
+			}
+			else
+				str.Format(_T("%d"), *it2);
 			Item.strText = str;
 			m_Grid.SetItem(&Item);
 		}

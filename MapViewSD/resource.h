@@ -174,6 +174,7 @@
 #define IDC_TWO_RACES                   1071
 #define IDC_NOT_HISPANIC                1072
 #define IDC_HISPANIC_LATINO             1073
+#define IDC_MOE                         1074
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -196,7 +197,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        319
 #define _APS_NEXT_COMMAND_VALUE         32786
-#define _APS_NEXT_CONTROL_VALUE         1074
+#define _APS_NEXT_CONTROL_VALUE         1075
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

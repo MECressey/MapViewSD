@@ -19,8 +19,10 @@
 #include "layerdlg.h"
 #include "linedlg.h"
 #include "GEODB.HPP"
-#include "AcsSexAgeDialog.h"
+
 #include "ACSSurveyData.h"
+#include "AcsSexAgeDialog.h"
+#include "ACSDataDisplay.h"
 
 class CMapViewSDView : public CView, protected GeoDB::SpatialObjectFilter
 {
@@ -87,6 +89,8 @@ protected:
 	BOOL doThining;
 	BOOL doShortPath;
 	BOOL doACSAgeSex;
+	std::vector<CString> acsAgeSexHeaders;
+	std::multimap<int, std::vector<int>> acsAgeSexRows;
 	std::vector<DbObject::Id> selectionIDs;
 	//std::vector<int> geoIDs;
 	int pickCount;
@@ -94,6 +98,7 @@ protected:
 	XY_t startPt;
 	int startDir;
 	double startDist;
+	//ACSDataDisplay *acsGridDialog;
 	AcsSexAgeDialog *acsSexAgeDlg;
 
 	void DoPan(double horizontal, double vertical);
