@@ -48,6 +48,7 @@ AcsSexAgeDialog::AcsSexAgeDialog(CWnd* pParent /*=nullptr*/)
 	, m_ageCat85AndOver(FALSE)
 	, m_showMOE(FALSE)
 	, m_raceIteration(0)
+	, m_allAgeCategories(FALSE)
 {
 
 }
@@ -88,6 +89,7 @@ void AcsSexAgeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_85AndOVER, m_ageCat85AndOver);
 	DDX_Check(pDX, IDC_MOE, m_showMOE);
 	DDX_Radio(pDX, IDC_ALL_RACES, m_raceIteration);
+	DDX_Check(pDX, IDC_ALL_AGES, m_allAgeCategories);
 }
 
 BOOL AcsSexAgeDialog::OnInitDialog()
@@ -115,6 +117,7 @@ BEGIN_MESSAGE_MAP(AcsSexAgeDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_COMBINED, &AcsSexAgeDialog::OnBnClickedCheckCombined)
 	ON_BN_CLICKED(IDC_CHECK_FEMALE, &AcsSexAgeDialog::OnBnClickedCheckFemale)
 	ON_BN_CLICKED(IDC_CHECK_MALE, &AcsSexAgeDialog::OnBnClickedCheckMale)
+	ON_BN_CLICKED(IDC_ALL_AGES, &AcsSexAgeDialog::OnBnClickedAllAges)
 END_MESSAGE_MAP()
 
 void AcsSexAgeDialog::SwitchToAllRaces()
@@ -361,5 +364,129 @@ void AcsSexAgeDialog::OnBnClickedCheckMale()
 		nCheck = button2->GetState();
 		if ((nCheck & BST_CHECKED) == 0)
 			button->SetCheck(BST_CHECKED);
+	}
+}
+
+
+void AcsSexAgeDialog::OnBnClickedAllAges()
+{
+	CButton* button = (CButton*)GetDlgItem(IDC_ALL_AGES);
+	UINT nCheck = button->GetState();
+	if ((nCheck & BST_CHECKED) != 0)
+	{
+		button = (CButton*)GetDlgItem(IDC_UNDER5);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_5TO9);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_10TO14);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_15TO17);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_18TO19);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_25TO29);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_30TO34);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_85AndOVER);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_22TO24);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_35TO39);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_45TO49);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_55TO59);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_65TO66);
+		button->SetCheck(BST_CHECKED);
+		button = (CButton*)GetDlgItem(IDC_75TO79);
+		button->SetCheck(BST_CHECKED);
+
+		if (m_raceIteration == 0)
+		{
+			button = (CButton*)GetDlgItem(IDC_20);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_21);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_40TO44);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_50TO54);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_60TO61);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_62TO64);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_67TO69);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_70TO74);
+			button->SetCheck(BST_CHECKED);
+			button = (CButton*)GetDlgItem(IDC_80TO84);
+			button->SetCheck(BST_CHECKED);
+		}
+	}
+	else
+	{
+		button = (CButton*)GetDlgItem(IDC_UNDER5);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_5TO9);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_10TO14);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_15TO17);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_18TO19);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_25TO29);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_30TO34);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_85AndOVER);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_22TO24);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_35TO39);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_45TO49);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_55TO59);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_65TO66);
+		button->SetCheck(BST_UNCHECKED);
+		button = (CButton*)GetDlgItem(IDC_75TO79);
+		button->SetCheck(BST_UNCHECKED);
+		if (m_raceIteration == 0)
+		{
+			button = (CButton*)GetDlgItem(IDC_20);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_21);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_22TO24);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_35TO39);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_40TO44);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_45TO49);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_50TO54);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_55TO59);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_60TO61);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_62TO64);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_65TO66);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_67TO69);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_75TO79);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_70TO74);
+			button->SetCheck(BST_UNCHECKED);
+			button = (CButton*)GetDlgItem(IDC_80TO84);
+			button->SetCheck(BST_UNCHECKED);
+		}
 	}
 }

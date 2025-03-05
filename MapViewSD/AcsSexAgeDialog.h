@@ -57,6 +57,7 @@ public:
 	BOOL m_ageCat80To84;
 	BOOL m_ageCat85AndOver;
 	BOOL m_showMOE;
+	BOOL m_allAgeCategories;
 	int m_raceIteration;
 	afx_msg void OnBnClickedAllRaces();
 	afx_msg void OnBnClickedWhiteAlone();
@@ -76,4 +77,5 @@ public:
 	afx_msg void OnBnClickedCheckCombined();
 	afx_msg void OnBnClickedCheckFemale();
 	afx_msg void OnBnClickedCheckMale();
+	afx_msg void OnBnClickedAllAges();
 };
