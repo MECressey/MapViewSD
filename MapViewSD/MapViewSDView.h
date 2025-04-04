@@ -89,6 +89,7 @@ protected:
 	BOOL doThining;
 	BOOL doShortPath;
 	BOOL doACSAgeSex;
+	BOOL doACSQuery;
 	std::vector<CString> acsAgeSexHeaders;
 	std::multimap<int, std::vector<int>> acsAgeSexRows;
 	std::vector<DbObject::Id> selectionIDs;
@@ -100,6 +101,7 @@ protected:
 	double startDist;
 	//ACSDataDisplay *acsGridDialog;
 	AcsSexAgeDialog *acsSexAgeDlg;
+	int acs5YrDataYear;
 
 	void DoPan(double horizontal, double vertical);
 	void DisplayInfo(TigerDB::Chain* line);
@@ -146,12 +148,13 @@ public:
 	afx_msg void OnUpdateSearchUserid(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateToolsShortpath(CCmdUI* pCmdUI);
 	afx_msg void OnToolsShortpath();
-	afx_msg void OnACSAgeSexQuery();
+	//afx_msg void OnACSAgeSexQuery();
 	afx_msg void OnUpdateToolsThining(CCmdUI* pCmdUI);
 	afx_msg void OnToolsThining();
 	afx_msg void OnZoomDataextent();
 	afx_msg void OnAcsSex();
 	afx_msg void OnUpdateAcsSex(CCmdUI* pCmdUI);
+	afx_msg void OnAcsQuery();
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

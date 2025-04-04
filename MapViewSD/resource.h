@@ -92,6 +92,7 @@
 #define IDD_SEARCH_USERID               312
 #define IDD_ACS_DIALOG                  315
 #define IDD_ACS_AGESEX_QUERY            317
+#define IDD_ACS_QUERY                   319
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
 #define IDC_PRIMARD_RDS                 1002
@@ -175,8 +176,19 @@
 #define IDC_NOT_HISPANIC                1072
 #define IDC_HISPANIC_LATINO             1073
 #define IDC_MOE                         1074
-#define IDC_                            1075
 #define IDC_ALL_AGES                    1075
+#define IDC_ACS_SOURCE                  1076
+#define IDC_ACS_YEAR                    1079
+#define IDC_COL_COMBO                   1083
+#define IDC_SOURCE_COMBO                1084
+#define IDC_YEAR_COMBO                  1085
+#define IDC_COMP_OP1                    1086
+#define IDC_VALUE1                      1087
+#define IDC_GROUP1                      1088
+#define IDC_LOGICAL_OP                  1089
+#define IDC_COL_COMBO2                  1090
+#define IDC_COMP_OP2                    1091
+#define IDC_VALUE2                      1092
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -192,14 +204,15 @@
 #define ID_TOOLS_THINING                32783
 #define ID_ZOOM_DATAEXTENT              32784
 #define ID_ACS_SEX                      32785
+#define ID_ACS_QUERY                    32786
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        319
-#define _APS_NEXT_COMMAND_VALUE         32786
-#define _APS_NEXT_CONTROL_VALUE         1076
+#define _APS_NEXT_RESOURCE_VALUE        321
+#define _APS_NEXT_COMMAND_VALUE         32787
+#define _APS_NEXT_CONTROL_VALUE         1090
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

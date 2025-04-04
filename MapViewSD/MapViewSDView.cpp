@@ -43,6 +43,7 @@
 //#include "GridCtrl.h"
 #include "ACSDataDisplay.h"
 #include "ACSSurveyData.h"
+#include "ACSQueryDialog.h"
 
 #define DO_SHORT_PATH
 
@@ -90,6 +91,7 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_COMMAND(ID_ZOOM_DATAEXTENT, &CMapViewSDView::OnZoomDataextent)
 	ON_COMMAND(ID_ACS_SEX, &CMapViewSDView::OnAcsSex)
 	ON_UPDATE_COMMAND_UI(ID_ACS_SEX, &CMapViewSDView::OnUpdateAcsSex)
+	ON_COMMAND(ID_ACS_QUERY, &CMapViewSDView::OnAcsQuery)
 END_MESSAGE_MAP()
 
 static const char* LineStr(int code);
@@ -125,6 +127,7 @@ const int DASH_2DOTS_PEN = 12;
 
 CMapViewSDView::CMapViewSDView() noexcept
 {
+	this->acs5YrDataYear = 2023;
 	this->layerDlg = new LayerDlg(this);
 	this->acsSexAgeDlg = new AcsSexAgeDialog(this);
 	//this->acsGridDialog = new ACSDataDisplay(acsAgeSexHeaders, acsAgeSexRows, this);
@@ -2413,7 +2416,7 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 		}
 	}
 
-	int err = ACSSurveyData::ACSSexByAge(odbcDB, stateFips, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoIDs, maleRecords, femaleRecords,
+	int err = ACSSurveyData::ACSSexByAge(odbcDB, this->acs5YrDataYear, stateFips, (ACSSurveyData::RaceIteration)(this->acsSexAgeDlg->m_raceIteration), summaryLevel, geoIDs, maleRecords, femaleRecords,
 		returnMOE, (ACSSurveyData::Sex)sex, ageCategories);
 
 	if (err == 0)
@@ -2681,4 +2684,92 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 
 
 	return 0;
+}
+
+void CMapViewSDView::OnAcsQuery()
+{
+	ACSQueryDialog acsQueryDialog(this);
+	if (acsQueryDialog.DoModal() == IDOK)
+	{
+		CMapViewSDDoc* pDoc = GetDocument();
+		std::vector<ACSSurveyData::ColumnQuery> filter;
+		std::vector<int> geoIDs;
+
+		ACSSurveyData::ColumnQuery colQ;
+
+		if (acsQueryDialog.m_idxCol1 == ACSSurveyData::TOTAL_POPULATION)
+			colQ.column = ACSSurveyData::TOTAL_POPULATION;
+		else
+			colQ.column = (ACSSurveyData::SexByAgeCategories)(1 << (acsQueryDialog.m_idxCol1 - 1));
+		colQ.sqlCompOp = acsQueryDialog.m_idxComp1;
+		colQ.sqlLogOp = (ACSSurveyData::SQLLogicalOp)0;
+		colQ.value1 = _ttoi(acsQueryDialog.m_value1);
+
+		filter.push_back(colQ);
+
+		if (acsQueryDialog.m_idxCol1 == ACSSurveyData::TOTAL_POPULATION)
+			colQ.column = ACSSurveyData::TOTAL_POPULATION;
+		else
+			colQ.column = (ACSSurveyData::SexByAgeCategories)(1 << (acsQueryDialog.m_idxCol2 - 1));
+		if (acsQueryDialog.m_idxComp2 > 0 && acsQueryDialog.m_idxLogOp1 != 0)
+		{
+		  colQ.sqlCompOp = acsQueryDialog.m_idxComp2;
+			colQ.sqlLogOp = (ACSSurveyData::SQLLogicalOp)acsQueryDialog.m_idxLogOp1;
+			colQ.value1 = _ttoi(acsQueryDialog.m_value2);
+
+			filter.push_back(colQ);
+		}
+		/*
+		colQ.sqlCompOp = ACSSurveyData::SQL_LTE;
+		colQ.sqlLogOp = (ACSSurveyData::SQLLogicalOp)ACSSurveyData::SQL_AND;
+		colQ.value1 = 110;
+
+		filter.push_back(colQ);
+		*/
+		int err = ACSSurveyData::ACSSexByAgeQueryByAttributes(pDoc->odbcDB, this->acs5YrDataYear, (ACSSurveyData::StateFIPSCodes)pDoc->stateFips,
+			ACSSurveyData::ALL_RACES, ACSSurveyData::STATE_COUNTY_TRACT, filter, geoIDs);
+		if (err == 0)
+		{
+			std::vector<DbObject::Id> polyIDs;
+			Range2D mbr;
+			for (int i = 0; i < geoIDs.size(); i++)
+			{
+				GeoDB::Poly::Hash dbHash;
+				dbHash.id = geoIDs[i];
+				ObjHandle oh;
+				if ((err = pDoc->db->dacSearch(DB_POLY, &dbHash, oh)) == 0)
+				{
+					GeoDB::Poly* poly = (GeoDB::Poly*)oh.Lock();
+					mbr.Envelope(poly->getMBR());
+					polyIDs.push_back(poly->dbAddress());
+					oh.Unlock();
+				}
+			}
+			if (polyIDs.size() > 0)
+			{
+
+				//this->mapWin->Set(mbr);
+				//this->Invalidate();
+				CDC* dc = GetDC();
+				for (int i = 0; i < polyIDs.size(); i++)
+				{
+					ObjHandle oh;
+					err = pDoc->db->Read(polyIDs[i], oh);
+					assert(err == 0);
+					GeoDB::Poly* poly = (GeoDB::Poly*)oh.Lock();
+					this->selectionIDs.push_back(poly->dbAddress());
+					int nPts = GeoDB::Poly::getPts(oh, pts);
+
+					CPen* oldPen = dc->SelectObject(&this->pens[RED_PEN]);
+
+					DrawLine(*this->mapWin, dc, this->pts, nPts);
+
+					dc->SelectObject(oldPen);
+
+					oh.Unlock();
+				}
+				ReleaseDC(dc);
+			}
+		}
+	}
 }
