@@ -44,6 +44,7 @@
 #include "ACSDataDisplay.h"
 #include "ACSSurveyData.h"
 #include "ACSQueryDialog.h"
+#include "ACSIncomeDialog.h"
 
 #define DO_SHORT_PATH
 
@@ -92,6 +93,10 @@ BEGIN_MESSAGE_MAP(CMapViewSDView, CView)
 	ON_COMMAND(ID_ACS_SEX, &CMapViewSDView::OnAcsSex)
 	ON_UPDATE_COMMAND_UI(ID_ACS_SEX, &CMapViewSDView::OnUpdateAcsSex)
 	ON_COMMAND(ID_ACS_QUERY, &CMapViewSDView::OnAcsQuery)
+	ON_COMMAND(ID_HOUSEHOLD_INCOME, &CMapViewSDView::OnAcsHouseholdIncome)
+	ON_UPDATE_COMMAND_UI(ID_HOUSEHOLD_INCOME, &CMapViewSDView::OnUpdateAcsHouseIncome)
+
+	ON_COMMAND(ID_SELECT_CLEARSELECTION, &CMapViewSDView::OnSelectClearselection)
 END_MESSAGE_MAP()
 
 static const char* LineStr(int code);
@@ -900,6 +905,39 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			}
 			dbo.Unlock();
 		}
+		// Highlight selected objects
+		for (int i = 0; i < this->selectionIDs.size(); i++)
+		{
+			ObjHandle oh;
+			int err = pDoc->db->Read(this->selectionIDs[i].dbId, oh);
+			assert(err == 0);
+			GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
+			GeoDB::SpatialClass sc = obj->IsA();
+			switch (sc)
+			{
+			case GeoDB::AREA:
+			{
+				TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
+				CPen* oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
+
+				int nPts = GeoDB::Poly::getPts(oh, pts);
+				DrawLine(*this->mapWin, pDC, this->pts, nPts);
+
+				pDC->SelectObject(oldPen);
+				break;
+			}
+			case GeoDB::LINE:
+			{
+				TigerDB::Chain* line = (TigerDB::Chain*)obj;
+
+				break;
+			}
+			default:
+				assert(false);
+				break;
+			}
+			oh.Unlock();
+		}
 		/*
 		pDC->SelectObject(&this->pens[TRAIL]);
 		pDC->SelectObject(this->faceBrush);
@@ -1126,37 +1164,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		this->mapWin->Reverse(&pt0, pt0);
 		range.Add(pt0);
 
-		if (!this->selectionIDs.empty())
-		{
-			for (int i = 0; i < this->selectionIDs.size(); i++)
-			{
-				ObjHandle oh;
-				int err = doc->db->Read(this->selectionIDs[i], oh);
-				assert(err == 0);
-				GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
-				GeoDB::SpatialClass sc = obj->IsA();
-				switch (sc)
-				{
-				case GeoDB::AREA:
-				{
-					TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
-					DrawPoly(dc, poly, oh);
-					break;
-				}
-				case GeoDB::LINE:
-				{
-					TigerDB::Chain* line = (TigerDB::Chain*)obj;
-
-					break;
-				}
-				default:
-					assert(false);
-					break;
-				}
-				oh.Unlock();
-			}
-			this->selectionIDs.clear();
-		}
+		OnSelectClearselection();
 
 		if (this->pt.x == point.x && this->pt.y == point.y)   // Point select
 		{
@@ -1205,20 +1213,17 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						int nPts = GeoDB::Poly::getPts(fo.handle, pts);
 						DrawLine(*this->mapWin, dc, this->pts, nPts);
 						DisplayInfo(poly);
-						this->selectionIDs.push_back(poly->dbAddress());
+						this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
+						/*
 						if (this->doACSAgeSex)
 						{
 							std::vector<int> geoIDs;
-							/*if (!this->geoIDs.empty())
-							{
-								this->geoIDs.clear();
-							}*/
 							geoIDs.push_back(poly->userId);
 
 							assert(doc->stateFips != 0);
 							doACSAgeAndSex(doc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
 						//	break;
-						}
+						}*/
 						dc->SelectObject(oldPen);
 						break;
 					}
@@ -1369,7 +1374,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				TigerDB::Polygon* poly = (TigerDB::Polygon*)spatialObj;
 
 				geoIDs.push_back(poly->userId);
-				this->selectionIDs.push_back(poly->dbAddress());
+				this->selectionIDs.push_back({ poly->dbAddress(), poly->userId,  (TigerDB::MAFTCCodes)poly->userCode });
 				polyCode = (TigerDB::MAFTCCodes)poly->userCode;
 				int nPts = GeoDB::Poly::getPts(fo.handle, pts);
 
@@ -1392,10 +1397,10 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 
 			RemoveRectangle(dc);
 
-			if (this->doACSAgeSex)
+/*			if (this->doACSAgeSex)
 			{
 				doACSAgeAndSex(doc->odbcDB, polyCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
-			}
+			}*/
 			//ReleaseDC(dc);
 		}
 		ReleaseDC(dc);
@@ -2304,6 +2309,13 @@ void CMapViewSDView::OnAcsSex()
 	INT_PTR retVal = this->acsSexAgeDlg->DoModal();
 	if (retVal == IDOK)
 	{
+		std::vector<int> geoIDs;
+		for (int i = 0; i < this->selectionIDs.size(); i++)
+			geoIDs.push_back(selectionIDs[i].userId);
+
+		CMapViewSDDoc* doc = GetDocument();
+		assert(doc->stateFips != 0);
+		doACSAgeAndSex(doc->odbcDB, selectionIDs[0].cCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
 		this->doACSAgeSex = TRUE;
 		//this->acsGridDialog->ShowWindow(SW_NORMAL);
 	}
@@ -2757,7 +2769,7 @@ void CMapViewSDView::OnAcsQuery()
 					err = pDoc->db->Read(polyIDs[i], oh);
 					assert(err == 0);
 					GeoDB::Poly* poly = (GeoDB::Poly*)oh.Lock();
-					this->selectionIDs.push_back(poly->dbAddress());
+					this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
 					int nPts = GeoDB::Poly::getPts(oh, pts);
 
 					CPen* oldPen = dc->SelectObject(&this->pens[RED_PEN]);
@@ -2771,5 +2783,58 @@ void CMapViewSDView::OnAcsQuery()
 				ReleaseDC(dc);
 			}
 		}
+	}
+}
+
+void CMapViewSDView::OnUpdateAcsHouseIncome(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(this->mapWin != 0);
+	pCmdUI->SetCheck(this->doACSAgeSex);
+}
+
+void CMapViewSDView::OnAcsHouseholdIncome()
+{
+	ACSIncomeDialog acsIncomeDialog(this);
+	if (acsIncomeDialog.DoModal() == IDOK)
+	{
+
+	}
+}
+
+void CMapViewSDView::OnSelectClearselection()
+{
+	if (!this->selectionIDs.empty())
+	{
+		CMapViewSDDoc* doc = GetDocument();
+		CDC* dc = GetDC();
+		for (int i = 0; i < this->selectionIDs.size(); i++)
+		{
+			ObjHandle oh;
+			int err = doc->db->Read(this->selectionIDs[i].dbId, oh);
+			assert(err == 0);
+			GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
+			GeoDB::SpatialClass sc = obj->IsA();
+			switch (sc)
+			{
+			case GeoDB::AREA:
+			{
+				TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
+				DrawPoly(dc, poly, oh);
+				break;
+			}
+			case GeoDB::LINE:
+			{
+				TigerDB::Chain* line = (TigerDB::Chain*)obj;
+
+				break;
+			}
+			default:
+				assert(false);
+				break;
+			}
+			oh.Unlock();
+		}
+		ReleaseDC(dc);
+		this->selectionIDs.clear();
 	}
 }

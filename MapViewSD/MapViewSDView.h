@@ -92,7 +92,13 @@ protected:
 	BOOL doACSQuery;
 	std::vector<CString> acsAgeSexHeaders;
 	std::multimap<int, std::vector<int>> acsAgeSexRows;
-	std::vector<DbObject::Id> selectionIDs;
+	struct SelectionRec
+	{
+		DbObject::Id dbId;
+		long userId;
+		TigerDB::MAFTCCodes cCode;
+	};
+	std::vector<SelectionRec> selectionIDs;
 	//std::vector<int> geoIDs;
 	int pickCount;
 	long startId;
@@ -155,6 +161,9 @@ public:
 	afx_msg void OnAcsSex();
 	afx_msg void OnUpdateAcsSex(CCmdUI* pCmdUI);
 	afx_msg void OnAcsQuery();
+	afx_msg void OnAcsHouseholdIncome();
+	afx_msg void OnUpdateAcsHouseIncome(CCmdUI* pCmdUI);
+	afx_msg void OnSelectClearselection();
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

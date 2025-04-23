@@ -93,6 +93,7 @@
 #define IDD_ACS_DIALOG                  315
 #define IDD_ACS_AGESEX_QUERY            317
 #define IDD_ACS_QUERY                   319
+#define IDD_ACS_INCOME_QUERY            320
 #define IDC_LINE_ID                     1000
 #define IDC_LINE_TYPE                   1001
 #define IDC_PRIMARD_RDS                 1002
@@ -187,8 +188,28 @@
 #define IDC_GROUP1                      1088
 #define IDC_LOGICAL_OP                  1089
 #define IDC_COL_COMBO2                  1090
+#define IDC_UNDER10K                    1090
 #define IDC_COMP_OP2                    1091
+#define IDC_10To14999                   1091
 #define IDC_VALUE2                      1092
+#define IDC_15TO19999                   1092
+#define IDC_20To24999                   1093
+#define IDC_25To29999                   1094
+#define IDC_30To34999                   1095
+#define IDC_35To39999                   1096
+#define IDC_40To44999                   1097
+#define IDC_45To49999                   1098
+#define IDC_50To59999                   1099
+#define IDC_60To74999                   1100
+#define IDC_75To99999                   1101
+#define IDC_100To124999                 1102
+#define IDC_125To149999                 1103
+#define IDC_150To199999                 1104
+#define IDC_200AndOver                  1105
+#define IDC_ALL_INCOMES                 1106
+#define IDC_SUMMARY_LEVEL               1107
+#define IDC_INCOME_TOTALS               1108
+#define IDC_INCOME_MOE                  1109
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -205,14 +226,17 @@
 #define ID_ZOOM_DATAEXTENT              32784
 #define ID_ACS_SEX                      32785
 #define ID_ACS_QUERY                    32786
+#define ID_ACS_HOUSEHOLDINCOME          32787
+#define ID_HOUSEHOLD_INCOME             32788
+#define ID_SELECT_CLEARSELECTION        32789
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32787
-#define _APS_NEXT_CONTROL_VALUE         1090
+#define _APS_NEXT_COMMAND_VALUE         32790
+#define _APS_NEXT_CONTROL_VALUE         1110
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif
