@@ -23,6 +23,7 @@
 #include "ACSSurveyData.h"
 #include "AcsSexAgeDialog.h"
 #include "ACSDataDisplay.h"
+#include "ACSIncomeDialog.h"
 
 class CMapViewSDView : public CView, protected GeoDB::SpatialObjectFilter
 {
@@ -107,6 +108,7 @@ protected:
 	double startDist;
 	//ACSDataDisplay *acsGridDialog;
 	AcsSexAgeDialog *acsSexAgeDlg;
+	ACSIncomeDialog *acsIncomeDialog;
 	int acs5YrDataYear;
 
 	void DoPan(double horizontal, double vertical);
@@ -164,6 +166,9 @@ public:
 	afx_msg void OnAcsHouseholdIncome();
 	afx_msg void OnUpdateAcsHouseIncome(CCmdUI* pCmdUI);
 	afx_msg void OnSelectClearselection();
+
+private:
+	void highlightSelectionSet(TigerDB* db, CDC* pDC);
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp

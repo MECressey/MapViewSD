@@ -44,7 +44,6 @@
 #include "ACSDataDisplay.h"
 #include "ACSSurveyData.h"
 #include "ACSQueryDialog.h"
-#include "ACSIncomeDialog.h"
 
 #define DO_SHORT_PATH
 
@@ -135,6 +134,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->acs5YrDataYear = 2023;
 	this->layerDlg = new LayerDlg(this);
 	this->acsSexAgeDlg = new AcsSexAgeDialog(this);
+	this->acsIncomeDialog = new ACSIncomeDialog(this);
 	//this->acsGridDialog = new ACSDataDisplay(acsAgeSexHeaders, acsAgeSexRows, this);
 	this->doThining = FALSE;
 	this->doProj = 0;
@@ -230,7 +230,7 @@ CMapViewSDView::~CMapViewSDView()
 		delete this->lineDlg;
 
 	delete this->acsSexAgeDlg;
-	//delete this->acsGridDialog;
+	delete this->acsIncomeDialog;
 }
 
 BOOL CMapViewSDView::PreCreateWindow(CREATESTRUCT& cs)
@@ -630,6 +630,43 @@ bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
 	return false;
 }
 
+void CMapViewSDView::highlightSelectionSet(TigerDB *db, CDC *pDC)
+{
+// Highlight selected objects
+	for (int i = 0; i < this->selectionIDs.size(); i++)
+	{
+		ObjHandle oh;
+		int err = db->Read(this->selectionIDs[i].dbId, oh);
+		assert(err == 0);
+		GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
+		GeoDB::SpatialClass sc = obj->IsA();
+		switch (sc)
+		{
+		case GeoDB::AREA:
+		{
+			TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
+			CPen* oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
+
+			int nPts = GeoDB::Poly::getPts(oh, pts);
+			DrawLine(*this->mapWin, pDC, this->pts, nPts);
+
+			pDC->SelectObject(oldPen);
+			break;
+		}
+		case GeoDB::LINE:
+		{
+			TigerDB::Chain* line = (TigerDB::Chain*)obj;
+
+			break;
+		}
+		default:
+			assert(false);
+			break;
+		}
+		oh.Unlock();
+	}
+}
+
 void CMapViewSDView::OnDraw(CDC* pDC)
 {
 	CMapViewSDDoc* pDoc = GetDocument();
@@ -905,39 +942,10 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 			}
 			dbo.Unlock();
 		}
+
 		// Highlight selected objects
-		for (int i = 0; i < this->selectionIDs.size(); i++)
-		{
-			ObjHandle oh;
-			int err = pDoc->db->Read(this->selectionIDs[i].dbId, oh);
-			assert(err == 0);
-			GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
-			GeoDB::SpatialClass sc = obj->IsA();
-			switch (sc)
-			{
-			case GeoDB::AREA:
-			{
-				TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
-				CPen* oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
+		this->highlightSelectionSet(pDoc->db, pDC);
 
-				int nPts = GeoDB::Poly::getPts(oh, pts);
-				DrawLine(*this->mapWin, pDC, this->pts, nPts);
-
-				pDC->SelectObject(oldPen);
-				break;
-			}
-			case GeoDB::LINE:
-			{
-				TigerDB::Chain* line = (TigerDB::Chain*)obj;
-
-				break;
-			}
-			default:
-				assert(false);
-				break;
-			}
-			oh.Unlock();
-		}
 		/*
 		pDC->SelectObject(&this->pens[TRAIL]);
 		pDC->SelectObject(this->faceBrush);
@@ -2302,6 +2310,78 @@ void CMapViewSDView::OnZoomDataextent()
 	this->Invalidate();
 }
 
+static ACSSurveyData::SummaryLevels mapUserCodeToSummaryLevel(TigerDB::MAFTCCodes code)
+{
+	ACSSurveyData::SummaryLevels summaryLevel;
+	switch (code)
+	{
+	default:
+		summaryLevel = (ACSSurveyData::SummaryLevels)0;
+		break;
+
+	case TigerDB::TAB_CountyFeature:
+		summaryLevel = ACSSurveyData::STATE_COUNTY;
+		break;
+
+	case TigerDB::TAB_CensusTract:
+		summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
+		break;
+
+	case TigerDB::TAB_CensusBlockGroup:
+		summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
+		break;
+	}
+
+	return summaryLevel;
+}
+
+static TCHAR * mapRaceIterationToText(int raceIteration)
+{
+	TCHAR* text;
+	switch (raceIteration)
+	{
+	default:
+		text = 0;
+		break;
+
+	case ACSSurveyData::ALL_RACES:
+		text = _T("All Races");
+		break;
+
+	case ACSSurveyData::WHITE_ALONE:
+		text = _T("White");
+		break;
+
+	case ACSSurveyData::BLACK_AFRICAN_ALONE:
+		text = _T("Black African");
+		break;
+
+	case ACSSurveyData::AMERICAN_INDIAN_ALASKA_NATIVE_ALONE:
+		text = _T("American Indian/Alaska Native");
+		break;
+
+	case ACSSurveyData::ASIAN_ALONE:
+		text = _T("American Indian/Alaska Native");
+		break;
+
+	case ACSSurveyData::NATIVE_HAWAIIAN_ALONE:
+		text = _T("Native Hawaiian");
+		break;
+	case ACSSurveyData::OTHER_RACE_ALONE:
+		text = _T("Other Race");
+		break;
+	case ACSSurveyData::TWO_OR_MORE_RACES:
+		text = _T("Two or More Races");
+		break;
+	case ACSSurveyData::WHITE_ALONE_NOT_HISPANICorLATINO:
+		text = _T("White (not Hispanic or Latino)");
+		break;
+	case ACSSurveyData::HISPANIC_OR_LATINO:
+		text = _T("Hispanic or Latino");
+		break;
+	}
+	return text;
+}
 
 void CMapViewSDView::OnAcsSex()
 {
@@ -2335,25 +2415,7 @@ void CMapViewSDView::OnUpdateAcsSex(CCmdUI* pCmdUI)
 
 int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyCode, ACSSurveyData::StateFIPSCodes stateFips, std::vector<int> &geoIDs)
 {
-	ACSSurveyData::SummaryLevels summaryLevel;
-	switch (polyCode)
-	{
-	default:
-		summaryLevel = (ACSSurveyData::SummaryLevels)0;
-		break;
-
-	case TigerDB::TAB_CountyFeature:
-		summaryLevel = ACSSurveyData::STATE_COUNTY;
-		break;
-
-	case TigerDB::TAB_CensusTract:
-		summaryLevel = ACSSurveyData::STATE_COUNTY_TRACT;
-		break;
-
-	case TigerDB::TAB_CensusBlockGroup:
-		summaryLevel = ACSSurveyData::STATE_COUNTY_CENSUS_BLOCKGROUP;
-		break;
-	}
+	ACSSurveyData::SummaryLevels summaryLevel = mapUserCodeToSummaryLevel(polyCode);
 
 	std::map<int, std::vector<ACSSurveyData::AgeRec>> maleRecords,
 		femaleRecords;
@@ -2651,49 +2713,12 @@ int  CMapViewSDView::doACSAgeAndSex(CDatabase &odbcDB, TigerDB::MAFTCCodes polyC
 		assert(headers.size() == data.size());
 */
 		//this->acsGridDialog->DoModal()/*ShowWindow(SW_NORMAL)*/;
-		CString title = _T("ACS Sex and Age Data: ");
-		switch (this->acsSexAgeDlg->m_raceIteration)
-		{
-		case ACSSurveyData::ALL_RACES:
-			title += _T("All Races");
-			break;
+		CString title = _T("ACS Sex/Age Data: ");
+		title += mapRaceIterationToText(this->acsSexAgeDlg->m_raceIteration);
 
-		case ACSSurveyData::WHITE_ALONE:
-			title += _T("White");
-			break;
-
-		case ACSSurveyData::BLACK_AFRICAN_ALONE:
-			title += _T("Black African");
-			break;
-
-		case ACSSurveyData::AMERICAN_INDIAN_ALASKA_NATIVE_ALONE:
-			title += _T("American Indian/Alaska Native");
-			break;
-
-		case ACSSurveyData::ASIAN_ALONE:
-			title += _T("American Indian/Alaska Native");
-			break;
-
-		case ACSSurveyData::NATIVE_HAWAIIAN_ALONE:
-			title += _T("Native Hawaiian");
-			break;
-		case ACSSurveyData::OTHER_RACE_ALONE:
-			title += _T("Other Race");
-			break;
-		case ACSSurveyData::TWO_OR_MORE_RACES:
-			title += _T("Two or More Races");
-			break;
-		case ACSSurveyData::WHITE_ALONE_NOT_HISPANICorLATINO:
-			title += _T("White (not Hispanic or Latino)");
-			break;
-		case ACSSurveyData::HISPANIC_OR_LATINO:
-			title += _T("Hispanic or Latino");
-			break;
-		}
 		ACSDataDisplay acsDialog(title, headers, data, this);
 		acsDialog.DoModal();
 	}
-
 
 	return 0;
 }
@@ -2794,9 +2819,159 @@ void CMapViewSDView::OnUpdateAcsHouseIncome(CCmdUI* pCmdUI)
 
 void CMapViewSDView::OnAcsHouseholdIncome()
 {
-	ACSIncomeDialog acsIncomeDialog(this);
-	if (acsIncomeDialog.DoModal() == IDOK)
+	//ACSIncomeDialog acsIncomeDialog(this);
+	if (this->acsIncomeDialog->DoModal() == IDOK)
 	{
+		ACSSurveyData::SummaryLevels summaryLevel = mapUserCodeToSummaryLevel(this->selectionIDs[0].cCode);
+
+		bool returnMOE = false;
+		if (acsIncomeDialog->m_includeMOE)
+			returnMOE = true;
+
+		int incomeCategories = acsIncomeDialog->getIncomeCategories();
+
+		CMapViewSDDoc* doc = GetDocument();
+		std::vector<int> geoIDs;
+		for (int i = 0; i < this->selectionIDs.size(); i++)
+			geoIDs.push_back(selectionIDs[i].userId);
+
+		std::map<int, std::vector<ACSSurveyData::ACSRec>> incomeRecords;
+
+		int err = ACSSurveyData::ACSHouseholdIncome(doc->odbcDB, this->acs5YrDataYear, (ACSSurveyData::StateFIPSCodes)doc->stateFips, (ACSSurveyData::RaceIteration)(acsIncomeDialog->m_raceIteration),
+			summaryLevel, geoIDs, incomeRecords, returnMOE, incomeCategories);
+
+		if (err == 0)
+		{
+			std::vector<CString> headers;
+			headers.push_back(_T("Geo ID"));
+			if (incomeCategories == ACSSurveyData::TOTAL_INCOME)
+			{
+				headers.push_back(_T("Totals"));
+				if (returnMOE)
+					headers.push_back(_T("MOE"));
+			}
+			else
+			{
+				if (incomeCategories & ACSSurveyData::TUnder10)
+				{
+					headers.push_back(_T("Under 10"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T10To14999)
+				{
+					headers.push_back(_T("10K-14.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T15To19999)
+				{
+					headers.push_back(_T("15K-19.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T20To24999)
+				{
+					headers.push_back(_T("20K-24.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T25To29999)
+				{
+					headers.push_back(_T("25K-29.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T30To34999)
+				{
+					headers.push_back(_T("30K-34.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T35To39999)
+				{
+					headers.push_back(_T("35K-39.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T40To44999)
+				{
+					headers.push_back(_T("40K-44.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T45To49999)
+				{
+					headers.push_back(_T("45K-49.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T50To59999)
+				{
+					headers.push_back(_T("50K-59.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T60To74999)
+				{
+					headers.push_back(_T("60K-74.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T75To99999)
+				{
+					headers.push_back(_T("75K-99.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T100To124999)
+				{
+					headers.push_back(_T("100K-124.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T125To149999)
+				{
+					headers.push_back(_T("125K-149.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T150To199999)
+				{
+					headers.push_back(_T("150K-199.999K"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+				if (incomeCategories & ACSSurveyData::T200andOver)
+				{
+					headers.push_back(_T("200K+"));
+					if (returnMOE)
+						headers.push_back(_T("MOE"));
+				}
+			}
+
+			std::multimap<int, std::vector<int>> data;
+
+			for (auto it = incomeRecords.begin(); it != incomeRecords.end(); it++)
+			{
+				std::vector<int> list;
+				std::vector<ACSSurveyData::ACSRec>::iterator it2;
+				for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+				{
+					list.push_back(it2->total);
+					if (returnMOE)
+						list.push_back(it2->moe);
+				}
+
+				data.insert({ it->first, list });
+			}
+
+			CString title = _T("ACS Household Income: ");
+			title += mapRaceIterationToText(this->acsIncomeDialog->m_raceIteration);
+
+			ACSDataDisplay acsDialog(title, headers, data, this);
+			acsDialog.DoModal();
+		}
 
 	}
 }

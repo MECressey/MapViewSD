@@ -22,6 +22,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	int getIncomeCategories(void);
 	BOOL m_incomeTotals;
 	BOOL m_includeMOE;
 	BOOL m_under10K;

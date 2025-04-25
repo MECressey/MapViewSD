@@ -5,7 +5,7 @@
 #include "MapViewSD.h"
 #include "afxdialogex.h"
 #include "ACSIncomeDialog.h"
-
+#include "ACSSurveyData.h"
 
 // ACSIncomeDialog dialog
 
@@ -84,5 +84,49 @@ BOOL ACSIncomeDialog::OnInitDialog()
 	m_summaryLevels.SetCurSel(2);
 
 	return TRUE;
+}
+
+int ACSIncomeDialog::getIncomeCategories(void)
+{
+	int incomeCategories = 0;
+	if (this->m_incomeTotals)
+		incomeCategories = ACSSurveyData::TOTAL_INCOME;
+	else
+	{
+		if (this->m_under10K)
+			incomeCategories |= ACSSurveyData::TUnder10;
+		if (this->m_10KTo14999K)
+			incomeCategories |= ACSSurveyData::T10To14999;
+		if (this->m_15KTo19999K)
+			incomeCategories |= ACSSurveyData::T15To19999;
+		if (this->m_20KTo24999K)
+			incomeCategories |= ACSSurveyData::T20To24999;
+		if (this->m_25KTo29999K)
+			incomeCategories |= ACSSurveyData::T25To29999;
+		if (this->m_30KTo34999K)
+			incomeCategories |= ACSSurveyData::T30To34999;
+		if (this->m_35KTo39999K)
+			incomeCategories |= ACSSurveyData::T35To39999;
+		if (this->m_40KTo44999K)
+			incomeCategories |= ACSSurveyData::T40To44999;
+		if (this->m_45KTo49999K)
+			incomeCategories |= ACSSurveyData::T45To49999;
+		if (this->m_50KTo59999K)
+			incomeCategories |= ACSSurveyData::T50To59999;
+		if (this->m_60KTo74999K)
+			incomeCategories |= ACSSurveyData::T60To74999;
+		if (this->m_75KTo99999K)
+			incomeCategories |= ACSSurveyData::T75To99999;
+		if (this->m_100KTo124999K)
+			incomeCategories |= ACSSurveyData::T100To124999;
+		if (this->m_125KTo14999K)
+			incomeCategories |= ACSSurveyData::T125To149999;
+		if (this->m_150KTo19999K)
+			incomeCategories |= ACSSurveyData::T150To199999;
+		if (this->m_200KAndOver)
+			incomeCategories |= ACSSurveyData::T200andOver;
+	}
+
+	return incomeCategories;
 }
 // ACSIncomeDialog message handlers
