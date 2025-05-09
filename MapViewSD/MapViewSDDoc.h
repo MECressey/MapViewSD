@@ -38,6 +38,7 @@ public:
 	XY_t points[3000];
 #endif
 	int stateFips;
+	CString stateAbbrev;
 
 // Operations
 public:

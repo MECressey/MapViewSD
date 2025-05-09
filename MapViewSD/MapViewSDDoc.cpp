@@ -49,8 +49,8 @@ CMapViewSDDoc::CMapViewSDDoc() noexcept
 	//odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	//odbcDB.Open(_T("TigerNames2"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	odbcDB.SetSynchronousMode(TRUE);
-	this->db = new TigerDB(&odbcDB);
-	ASSERT(this->db != 0);
+	this->db = 0/*new TigerDB(&odbcDB)*/;
+	//ASSERT(this->db != 0);
 
 	this->isOpen = FALSE;
 	this->stateFips = 0;
@@ -90,7 +90,24 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 	if (!CDocument::OnOpenDocument(lpszPathName))
 		return FALSE;
 
-	ASSERT(this->db != 0);
+	// MapViewSD assumes that it works with TigerDB files that require the first 2-letters to be State 2-letter abbreviations
+	CString filePath = lpszPathName;
+	int pos = filePath.ReverseFind(_T('\\'));
+	CString fileName = filePath.Mid(pos + 1);
+	CString stateAbbr(fileName.GetAt(0));
+	stateAbbr += fileName.GetAt(1);
+	stateAbbr.MakeUpper();
+
+	this->stateAbbrev = stateAbbr;
+	if (stateAbbr == _T("ME"))
+		this->stateFips = ACSSurveyData::ME;
+	else if (stateAbbr == _T("MA"))
+		this->stateFips = ACSSurveyData::MA;
+	// Need to finish the rest of the states!!!
+
+	this->db = new TigerDB(&this->odbcDB, this->stateFips);
+
+	//ASSERT(this->db != 0);
 
 	std::string version;
 	if (this->db->Open(TString(lpszPathName), version, 0/*1*/, 0) != 0)
@@ -115,20 +132,8 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 	this->range.Add(center);
 	//this->range = dataRange;
 
-	// MapViewSD assumes that it works with TigerDB files that require the first 2-letters to be State 2-letter abbreviations
-	CString filePath = lpszPathName;
-	int pos = filePath.ReverseFind(_T('\\'));
-	CString fileName = filePath.Mid(pos + 1);
-	CString stateAbbr(fileName.GetAt(0));
-	stateAbbr += fileName.GetAt(1);
-	stateAbbr.MakeUpper();
-
-	if (stateAbbr == _T("ME"))
-		this->stateFips = ACSSurveyData::ME;
-	// Need to finish the rest of the states!!!
 
 	this->isOpen = TRUE;
-
 
 	return TRUE;
 }

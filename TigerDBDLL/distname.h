@@ -21,10 +21,13 @@ public:
 	CString	nameParam;
 	long	idParam;
 
-	DistNames( CDatabase *pDB = 0 );
+	DistNames(const CString& stateAbbr, CDatabase *pDB = 0);
 
 	virtual CString GetDefaultConnect();	// Default connection string
 	virtual CString GetDefaultSQL(); 	// Default SQL for Recordset
 	virtual void DoFieldExchange(CFieldExchange* pFX);	// RFX support
 	DECLARE_DYNAMIC(DistNames)
+
+private:
+	CString stateAbbr;
 };

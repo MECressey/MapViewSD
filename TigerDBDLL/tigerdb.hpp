@@ -471,7 +471,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 			std::string name;
 		};
 
-		TigerDB(CDatabase *);		// Connection to a SQL database using ODBC
+		TigerDB(CDatabase *, int stateFips);		// Connection to a SQL database using ODBC
 		~TigerDB(void);
 		int Close( void );
 		static MAFTCCodes MapMTFCC(const char* mtfcc);

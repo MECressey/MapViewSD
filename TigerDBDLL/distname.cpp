@@ -23,7 +23,7 @@ static char BASED_CODE THIS_FILE[] = __FILE__;
 
 IMPLEMENT_DYNAMIC(DistNames, CRecordset)
 
-DistNames::DistNames( CDatabase* pDB )
+DistNames::DistNames(const CString & stateAbbr, CDatabase* pDB )
 	: CRecordset( pDB )
 {
 	//{{AFX_FIELD_INIT(DistNames)
@@ -36,6 +36,8 @@ DistNames::DistNames( CDatabase* pDB )
 	this->idParam = 0;
 //	this->m_strFilter = "(NAME = ?)";
 	this->m_nParams = 1;
+
+	this->stateAbbr = stateAbbr;
 }
 
 CString DistNames::GetDefaultConnect()
@@ -45,7 +47,7 @@ CString DistNames::GetDefaultConnect()
 
 CString DistNames::GetDefaultSQL()
 {
-	return( _T( "DISTNAMES" ) );
+	return(this->stateAbbr + _T( "DISTNAMES" ));
 }
 
 void DistNames::DoFieldExchange(CFieldExchange* pFX)

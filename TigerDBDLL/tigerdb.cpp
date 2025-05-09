@@ -601,13 +601,28 @@ TigerDB::MAFTCCodes TigerDB::MapMTFCC(const char* mtfcc)
 	return(code);
 }
 
-TigerDB::TigerDB(CDatabase *rDB) : GeoDB(1 << 11, 400, SEQUENTIAL/*PAGES*/)
+TigerDB::TigerDB(CDatabase *rDB, int stateFips) : GeoDB(1 << 11, 400, SEQUENTIAL/*PAGES*/)
 {
 	this->nLines = 0;
 	this->db = rDB;
   assert( this->db != 0 );
 
-	this->names = new DistNames( this->db );
+	CString stateAbbr;
+	switch (stateFips)
+	{
+	default:
+		stateAbbr = "??";
+		break;
+
+	case 23:
+		stateAbbr = "ME";
+		break;
+	case 25:
+		stateAbbr = "MA";
+		break;
+	}
+
+	this->names = new DistNames(stateAbbr, this->db);
   assert( this->names != 0 );
 	this->names->nameParam = "";
 	this->names->m_strFilter = _T("(NAME = ?)");
@@ -615,7 +630,7 @@ TigerDB::TigerDB(CDatabase *rDB) : GeoDB(1 << 11, 400, SEQUENTIAL/*PAGES*/)
 	while( ! this->names->IsEOF() )
 		this->names->MoveNext();
 
-	this->nameById = new DistNames( this->db );
+	this->nameById = new DistNames(stateAbbr, this->db );
   assert( this->nameById != 0 );
 	this->nameById->idParam = 0;
 	this->nameById->m_strFilter = _T("(ID = ?)");

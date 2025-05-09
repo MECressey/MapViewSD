@@ -249,11 +249,12 @@ void CMapViewSDView::OnInitialUpdate()
 
 	ASSERT_VALID(pDoc);
 	ASSERT(pDoc != NULL);
-	ASSERT(pDoc->db != 0);
+
 	if (!pDoc->isOpen)
 		//  if( ! pDoc->db->IsOpen() )
 		return;
 
+	ASSERT(pDoc->db != 0);
 	if (this->mapWin == 0)
 	{
 		this->mapWin = new MapWindow(0, 1);
@@ -678,9 +679,9 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 
 	HCURSOR cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
-	ASSERT(pDoc->db != 0);
 	if (pDoc->isOpen)
 	{
+		ASSERT(pDoc->db != 0);
 		Range2D range;
 		CPen* lastPen = 0;
 		CPen* oldPen = pDC->SelectObject((CPen*)pDC->SelectStockObject(NULL_PEN));
