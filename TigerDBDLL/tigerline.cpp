@@ -143,8 +143,8 @@ void TigerDB::Chain::SetName( TigerDB::Name lineNames[], int count )
 {
   TigerDB *db = (TigerDB *)((DbObject *)this)->database();
 
-	if( count > 5 )
-		count = 5;
+	if( count > (sizeof(names) / sizeof(names[0])))		// Ignore any names larger than the list
+		count = (sizeof(names) / sizeof(names[0]));
 
 	this->nNames = count;
 	for( int i = 0; i < count; i++ )

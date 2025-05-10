@@ -412,7 +412,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 				~Chain( void );
 				unsigned GetNumNames( void ) const;
 				void GetName( Name *, int ) const;
-				void SetName( Name lineNames[], int );
+				void SetName( Name lineNames[], int );  // This method only gets called ONCE when the Chain is first created!
 
 				int is_equal(DbObject*);				// DbHashAccess interface
 				long int hashKey(int nBits);
@@ -435,7 +435,7 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 				//
 				//	Used only for getting/setting the records (these are stored on disk)
 				unsigned char nNames;
-				TName names[5];
+				TName names[8];
 		};
 
 		class __declspec(dllexport) Polygon : public GeoDB::Poly
