@@ -99,11 +99,7 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 	stateAbbr.MakeUpper();
 
 	this->stateAbbrev = stateAbbr;
-	if (stateAbbr == _T("ME"))
-		this->stateFips = ACSSurveyData::ME;
-	else if (stateAbbr == _T("MA"))
-		this->stateFips = ACSSurveyData::MA;
-	// Need to finish the rest of the states!!!
+	this->stateFips = TigerDB::MapStateAbbrevFipsCode(stateAbbr);
 
 	this->db = new TigerDB(&this->odbcDB, this->stateFips);
 

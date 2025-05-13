@@ -19,6 +19,7 @@
 #include "tigerdb.hpp"
 #include "distname.h"
 #include "GNISName.h"
+#include "ACSSurveyData.h"
 
 using namespace NodeEdgePoly;
 
@@ -740,4 +741,510 @@ void TigerDB::DeleteDbObject( DbObject::ClassCode code, DbObject *dbo )
       }
       break;       
   }
+}
+
+
+TCHAR* TigerDB::MapStateFipsAbbrev(int stateFips)
+{
+	TCHAR* abbrev = 0;
+
+	switch (stateFips)
+	{
+	default:
+		break;
+	case ACSSurveyData::AL:
+		abbrev = _T("AL");
+		break;
+	case ACSSurveyData::AK:
+		abbrev = _T("AK");
+		break;
+	case ACSSurveyData::AZ:
+		abbrev = _T("AZ");
+		break;
+	case ACSSurveyData::AR:
+		abbrev = _T("AR");
+		break;
+	case ACSSurveyData::CA:
+		abbrev = _T("CA");
+		break;
+	case ACSSurveyData::CO:
+		abbrev = _T("CO");
+		break;
+	case ACSSurveyData::CT:
+		abbrev = _T("CT");
+		break;
+	case ACSSurveyData::DE:
+		abbrev = _T("DE");
+		break;
+	case ACSSurveyData::DC:
+		abbrev = _T("DC");
+		break;
+	case ACSSurveyData::FL:
+		abbrev = _T("FL");
+		break;
+	case ACSSurveyData::GA:
+		abbrev = _T("GA");
+		break;
+	case ACSSurveyData::HI:
+		abbrev = _T("HI");
+		break;
+	case ACSSurveyData::ID:
+		abbrev = _T("ID");
+		break;
+	case ACSSurveyData::IL:
+		abbrev = _T("IL");
+		break;
+	case ACSSurveyData::INDIANA:
+		abbrev = _T("IN");
+		break;
+	case ACSSurveyData::IA:
+		abbrev = _T("IA");
+		break;
+	case ACSSurveyData::KS:
+		abbrev = _T("KS");
+		break;
+	case ACSSurveyData::KY:
+		abbrev = _T("KY");
+		break;
+	case ACSSurveyData::LA:
+		abbrev = _T("LA");
+		break;
+	case ACSSurveyData::ME:
+		abbrev = _T("ME");
+		break;
+	case ACSSurveyData::MD:
+		abbrev = _T("MD");
+		break;
+	case ACSSurveyData::MA:
+		abbrev = _T("MA");
+		break;
+	case ACSSurveyData::MI:
+		abbrev = _T("MI");
+		break;
+	case ACSSurveyData::MN:
+		abbrev = _T("MN");
+		break;
+	case ACSSurveyData::MS:
+		abbrev = _T("MS");
+		break;
+	case ACSSurveyData::MO:
+		abbrev = _T("MO");
+		break;
+	case ACSSurveyData::MT:
+		abbrev = _T("MT");
+		break;
+	case ACSSurveyData::NE:
+		abbrev = _T("NE");
+		break;
+	case ACSSurveyData::NV:
+		abbrev = _T("NV");
+		break;
+	case ACSSurveyData::NH:
+		abbrev = _T("NH");
+		break;
+	case ACSSurveyData::NJ:
+		abbrev = _T("NJ");
+		break;
+	case ACSSurveyData::NM:
+		abbrev = _T("NM");
+		break;
+	case ACSSurveyData::NY:
+		abbrev = _T("NY");
+		break;
+	case ACSSurveyData::NC:
+		abbrev = _T("NC");
+		break;
+	case ACSSurveyData::ND:
+		abbrev = _T("ND");
+		break;
+	case ACSSurveyData::OH:
+		abbrev = _T("OH");
+		break;
+	case ACSSurveyData::OK:
+		abbrev = _T("OK");
+		break;
+	case ACSSurveyData::OR:
+		abbrev = _T("OR");
+		break;
+	case ACSSurveyData::PA:
+		abbrev = _T("PA");
+		break;
+	case ACSSurveyData::RI:
+		abbrev = _T("RI");
+		break;
+	case ACSSurveyData::SC:
+		abbrev = _T("SC");
+		break;
+	case ACSSurveyData::SD:
+		abbrev = _T("SD");
+		break;
+	case ACSSurveyData::TN:
+		abbrev = _T("TN");
+		break;
+	case ACSSurveyData::TX:
+		abbrev = _T("TX");
+		break;
+	case ACSSurveyData::UT:
+		abbrev = _T("UT");
+		break;
+	case ACSSurveyData::VT:
+		abbrev = _T("VT");
+		break;
+	case ACSSurveyData::VI:
+		abbrev = _T("VI");
+		break;
+	case ACSSurveyData::WA:
+		abbrev = _T("WA");
+		break;
+	case ACSSurveyData::WV:
+		abbrev = _T("WV");
+		break;
+	case ACSSurveyData::WI:
+		abbrev = _T("WI");
+		break;
+	case ACSSurveyData::WY:
+		abbrev = _T("WY");
+		break;
+	}
+
+	return abbrev;
+}
+
+int TigerDB::MapStateAbbrevFipsCode(const TCHAR* abbrev)
+{
+	int stateFips = 0;
+	switch (abbrev[0])
+	{
+	case _T('A'):
+	case _T('a'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('L'):
+		case _T('l'):
+			stateFips = ACSSurveyData::AL;
+			break;
+		case _T('K'):
+		case _T('k'):
+			stateFips = ACSSurveyData::AK;
+			break;
+		case _T('Z'):
+		case _T('z'):
+			stateFips = ACSSurveyData::AZ;
+			break;
+		case _T('R'):
+		case _T('r'):
+			stateFips = ACSSurveyData::AR;
+			break;
+		}
+		break;
+
+	case _T('C'):
+	case _T('c'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('A'):
+		case _T('a'):
+			stateFips = ACSSurveyData::CA;
+			break;
+		case _T('O'):
+		case _T('o'):
+			stateFips = ACSSurveyData::CO;
+			break;
+		case _T('T'):
+		case _T('t'):
+			stateFips = ACSSurveyData::CT;
+			break;
+		case _T('R'):
+		case _T('r'):
+			stateFips = ACSSurveyData::AR;
+			break;
+		}
+		break;
+
+	case _T('D'):
+	case _T('d'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('E'):
+		case _T('e'):
+			stateFips = ACSSurveyData::DE;
+			break;
+		case _T('C'):
+		case _T('c'):
+			stateFips = ACSSurveyData::DC;
+			break;
+		}
+		break;
+
+	case _T('F'):
+	case _T('f'):
+		if (abbrev[1] == _T('L') || abbrev[1] == _T('l'))
+			stateFips = ACSSurveyData::FL;
+		break;
+
+	case _T('G'):
+	case _T('g'):
+		if (abbrev[1] == _T('A') || abbrev[1] == _T('a'))
+			stateFips = ACSSurveyData::GA;
+		break;
+
+	case _T('H'):
+	case _T('h'):
+		if (abbrev[1] == _T('I') || abbrev[1] == _T('i'))
+			stateFips = ACSSurveyData::HI;
+		break;
+
+	case _T('I'):
+	case _T('i'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('D'):
+		case _T('d'):
+			stateFips = ACSSurveyData::ID;
+			break;
+		case _T('L'):
+		case _T('i'):
+			stateFips = ACSSurveyData::IL;
+			break;
+		case _T('N'):
+		case _T('n'):
+			stateFips = ACSSurveyData::INDIANA;
+			break;
+		case _T('A'):
+		case _T('a'):
+			stateFips = ACSSurveyData::IA;
+			break;
+		}
+		break;
+
+	case _T('K'):
+	case _T('k'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('S'):
+		case _T('s'):
+			stateFips = ACSSurveyData::KS;
+			break;
+		case _T('Y'):
+		case _T('y'):
+			stateFips = ACSSurveyData::KY;
+			break;
+		}
+		break;
+
+	case _T('L'):
+	case _T('l'):
+		if (abbrev[1] == _T('A') || abbrev[1] == _T('a'))
+			stateFips = ACSSurveyData::LA;
+		break;
+
+	case _T('M'):
+	case _T('m'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('E'):
+		case _T('e'):
+			stateFips = ACSSurveyData::ME;
+			break;
+		case _T('D'):
+		case _T('d'):
+			stateFips = ACSSurveyData::MD;
+			break;
+		case _T('A'):
+		case _T('a'):
+			stateFips = ACSSurveyData::MA;
+			break;
+		case _T('I'):
+		case _T('i'):
+			stateFips = ACSSurveyData::MI;
+			break;
+		case _T('N'):
+		case _T('n'):
+			stateFips = ACSSurveyData::MN;
+			break;
+		case _T('S'):
+		case _T('s'):
+			stateFips = ACSSurveyData::MS;
+			break;
+		case _T('O'):
+		case _T('o'):
+			stateFips = ACSSurveyData::MO;
+			break;
+		case _T('T'):
+		case _T('t'):
+			stateFips = ACSSurveyData::MT;
+			break;
+		}
+		break;
+
+	case _T('N'):
+	case _T('n'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('E'):
+		case _T('e'):
+			stateFips = ACSSurveyData::NE;
+			break;
+		case _T('V'):
+		case _T('v'):
+			stateFips = ACSSurveyData::NV;
+			break;
+		case _T('H'):
+		case _T('h'):
+			stateFips = ACSSurveyData::NH;
+			break;
+		case _T('J'):
+		case _T('j'):
+			stateFips = ACSSurveyData::NJ;
+			break;
+		case _T('M'):
+		case _T('m'):
+			stateFips = ACSSurveyData::NM;
+			break;
+		case _T('Y'):
+		case _T('y'):
+			stateFips = ACSSurveyData::NY;
+			break;
+		case _T('C'):
+		case _T('c'):
+			stateFips = ACSSurveyData::NC;
+			break;
+		case _T('D'):
+		case _T('d'):
+			stateFips = ACSSurveyData::ND;
+			break;
+		}
+		break;
+
+	case _T('O'):
+	case _T('o'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('H'):
+		case _T('h'):
+			stateFips = ACSSurveyData::OH;
+			break;
+		case _T('K'):
+		case _T('k'):
+			stateFips = ACSSurveyData::OK;
+			break;
+		case _T('R'):
+		case _T('r'):
+			stateFips = ACSSurveyData::OR;
+			break;
+		}
+		break;
+
+	case _T('P'):
+	case _T('p'):
+		if (abbrev[1] == _T('A') || abbrev[1] == _T('a'))
+			stateFips = ACSSurveyData::PA;
+		break;
+
+	case _T('R'):
+	case _T('r'):
+		if (abbrev[1] == _T('I') || abbrev[1] == _T('i'))
+			stateFips = ACSSurveyData::RI;
+		break;
+
+	case _T('S'):
+	case _T('s'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('C'):
+		case _T('c'):
+			stateFips = ACSSurveyData::SC;
+			break;
+		case _T('D'):
+		case _T('d'):
+			stateFips = ACSSurveyData::SD;
+			break;
+		}
+		break;
+
+	case _T('T'):
+	case _T('t'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('N'):
+		case _T('n'):
+			stateFips = ACSSurveyData::TN;
+			break;
+		case _T('X'):
+		case _T('x'):
+			stateFips = ACSSurveyData::TX;
+			break;
+		}
+		break;
+
+	case _T('U'):
+	case _T('u'):
+		if (abbrev[1] == _T('T') || abbrev[1] == _T('t'))
+			stateFips = ACSSurveyData::UT;
+		break;
+
+	case _T('V'):
+	case _T('v'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('T'):
+		case _T('t'):
+			stateFips = ACSSurveyData::VT;
+			break;
+		case _T('I'):
+		case _T('i'):
+			stateFips = ACSSurveyData::VI;
+			break;
+		}
+		break;
+
+	case _T('W'):
+	case _T('w'):
+		switch (abbrev[1])
+		{
+		default:
+			break;
+		case _T('A'):
+		case _T('a'):
+			stateFips = ACSSurveyData::WA;
+			break;
+		case _T('V'):
+		case _T('v'):
+			stateFips = ACSSurveyData::WV;
+			break;
+		case _T('I'):
+		case _T('i'):
+			stateFips = ACSSurveyData::WI;
+			break;
+		case _T('Y'):
+		case _T('y'):
+			stateFips = ACSSurveyData::WY;
+			break;
+		}
+		break;
+	}
+
+	return stateFips;
 }

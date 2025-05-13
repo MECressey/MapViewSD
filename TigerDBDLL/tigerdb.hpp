@@ -475,6 +475,8 @@ class  __declspec(dllexport) TigerDB : public NodeEdgePoly::GeoDB
 		~TigerDB(void);
 		int Close( void );
 		static MAFTCCodes MapMTFCC(const char* mtfcc);
+		static TCHAR *MapStateFipsAbbrev(int stateFips);
+		static int MapStateAbbrevFipsCode(const TCHAR *);
 
 	private :
 		DbObject *CreateDbObject( DbObject::ClassCode );			// Override method to create objects
