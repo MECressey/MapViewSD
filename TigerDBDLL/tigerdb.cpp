@@ -958,10 +958,6 @@ int TigerDB::MapStateAbbrevFipsCode(const TCHAR* abbrev)
 		case _T('t'):
 			stateFips = ACSSurveyData::CT;
 			break;
-		case _T('R'):
-		case _T('r'):
-			stateFips = ACSSurveyData::AR;
-			break;
 		}
 		break;
 
@@ -1011,7 +1007,7 @@ int TigerDB::MapStateAbbrevFipsCode(const TCHAR* abbrev)
 			stateFips = ACSSurveyData::ID;
 			break;
 		case _T('L'):
-		case _T('i'):
+		case _T('l'):
 			stateFips = ACSSurveyData::IL;
 			break;
 		case _T('N'):
