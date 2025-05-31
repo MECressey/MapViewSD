@@ -162,7 +162,10 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->countyBrush.CreateSolidBrush(RGB(255, 211, 127));		// ESRI Mango
 	this->faceBrush.CreateSolidBrush(RGB(204, 204, 204));		// ESRI Gray 20%
 	this->bgBrush.CreateSolidBrush(RGB(214, 157, 188));		// ESRI Tudor Rose Dust
-	
+	this->polySelectBush.CreateSolidBrush(RGB(255, 0, 0));
+	this->highLitePolysWithFill = true;
+	this->polyROP2 = R2_XORPEN/*R2_MERGEPEN*/;
+
 	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
@@ -631,7 +634,7 @@ bool CMapViewSDView::filter(GeoDB::SpatialObj* so)
 	return false;
 }
 
-void CMapViewSDView::highlightSelectionSet(TigerDB *db, CDC *pDC)
+void CMapViewSDView::highLiteSelectionSet(TigerDB *db, CDC *pDC)
 {
 // Highlight selected objects
 	for (int i = 0; i < this->selectionIDs.size(); i++)
@@ -639,32 +642,86 @@ void CMapViewSDView::highlightSelectionSet(TigerDB *db, CDC *pDC)
 		ObjHandle oh;
 		int err = db->Read(this->selectionIDs[i].dbId, oh);
 		assert(err == 0);
-		GeoDB::SpatialObj* obj = (GeoDB::SpatialObj*)oh.Lock();
-		GeoDB::SpatialClass sc = obj->IsA();
-		switch (sc)
-		{
-		case GeoDB::AREA:
-		{
-			TigerDB::Polygon* poly = (TigerDB::Polygon*)obj;
-			CPen* oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
+		GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)oh.Lock();
+		highLiteObject(sObj, pDC);
+		oh.Unlock();
+	}
+}
 
-			int nPts = GeoDB::Poly::getPts(oh, pts);
-			DrawLine(*this->mapWin, pDC, this->pts, nPts);
+void CMapViewSDView::highLiteObject(GeoDB::SpatialObj *sObj, CDC* pDC)
+{
+	GeoDB::SpatialClass sc = sObj->IsA();
+	switch (sc)
+	{
+	case GeoDB::POINT:
+		break;
+
+	case GeoDB::AREA:
+	{
+		TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+
+		CPen* oldPen = 0;
+		int old_rop2 = 0;
+		/*if (!this->geoIDs.empty())
+		{
+			int old_rop2 = dc->SetROP2(R2_XORPEN);
+		}*/
+
+		if (this->highLitePolysWithFill)
+		{
+			pDC->SelectObject(this->polySelectBush);
+			old_rop2 = pDC->SetROP2(polyROP2);
+		}
+		else
+			oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
+		ObjHandle oh;
+		oh = sObj;
+		int nPts = GeoDB::Poly::getPts(oh, pts);
+		DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+		//DrawLine(*this->mapWin, dc, this->pts, nPts);
+		if (this->highLitePolysWithFill)
+			pDC->SetROP2(old_rop2);
+		else
+			pDC->SelectObject(oldPen);
+		/*
+		if (this->doACSAgeSex)
+		{
+			std::vector<int> geoIDs;
+			geoIDs.push_back(poly->userId);
+
+			assert(doc->stateFips != 0);
+			doACSAgeAndSex(doc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
+		//	break;
+		}*/
+
+		break;
+	}
+
+	case GeoDB::LINE:
+	{
+		TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+		ASSERT(line != 0);
+		CPen* pen;
+		int code = line->userCode;
+
+		if ((pen = &this->hPen) != 0)
+		{
+			//pen = &this->hPen;
+			int nPts = (int)line->getNumPts();
+			line->Get(this->pts);
+
+			CPen* oldPen = pDC->SelectObject(pen);
+			int old_rop2 = pDC->SetROP2(R2_XORPEN);
+
+			if (this->doThining)
+				nPts = TrendLine(this->pts, nPts, this->tDist);
+			DrawLine(*this->mapWin, pDC, this->pts, nPts, true);
 
 			pDC->SelectObject(oldPen);
-			break;
+			pDC->SetROP2(old_rop2);
 		}
-		case GeoDB::LINE:
-		{
-			TigerDB::Chain* line = (TigerDB::Chain*)obj;
-
-			break;
-		}
-		default:
-			assert(false);
-			break;
-		}
-		oh.Unlock();
+		break;
+	}
 	}
 }
 
@@ -945,7 +1002,7 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 		}
 
 		// Highlight selected objects
-		this->highlightSelectionSet(pDoc->db, pDC);
+		this->highLiteSelectionSet(pDoc->db, pDC);
 
 		/*
 		pDC->SelectObject(&this->pens[TRAIL]);
@@ -1194,157 +1251,131 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				//so.Init(range);
 
 				so.Init(pt0, this->sDist, this->layerDlg->objClasses, this);
-				if (so.FindBest(&fo) == 0)/**/
+				if (so.FindBest(&fo) == 0)
 				{
 					GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
 					GeoDB::SpatialClass sc = sObj->IsA();
 					switch (sc)
 					{
-					case GeoDB::POINT:
-					{
-						if (sObj->getClassCode() == DB_POINT)
+						case GeoDB::POINT:
 						{
 							TigerDB::GNISFeature* feat = (TigerDB::GNISFeature*)sObj;
 							DisplayInfo(feat);
+							break;
 						}
-						break;
+
+						case GeoDB::AREA:
+						{
+							TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+							DisplayInfo(poly);
+							this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
+							break;
+						}
+
+						case GeoDB::LINE:
+						{
+							TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+							DisplayInfo(line);
+							break;
+						}
 					}
-					case GeoDB::AREA:
+
+					highLiteObject(sObj, dc);
+
+					fo.handle.Unlock();
+#if defined(DO_SHORT_PATH)
+
+					if (this->doShortPath)
 					{
-						TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
-
-						CPen* oldPen = dc->SelectObject(&this->pens[RED_PEN]);
-						/*if (!this->geoIDs.empty())
+						GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+						GeoDB::SpatialClass sc = sObj->IsA();
+						fo.handle.Unlock();
+						if (sc == GeoDB::LINE)
 						{
-							int old_rop2 = dc->SetROP2(R2_XORPEN);
-						}*/
+							TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+							double distSq;
+							XY_t tempPt;
+							int dir;
 
-						int nPts = GeoDB::Poly::getPts(fo.handle, pts);
-						DrawLine(*this->mapWin, dc, this->pts, nPts);
-						DisplayInfo(poly);
-						this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
-						/*
-						if (this->doACSAgeSex)
-						{
-							std::vector<int> geoIDs;
-							geoIDs.push_back(poly->userId);
-
-							assert(doc->stateFips != 0);
-							doACSAgeAndSex(doc->odbcDB, (TigerDB::MAFTCCodes)poly->userCode, (ACSSurveyData::StateFIPSCodes)doc->stateFips, geoIDs);
-						//	break;
-						}*/
-						dc->SelectObject(oldPen);
-						break;
-					}
-					case GeoDB::LINE:
-					{
-						TigerDB::Chain* line = (TigerDB::Chain*)sObj;
-						ASSERT(line != 0);
-						CPen* pen;
-						int code = line->userCode/*GetCode()*/;
-
-						if ((pen = &this->hPen/*this->GetPen(code)*/) != 0)
-						{
-							//pen = &this->hPen;
 							int nPts = (int)line->getNumPts();
 							line->Get(this->pts);
 
-							CPen* oldPen = dc->SelectObject(pen);
-							int old_rop2 = dc->SetROP2(R2_XORPEN);
-
-							if (this->doThining)
-								nPts = TrendLine(this->pts, nPts, this->tDist);
-							DrawLine(*this->mapWin, dc, this->pts, nPts, true);
-							DisplayInfo(line);
-
-	#if defined(DO_SHORT_PATH)
-							if (this->doShortPath)
+							distSq = fo.pt.DistSqr(this->pts[0]);
+							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
 							{
-								double distSq;
-								XY_t tempPt;
-								int dir;
-
-								distSq = fo.pt.DistSqr(this->pts[0]);
-								if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
-								{
-									tempPt = this->pts[0];
-									dir = -1;
-								}
-								else
-								{
-									tempPt = this->pts[nPts - 1];
-									dir = 1;
-								}
-
-								if (++this->pickCount == 1)
-								{
-									this->startId = line->dbAddress();
-									this->startPt = tempPt;
-									this->startDir = dir;
-									this->startDist = line->Length();
-									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
-								}
-								else if (this->pickCount == 2)
-								{
-									ShortPath sPath;
-									ObjHandle handle;
-									double dist;
-									int nIds;
-
-									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
-
-									int err = doc->db->Read(this->startId, handle);
-									assert(err == 0);
-									line = (TigerDB::Chain*)handle.Lock();
-									XY_t sPt, ePt;
-									line->getNodes(&sPt, &ePt);
-									double length = line->Length();
-									handle.Unlock();
-									double d1 = this->pts[0].DistSqr(sPt),
-										d2 = this->pts[0].DistSqr(ePt);
-									if (d1 < d2)
-										dir = 1;
-									else
-										dir = 0;
-									sPath.Init(handle, fo.handle, 0, this->startPt);
-									sPath.putEdge(handle, dir, length);
-
-									ShortPath::filter_t f1,
-										f2,
-										f3;
-									std::vector<long> edgeIds;
-
-									//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
-									//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-									f2.push_back(TigerDB::ROAD_SecondaryRoad);
-									f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
-									nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
-									{
-										for (int i = 0; i < edgeIds.size(); i++)
-										{
-											DbObject::Id id = edgeIds[i];
-											if (id < 0)
-												id = -id;
-											err = doc->db->Read(id, handle);
-											line = (TigerDB::Chain*)handle.Lock();
-											nPts = (int)line->getNumPts();
-											line->Get(this->pts);
-											DrawLine(*this->mapWin, dc, this->pts, nPts);
-											handle.Unlock();
-										}
-									}
-
-									this->pickCount = 0;
-									frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
-								}
+								tempPt = this->pts[0];
+								dir = -1;
 							}
-	#endif
-							dc->SelectObject(oldPen);
-							dc->SetROP2(old_rop2);
+							else
+							{
+								tempPt = this->pts[nPts - 1];
+								dir = 1;
+							}
+
+							if (++this->pickCount == 1)
+							{
+								this->startId = line->dbAddress();
+								this->startPt = tempPt;
+								this->startDir = dir;
+								this->startDist = line->Length();
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
+							}
+							else if (this->pickCount == 2)
+							{
+								ShortPath sPath;
+								ObjHandle handle;
+								double dist;
+								int nIds;
+
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
+
+								int err = doc->db->Read(this->startId, handle);
+								assert(err == 0);
+								line = (TigerDB::Chain*)handle.Lock();
+								XY_t sPt, ePt;
+								line->getNodes(&sPt, &ePt);
+								double length = line->Length();
+								handle.Unlock();
+								double d1 = this->pts[0].DistSqr(sPt),
+									d2 = this->pts[0].DistSqr(ePt);
+								if (d1 < d2)
+									dir = 1;
+								else
+									dir = 0;
+								sPath.Init(handle, fo.handle, 0, this->startPt);
+								sPath.putEdge(handle, dir, length);
+
+								ShortPath::filter_t f1,
+									f2,
+									f3;
+								std::vector<long> edgeIds;
+
+								//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
+								//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+								f2.push_back(TigerDB::ROAD_SecondaryRoad);
+								f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
+								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
+								{
+									for (int i = 0; i < edgeIds.size(); i++)
+									{
+										DbObject::Id id = edgeIds[i];
+										if (id < 0)
+											id = -id;
+										err = doc->db->Read(id, handle);
+										line = (TigerDB::Chain*)handle.Lock();
+										nPts = (int)line->getNumPts();
+										line->Get(this->pts);
+										DrawLine(*this->mapWin, dc, this->pts, nPts);
+										handle.Unlock();
+									}
+								}
+
+								this->pickCount = 0;
+								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
+							}
 						}
-						break;
 					}
-					}
+#endif
 
 					fo.handle.Unlock();
 				}
@@ -1377,6 +1408,42 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 			bool first = true;
 			while (so.FindNext(&fo) == 0)
 			{
+				GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
+				GeoDB::SpatialClass sc = sObj->IsA();
+				switch (sc)
+				{
+					case GeoDB::POINT:
+					{
+						break;
+					}
+
+					case GeoDB::AREA:
+					{
+						TigerDB::Polygon* poly = (TigerDB::Polygon*)sObj;
+						if (first)
+						{
+							DisplayInfo(poly);
+							first = false;
+						}
+						this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
+						break;
+					}
+
+					case GeoDB::LINE:
+					{
+						TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+						if (first)
+						{
+							DisplayInfo(line);
+							first = false;
+						}
+						break;
+					}
+				}
+
+				highLiteObject(sObj, dc);
+				fo.handle.Unlock();
+#ifdef SAVE_FOR_NOW
 				GeoDB::SpatialObj* spatialObj = (GeoDB::SpatialObj*)fo.handle.Lock();
 				GeoDB::SpatialClass sc = spatialObj->IsA();
 				assert(sc == GeoDB::AREA);
@@ -1387,21 +1454,23 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 				polyCode = (TigerDB::MAFTCCodes)poly->userCode;
 				int nPts = GeoDB::Poly::getPts(fo.handle, pts);
 
-				//CPen* oldPen = dc->SelectObject(&this->pens[2]);
-				//int old_rop2 = dc->SetROP2(R2_XORPEN);
-				CPen *oldPen = dc->SelectObject(&this->pens[RED_PEN]);
+				dc->SelectObject(this->polySelectBush);
+				int old_rop2 = dc->SetROP2(this->polyROP2);
+				//CPen *oldPen = dc->SelectObject(&this->pens[RED_PEN]);
 
 				if (first)
 				{
 					DisplayInfo(poly);
 					first = false;
 				}
-				DrawLine(*this->mapWin, dc, this->pts, nPts);
+				DrawPolygon(*this->mapWin, dc, this->pts, nPts);
+				//DrawLine(*this->mapWin, dc, this->pts, nPts);
 
-				dc->SelectObject(oldPen);
-				//dc->SetROP2(old_rop2);
+				//dc->SelectObject(oldPen);
+				dc->SetROP2(old_rop2);
 
 				fo.handle.Unlock();
+#endif
 			}
 
 			RemoveRectangle(dc);

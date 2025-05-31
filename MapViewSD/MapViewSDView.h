@@ -66,7 +66,8 @@ protected:
 				 tractBrush,
 				 bgBrush,
 				 countyBrush,
-				 faceBrush;
+				 faceBrush,
+				 polySelectBush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;
@@ -168,7 +169,10 @@ public:
 	afx_msg void OnSelectClearselection();
 
 private:
-	void highlightSelectionSet(TigerDB* db, CDC* pDC);
+	void highLiteSelectionSet(TigerDB* db, CDC* pDC);
+	void highLiteObject(GeoDB::SpatialObj *, CDC *);
+	bool highLitePolysWithFill;
+	int polyROP2;
 };
 
 #ifndef _DEBUG  // debug version in MapViewSDView.cpp
