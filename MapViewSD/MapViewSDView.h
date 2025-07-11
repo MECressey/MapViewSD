@@ -67,7 +67,8 @@ protected:
 				 bgBrush,
 				 countyBrush,
 				 faceBrush,
-				 polySelectBush;
+				 polySelectBush,
+				 zctaBrush;
 	CFont font;
 	int			pan_overlap;
 	double		zoom_factor;

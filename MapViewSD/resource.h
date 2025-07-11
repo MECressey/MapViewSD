@@ -210,6 +210,8 @@
 #define IDC_SUMMARY_LEVEL               1107
 #define IDC_INCOME_TOTALS               1108
 #define IDC_INCOME_MOE                  1109
+#define IDC_CHECK3                      1110
+#define IDC_ZCTA                        1110
 #define ID_ZOOM_IN                      32771
 #define ID_ZOOM_OUT                     32772
 #define ID_ZOOM_LEFT                    32773
@@ -236,7 +238,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32790
-#define _APS_NEXT_CONTROL_VALUE         1110
+#define _APS_NEXT_CONTROL_VALUE         1111
 #define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

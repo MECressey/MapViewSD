@@ -162,6 +162,7 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->countyBrush.CreateSolidBrush(RGB(255, 211, 127));		// ESRI Mango
 	this->faceBrush.CreateSolidBrush(RGB(204, 204, 204));		// ESRI Gray 20%
 	this->bgBrush.CreateSolidBrush(RGB(214, 157, 188));		// ESRI Tudor Rose Dust
+	this->zctaBrush.CreateSolidBrush(RGB(255, 235, 190));		// ESRI Sahara Sand 
 	this->polySelectBush.CreateSolidBrush(RGB(255, 0, 0));
 	this->highLitePolysWithFill = true;
 	this->polyROP2 = R2_XORPEN/*R2_MERGEPEN*/;
@@ -362,6 +363,11 @@ CBrush* CMapViewSDView::GetBrush(int code)	// Use for polygons
 	case TigerDB::TAB_CountyFeature:
 		if (this->layerDlg->doCounties)
 			return &this->countyBrush;
+		break;
+
+	case TigerDB::TAB_ZIPCodeArea:
+		if (this->layerDlg->doZctas)
+			return &this->zctaBrush;
 		break;
 	}
 
@@ -1282,97 +1288,90 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 
 					highLiteObject(sObj, dc);
 
-					fo.handle.Unlock();
 #if defined(DO_SHORT_PATH)
 
-					if (this->doShortPath)
+					if (this->doShortPath && sc == GeoDB::LINE)
 					{
-						GeoDB::SpatialObj* sObj = (GeoDB::SpatialObj*)fo.handle.Lock();
-						GeoDB::SpatialClass sc = sObj->IsA();
-						fo.handle.Unlock();
-						if (sc == GeoDB::LINE)
+						TigerDB::Chain* line = (TigerDB::Chain*)sObj;
+						double distSq;
+						XY_t tempPt;
+						int dir;
+
+						int nPts = (int)line->getNumPts();
+						line->Get(this->pts);
+
+						distSq = fo.pt.DistSqr(this->pts[0]);
+						if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
 						{
-							TigerDB::Chain* line = (TigerDB::Chain*)sObj;
-							double distSq;
-							XY_t tempPt;
-							int dir;
+							tempPt = this->pts[0];
+							dir = -1;
+						}
+						else
+						{
+							tempPt = this->pts[nPts - 1];
+							dir = 1;
+						}
 
-							int nPts = (int)line->getNumPts();
-							line->Get(this->pts);
+						if (++this->pickCount == 1)
+						{
+							this->startId = line->dbAddress();
+							this->startPt = tempPt;
+							this->startDir = dir;
+							this->startDist = line->Length();
+							frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
+						}
+						else if (this->pickCount == 2)
+						{
+							ShortPath sPath;
+							ObjHandle handle;
+							double dist;
+							int nIds;
 
-							distSq = fo.pt.DistSqr(this->pts[0]);
-							if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
-							{
-								tempPt = this->pts[0];
-								dir = -1;
-							}
-							else
-							{
-								tempPt = this->pts[nPts - 1];
+							frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
+
+							int err = doc->db->Read(this->startId, handle);
+							assert(err == 0);
+							line = (TigerDB::Chain*)handle.Lock();
+							XY_t sPt, ePt;
+							line->getNodes(&sPt, &ePt);
+							double length = line->Length();
+							handle.Unlock();
+							double d1 = this->pts[0].DistSqr(sPt),
+								d2 = this->pts[0].DistSqr(ePt);
+							if (d1 < d2)
 								dir = 1;
-							}
+							else
+								dir = 0;
+							sPath.Init(handle, fo.handle, 0, this->startPt);
+							sPath.putEdge(handle, dir, length);
 
-							if (++this->pickCount == 1)
+							ShortPath::filter_t f1,
+								f2,
+								f3;
+							std::vector<long> edgeIds;
+
+							//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
+							//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
+							f2.push_back(TigerDB::ROAD_SecondaryRoad);
+							f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
+							nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
 							{
-								this->startId = line->dbAddress();
-								this->startPt = tempPt;
-								this->startDir = dir;
-								this->startDist = line->Length();
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the second edge by right-clicking"));
-							}
-							else if (this->pickCount == 2)
-							{
-								ShortPath sPath;
-								ObjHandle handle;
-								double dist;
-								int nIds;
-
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: calculating..."));
-
-								int err = doc->db->Read(this->startId, handle);
-								assert(err == 0);
-								line = (TigerDB::Chain*)handle.Lock();
-								XY_t sPt, ePt;
-								line->getNodes(&sPt, &ePt);
-								double length = line->Length();
-								handle.Unlock();
-								double d1 = this->pts[0].DistSqr(sPt),
-									d2 = this->pts[0].DistSqr(ePt);
-								if (d1 < d2)
-									dir = 1;
-								else
-									dir = 0;
-								sPath.Init(handle, fo.handle, 0, this->startPt);
-								sPath.putEdge(handle, dir, length);
-
-								ShortPath::filter_t f1,
-									f2,
-									f3;
-								std::vector<long> edgeIds;
-
-								//f2.push_back(TigerDB::ROAD_PrimaryLimitedAccess);		// Need a UI for this (rather than hard-code)
-								//f2.push_back(TigerDB::ROAD_PrimaryUnlimitedAccess);
-								f2.push_back(TigerDB::ROAD_SecondaryRoad);
-								f3.push_back(TigerDB::ROAD_LocalNeighborhoodRoad);
-								nIds = sPath.Find(*doc->db, f1, f2, f3, edgeIds, &dist);
+								for (int i = 0; i < edgeIds.size(); i++)
 								{
-									for (int i = 0; i < edgeIds.size(); i++)
-									{
-										DbObject::Id id = edgeIds[i];
-										if (id < 0)
-											id = -id;
-										err = doc->db->Read(id, handle);
-										line = (TigerDB::Chain*)handle.Lock();
-										nPts = (int)line->getNumPts();
-										line->Get(this->pts);
-										DrawLine(*this->mapWin, dc, this->pts, nPts);
-										handle.Unlock();
-									}
+									DbObject::Id id = edgeIds[i];
+									if (id < 0)
+										id = -id;
+									err = doc->db->Read(id, handle);
+									line = (TigerDB::Chain*)handle.Lock();
+									nPts = (int)line->getNumPts();
+									line->Get(this->pts);
+									DrawLine(*this->mapWin, dc, this->pts, nPts);
+									handle.Unlock();
 								}
-
-								this->pickCount = 0;
-								frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
 							}
+
+							this->pickCount = 0;
+							frame->m_wndStatusBar.SetPaneText(0, _T("ShortPath: pick the first edge by right-clicking"));
 						}
 					}
 #endif
@@ -2479,7 +2478,15 @@ void CMapViewSDView::OnAcsSex()
 
 void CMapViewSDView::OnUpdateAcsSex(CCmdUI* pCmdUI)
 {
-	pCmdUI->Enable(this->mapWin != 0);
+	if (this->mapWin != 0 && !this->selectionIDs.empty())
+	{
+		pCmdUI->Enable(TRUE);
+	}
+	else
+	{
+		pCmdUI->Enable(FALSE);
+		this->doACSAgeSex = FALSE;
+	}
 	pCmdUI->SetCheck(this->doACSAgeSex);
 }
 
@@ -2883,7 +2890,17 @@ void CMapViewSDView::OnAcsQuery()
 
 void CMapViewSDView::OnUpdateAcsHouseIncome(CCmdUI* pCmdUI)
 {
-	pCmdUI->Enable(this->mapWin != 0);
+	//pCmdUI->Enable(this->mapWin != 0);
+	//pCmdUI->SetCheck(this->doACSAgeSex);
+	if (this->mapWin != 0 && !this->selectionIDs.empty())
+	{
+		pCmdUI->Enable(TRUE);
+	}
+	else
+	{
+		pCmdUI->Enable(FALSE);
+		this->doACSAgeSex = FALSE;
+	}
 	pCmdUI->SetCheck(this->doACSAgeSex);
 }
 

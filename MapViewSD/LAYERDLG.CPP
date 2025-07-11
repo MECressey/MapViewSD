@@ -67,6 +67,7 @@ LayerDlg::LayerDlg(CWnd* pParent /*=NULL*/)
 	doCounties = FALSE;
 	doFaces = FALSE;
 	doBlkGroups = FALSE;
+	doZctas = FALSE;
 	//}}AFX_DATA_INIT
 
 	SetUpSpatialFilter();
@@ -80,7 +81,7 @@ void LayerDlg::SetUpSpatialFilter(void)
 		this->objClasses.set(DB_EDGE);
 	if (doGNISPoints)
 		this->objClasses.set(DB_POINT);
-	if (doAreas && (doLakesOrPonds || doPark || doPlaces || doTracts || doCounties || doBlkGroups))
+	if (doAreas && (doLakesOrPonds || doPark || doPlaces || doTracts || doCounties || doBlkGroups || doZctas))
 		this->objClasses.set(DB_POLY);
 }
 
@@ -118,6 +119,7 @@ void LayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_COUNTIES, doCounties);
 	DDX_Check(pDX, IDC_FACES, doFaces);
 	DDX_Check(pDX, IDC_BLKGRP, doBlkGroups);
+	DDX_Check(pDX, IDC_ZCTA, doZctas);
 	//}}AFX_DATA_MAP
 }
 

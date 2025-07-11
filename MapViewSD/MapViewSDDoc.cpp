@@ -69,8 +69,7 @@ CMapViewSDDoc::~CMapViewSDDoc()
 
 void CMapViewSDDoc::OnCloseDocument()
 {
-	ASSERT(this->db != 0);
-	if (this->db->IsOpen())
+	if (this->db != 0 && this->db->IsOpen())
 		this->db->Close();
 }
 
