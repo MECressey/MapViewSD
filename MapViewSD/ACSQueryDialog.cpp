@@ -5,7 +5,7 @@
 #include "MapViewSD.h"
 #include "afxdialogex.h"
 #include "ACSQueryDialog.h"
-
+#include "TString.h"
 
 // ACSQueryDialog dialog
 
@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(ACSQueryDialog, CDialogEx)
 ACSQueryDialog::ACSQueryDialog(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_ACS_QUERY, pParent)
 	, m_value1(_T(""))
+	, m_subjectType (0)
 {
 	m_idxCol2 = m_idxCol1 = 0;
 	m_idxComp2 = m_idxComp1 = (ACSSurveyData::SQLComparisonOp)0 ;
@@ -63,7 +64,7 @@ BOOL ACSQueryDialog::OnInitDialog()
 	// TODO:  Add extra initialization here
 
 	m_sourceList.AddString(_T("Age and Sex"));
-	m_sourceList.AddString(_T("Population"));
+	m_sourceList.AddString(_T("Household Income"));
 	m_sourceList.SetCurSel(0);
 
 	m_yearCombo.AddString(_T("2023"));
@@ -92,21 +93,59 @@ BOOL ACSQueryDialog::OnInitDialog()
 	m_logOp1.AddString(_T("OR"));
 	m_logOp1.SetCurSel(0);
 
-	SetAgeAndSexColumns();
+	//SetAgeAndSexColumns();
+	InitColumnList(ACSSurveyData::SEX_BY_AGE);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
+void ACSQueryDialog::InitColumnList(ACSSurveyData::SubjectType subjectType)
+{
+	m_subjectType = subjectType;
+
+	m_colNames.clear();
+	ACSSurveyData::GetTableColumns(m_colNames, subjectType);
+
+	m_colCombo.ResetContent();
+	m_colCombo2.ResetContent();
+	switch (subjectType)
+	{
+	default:
+		break;
+	case ACSSurveyData::SEX_BY_AGE:
+	case ACSSurveyData::HOUSEHOLD_INCOME_IN_THE_PAST_12MONTHS:
+		m_colCombo.AddString(_T("Total"));
+		m_colCombo2.AddString(_T("Total"));
+		break;
+	}
+	for (int i = 0; i < m_colNames.size(); i++)
+	{
+		//LPCTSTR lpcstr = m_colNames[i].colName.c_str()
+		m_colCombo.AddString(TString(m_colNames[i].colName.c_str()));
+		m_colCombo2.AddString(TString(m_colNames[i].colName.c_str()));
+	}
+
+	m_colCombo.SetCurSel(0);
+	m_colCombo2.SetCurSel(0);
+}
 
 void ACSQueryDialog::OnLbnSelchangeSourceList()
 {
 	CString sourceList;
 
 	int nIndex = m_sourceList.GetCurSel();
-	if (nIndex == 0)
+	switch (nIndex)
 	{
-		SetAgeAndSexColumns();
+	default:
+		break;
+
+	case 0:
+		InitColumnList(ACSSurveyData::SEX_BY_AGE);
+		break;
+	case 1:
+		InitColumnList(ACSSurveyData::HOUSEHOLD_INCOME_IN_THE_PAST_12MONTHS);
+		break;
 
 	}
 }

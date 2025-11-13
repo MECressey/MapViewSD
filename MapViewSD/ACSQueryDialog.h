@@ -24,6 +24,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CComboBox m_sourceList;
+	std::vector<ACSSurveyData::ACSColumnRec> m_colNames;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnLbnSelchangeSourceList();
 	CComboBox m_yearCombo;
@@ -31,6 +32,8 @@ public:
 						m_colCombo2;
 
 private:
+	int m_subjectType;
+	void InitColumnList(ACSSurveyData::SubjectType subjectType);
 	void SetAgeAndSexColumns();
 
 public:
