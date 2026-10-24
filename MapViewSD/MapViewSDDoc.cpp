@@ -45,7 +45,8 @@ END_MESSAGE_MAP()
 CMapViewSDDoc::CMapViewSDDoc() noexcept
 {
 	odbcDB.SetQueryTimeout(60 * 10);
-	odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
+	//BOOL val = odbcDB.OpenEx(_T("ODBC;DRIVER={SQL Server};SERVER=localhost\\SS2022;DATABASE=TigerData;Trusted_Connection=Yes;"), CDatabase::noOdbcDialog);
+	BOOL val = odbcDB.Open(_T("TigerBase"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // SQL Server
 	//odbcDB.Open(_T("TigerNames"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	//odbcDB.Open(_T("TigerNames2"), FALSE, TRUE, _T("ODBC;UID=guest;PWD="), FALSE);  // Access MDB (New)
 	odbcDB.SetSynchronousMode(TRUE);
@@ -104,7 +105,7 @@ BOOL CMapViewSDDoc::OnOpenDocument(const TCHAR* lpszPathName)
 
 	//ASSERT(this->db != 0);
 
-	std::string version;
+	std::wstring version;
 	if (this->db->Open(TString(lpszPathName), version, 0/*1*/, 0) != 0)
 		return(FALSE);
 	//this->range = this->db->getDBRange();

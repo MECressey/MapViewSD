@@ -622,7 +622,7 @@ TigerDB::TigerDB(CDatabase *rDB, int stateFips) : GeoDB(1 << 11, 400, SEQUENTIAL
 		stateAbbr = "MA";
 		break;
 	}
-
+//#if defined( TEMP )
 	this->names = new DistNames(stateAbbr, this->db);
   assert( this->names != 0 );
 	this->names->nameParam = "";
@@ -645,6 +645,7 @@ TigerDB::TigerDB(CDatabase *rDB, int stateFips) : GeoDB(1 << 11, 400, SEQUENTIAL
 	this->nameByFeatureId->Open(CRecordset::forwardOnly, 0, CRecordset::readOnly);
 	while (!this->nameByFeatureId->IsEOF())
 		this->nameByFeatureId->MoveNext();
+//#endif
 }
 
 TigerDB::~TigerDB()
