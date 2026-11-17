@@ -74,7 +74,9 @@ protected:
 	double		zoom_factor;
 	MapProjection* mapProjs[2];
 	MapProjection* mapProj;
-	XY_t* pts;
+	//XY_t* pts;
+	std::vector<XY_t> ptList;
+	XY_t mousePt;
 	BOOL doWindow,
 		doPick,
 		doInfo;

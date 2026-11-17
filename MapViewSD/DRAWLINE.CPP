@@ -19,7 +19,18 @@
 
 #include "gdiplusgraphics.h"
 
-static CPoint cpts[80000];    // This should not be hard-coded!
+int nCpts = 1000;
+static CPoint* cpts = new CPoint[1000]; /*[80000];    // This should not be hard-coded!*/
+
+static void ResizeCPointArray(int size)
+{
+  if (size > nCpts)
+  {
+    delete[] cpts;
+    nCpts = size;
+    cpts = new CPoint[nCpts];
+  }
+}
 
 void DrawMarker(CPoint &pt, CDC* dc)
 {
@@ -41,28 +52,54 @@ void DrawMarker(CPoint &pt, CDC* dc)
 
 void DrawLine( const Transform &transform, CDC *dc, XY_t pts[], int nPts, bool drawDir)
 {
-  XY_t pt;
-  CPoint cPt;
+  ResizeCPointArray(nPts);
 
   for( int i = 0; i < nPts; i++ )
   {
- 	  transform.Forward( &pt, pts[ i ] );
+    XY_t pt;
+    CPoint cPt;
+
+ 	  transform.Forward(&pt, pts[ i ] );
 	  cPt.x = (int)pt.x;
  	  cPt.y = (int)pt.y;
 	  cpts[ i ] = cPt;
   }
 
-  dc->Polyline( cpts, nPts );
+  dc->Polyline(cpts, nPts);
   if (drawDir)
   {
     DrawMarker(cpts[nPts - 1], dc);
   }
 }
 
+void DrawLine(const Transform &transform, CDC* dc, std::vector<XY_t>& pts, bool drawDir)
+{
+    ResizeCPointArray(pts.size());
+
+    for (int i = 0; i < pts.size(); i++)
+    {
+        XY_t pt;
+        CPoint cPt;
+
+        transform.Forward(&pt, pts[i]);
+        cPt.x = (int)pt.x;
+        cPt.y = (int)pt.y;
+        cpts[i] = cPt;
+    }
+
+    dc->Polyline(cpts, pts.size());
+    if (drawDir)
+    {
+        DrawMarker(cpts[pts.size() - 1], dc);
+    }
+}
+
 void DrawPolygon(const Transform& transform, CDC* dc, XY_t pts[], int nPts)
 {
   XY_t pt;
   CPoint cPt;
+
+  ResizeCPointArray(nPts);
 
   for (int i = 0; i < nPts; i++)
   {
@@ -73,4 +110,22 @@ void DrawPolygon(const Transform& transform, CDC* dc, XY_t pts[], int nPts)
   }
 
   dc->Polygon(cpts, nPts);
+}
+
+void DrawPolygon(const Transform &transform, CDC* dc, std::vector<XY_t>& pts)
+{
+  XY_t pt;
+  CPoint cPt;
+
+  ResizeCPointArray(pts.size());
+
+  for (int i = 0; i < pts.size(); i++)
+  {
+    transform.Forward(&pt, pts[i]);
+    cPt.x = (int)pt.x;
+    cPt.y = (int)pt.y;
+    cpts[i] = cPt;
+  }
+
+  dc->Polygon(cpts, pts.size());
 }

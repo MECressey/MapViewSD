@@ -167,12 +167,11 @@ CMapViewSDView::CMapViewSDView() noexcept
 	this->highLitePolysWithFill = true;
 	this->polyROP2 = R2_XORPEN/*R2_MERGEPEN*/;
 
-	pts = 0;
 	this->pan_overlap = 50;
 	this->zoom_factor = 2.0;
 	this->sDist = .01 /*.001*/;
-	this->tDist = 0.0;
-	this->pts = 0;
+	this->tDist = 0.0005;
+	//this->pts = 0;
 	this->doWindow = FALSE;
 	this->doPick = FALSE;
 	this->doInfo = FALSE;
@@ -221,10 +220,10 @@ CMapViewSDView::~CMapViewSDView()
 		delete this->mapWin;
 
 	delete this->mapProj;
-
+/*
 	if (this->pts)
 		delete[] pts;
-
+*/
 	for (int i = 0; i < sizeof(this->pens) / sizeof(this->pens[0]); i++)
 		this->pens[i].DeleteObject();
 
@@ -269,11 +268,11 @@ void CMapViewSDView::OnInitialUpdate()
 
 	this->lineDlg = new LineDlg(this);
 	//this->acsGridDialog = new ACSDataDisplay(acsAgeSexHeaders, acsAgeSexRows, this);
-
+/*
 	if (this->pts == 0)
 		this->pts = new XY_t[80000];		// This should not be hard-coded!
 	ASSERT(this->pts != 0);
-
+*/
 	CRect region;
 	GetClientRect(region);
 
@@ -682,8 +681,9 @@ void CMapViewSDView::highLiteObject(GeoDB::SpatialObj *sObj, CDC* pDC)
 			oldPen = pDC->SelectObject(&this->pens[RED_PEN]);
 		ObjHandle oh;
 		oh = sObj;
-		int nPts = GeoDB::Poly::getPts(oh, pts);
-		DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+		this->ptList.clear();
+		int nPts = GeoDB::Poly::getPts(oh, ptList) /*GeoDB::Poly::getPts(oh, pts)*/;
+		DrawPolygon(*this->mapWin, pDC, this->ptList);
 		//DrawLine(*this->mapWin, dc, this->pts, nPts);
 		if (this->highLitePolysWithFill)
 			pDC->SetROP2(old_rop2);
@@ -714,14 +714,15 @@ void CMapViewSDView::highLiteObject(GeoDB::SpatialObj *sObj, CDC* pDC)
 		{
 			//pen = &this->hPen;
 			int nPts = (int)line->getNumPts();
-			line->Get(this->pts);
+			this->ptList.clear();
+			line->Get(this->ptList);
 
 			CPen* oldPen = pDC->SelectObject(pen);
 			int old_rop2 = pDC->SetROP2(R2_XORPEN);
 
 			if (this->doThining)
-				nPts = TrendLine(this->pts, nPts, this->tDist);
-			DrawLine(*this->mapWin, pDC, this->pts, nPts, true);
+				nPts = TrendLine(this->ptList, this->tDist);
+			DrawLine(*this->mapWin, pDC, this->ptList, true);
 
 			pDC->SelectObject(oldPen);
 			pDC->SetROP2(old_rop2);
@@ -860,15 +861,16 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 				if ((brush = this->GetBrush(poly->userCode)) != 0)
 				{
 					XY_t cen = poly->getCentroid();
-					int nPts = GeoDB::Poly::getPts(po, this->pts);
+					this->ptList.clear();
+					int nPts = GeoDB::Poly::getPts(po, this->ptList);
 					std::string name = poly->GetName();
 					if (poly->getArea() < 0.0)
 						brush = &this->isleBrush;
 
 					pDC->SelectObject(brush);
 					if (doThining)
-						nPts = TrendLine(this->pts, nPts, this->tDist);
-					DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+						nPts = TrendLine(this->ptList, this->tDist);
+					DrawPolygon(*this->mapWin, pDC, this->ptList);
 					XY_t pt;
 					CPoint cPt;
 					this->mapWin->Forward(&pt, cen);
@@ -953,12 +955,13 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 								std::map<long, DbObject::Id>::iterator it = faceMap.find(face->userId);
 								if (it == faceMap.end())
 								{
-									nPts = GeoDB::Face::getPts(fh, this->pts);
+									this->ptList.clear();
+									nPts = GeoDB::Face::getPts(fh, this->ptList);
 									pDC->SelectObject(this->faceBrush);
-									DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+									DrawPolygon(*this->mapWin, pDC, this->ptList);
 									XY_t cen;
 									double area;
-									TopoTools::calcCentroid(this->pts, nPts, &cen, &area);
+									TopoTools::calcCentroid(this->ptList, &cen, &area);
 									CPoint cPt;
 									XY_t pt;
 									this->mapWin->Forward(&pt, cen);
@@ -980,9 +983,10 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 								std::map<long, DbObject::Id>::iterator it = faceMap.find(face->userId);
 								if (it == faceMap.end())
 								{
-									nPts = GeoDB::Face::getPts(fh, this->pts);
+									this->ptList.clear();
+									nPts = GeoDB::Face::getPts(fh, this->ptList);
 									pDC->SelectObject(this->faceBrush);
-									DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+									DrawPolygon(*this->mapWin, pDC, this->ptList);
 									faceMap.insert({ face->userId, face->dbAddress() });
 								}
 								fh.Unlock();
@@ -990,7 +994,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						}
 
 						int nPts = (int)line->getNumPts();
-						line->Get(this->pts);
+						this->ptList.clear();
+						line->Get(this->ptList);
 						/*if (pen != lastPen)  Disable - this caused a bug in symbology
 						{
 							pDC->SelectObject(pen);
@@ -998,8 +1003,8 @@ void CMapViewSDView::OnDraw(CDC* pDC)
 						}*/
 						pDC->SelectObject(pen);
 						if (doThining)
-							nPts = TrendLine(this->pts, nPts, this->tDist);
-						DrawLine(*this->mapWin, pDC, this->pts, nPts);
+							nPts = TrendLine(this->ptList, this->tDist);
+						DrawLine(*this->mapWin, pDC, ptList);
 						pDC->SelectObject(oldPen);
 					}
 				}
@@ -1037,15 +1042,16 @@ void CMapViewSDView::DrawPoly(CDC* pDC, TigerDB::Polygon* poly, ObjHandle &po)
 	if ((brush = this->GetBrush(poly->userCode)) != 0)
 	{
 		XY_t cen = poly->getCentroid();
-		int nPts = GeoDB::Poly::getPts(po, this->pts);
+		this->ptList.clear();
+		int nPts = GeoDB::Poly::getPts(po, this->ptList);
 		std::string name = poly->GetName();
 		if (poly->getArea() < 0.0)
 			brush = &this->isleBrush;
 
 		pDC->SelectObject(brush);
 		if (doThining)
-			nPts = TrendLine(this->pts, nPts, this->tDist);
-		DrawPolygon(*this->mapWin, pDC, this->pts, nPts);
+			nPts = TrendLine(this->ptList, this->tDist);
+		DrawPolygon(*this->mapWin, pDC, this->ptList);
 		XY_t pt;
 		CPoint cPt;
 		this->mapWin->Forward(&pt, cen);
@@ -1191,7 +1197,7 @@ void CMapViewSDView::OnRButtonDown(UINT nFlags, CPoint point)
 
 			pt0.x = (double)point.x;
 			pt0.y = (double)point.y;
-			this->mapWin->Reverse(&this->pts[0], pt0);
+			this->mapWin->Reverse(&this->mousePt, pt0);
 		}
 	}
 
@@ -1216,7 +1222,7 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 		{
 			DbSearchByLSeg so(*doc->db);
 			DbSearch::Found fo;
-			lSeg.Init(this->pts[0], pt0);
+			lSeg.Init(this->mousePt, pt0);
 
 			so.Init(lSeg, this->layerDlg->objClasses);
 			if (so.FindBest(&fo) == 0)
@@ -1298,17 +1304,18 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 						int dir;
 
 						int nPts = (int)line->getNumPts();
-						line->Get(this->pts);
+						this->ptList.clear();
+						line->Get(this->ptList);
 
-						distSq = fo.pt.DistSqr(this->pts[0]);
-						if (distSq < fo.pt.DistSqr(this->pts[nPts - 1]))
+						distSq = fo.pt.DistSqr(this->mousePt);
+						if (distSq < fo.pt.DistSqr(this->ptList[this->ptList.size() - 1]))
 						{
-							tempPt = this->pts[0];
+							tempPt = this->mousePt;
 							dir = -1;
 						}
 						else
 						{
-							tempPt = this->pts[nPts - 1];
+							tempPt = this->ptList[this->ptList.size() - 1];
 							dir = 1;
 						}
 
@@ -1336,8 +1343,8 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 							line->getNodes(&sPt, &ePt);
 							double length = line->Length();
 							handle.Unlock();
-							double d1 = this->pts[0].DistSqr(sPt),
-								d2 = this->pts[0].DistSqr(ePt);
+							double d1 = this->mousePt.DistSqr(sPt),
+								d2 = this->mousePt.DistSqr(ePt);
 							if (d1 < d2)
 								dir = 1;
 							else
@@ -1364,8 +1371,9 @@ void CMapViewSDView::OnRButtonUp(UINT nFlags, CPoint point)
 									err = doc->db->Read(id, handle);
 									line = (TigerDB::Chain*)handle.Lock();
 									nPts = (int)line->getNumPts();
-									line->Get(this->pts);
-									DrawLine(*this->mapWin, dc, this->pts, nPts);
+									this->ptList.clear();
+									line->Get(this->ptList);
+									DrawLine(*this->mapWin, dc, this->ptList);
 									handle.Unlock();
 								}
 							}
@@ -1838,11 +1846,12 @@ void CMapViewSDView::OnSearchUserid()
 			else
 			{
 				//GeoDB::Face *face = (GeoDB::Face*)oh.Lock();
-				int nPts = GeoDB::Face::getPts(oh, this->pts);
+					this->ptList.clear();
+				int nPts = GeoDB::Face::getPts(oh, this->ptList);
 				//range = face->getMBR();
 				//oh.Unlock();
-				for (int i = 0; i < nPts; i++)
-					range.Envelope(this->pts[i]);
+				for (int i = 0; i < this->ptList.size(); i++)
+					range.Envelope(this->ptList[i]);
 			}
 			this->mapWin->Set(range);
 			this->Invalidate();
@@ -2872,11 +2881,12 @@ void CMapViewSDView::OnAcsQuery()
 					assert(err == 0);
 					GeoDB::Poly* poly = (GeoDB::Poly*)oh.Lock();
 					this->selectionIDs.push_back({ poly->dbAddress(), poly->userId, (TigerDB::MAFTCCodes)poly->userCode });
-					int nPts = GeoDB::Poly::getPts(oh, pts);
+					this->ptList.clear();
+					int nPts = GeoDB::Poly::getPts(oh, this->ptList);
 
 					CPen* oldPen = dc->SelectObject(&this->pens[RED_PEN]);
 
-					DrawLine(*this->mapWin, dc, this->pts, nPts);
+					DrawLine(*this->mapWin, dc, this->ptList);
 
 					dc->SelectObject(oldPen);
 

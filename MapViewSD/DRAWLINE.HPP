@@ -15,7 +15,12 @@
 #pragma once
 
 #include "geotools.hpp"
+#include <vector>
 
 void DrawLine( const Transform &, CDC *dc, XY_t pts[], int nPts, bool drawDir = false );
 
+void DrawLine(const Transform&, CDC* dc, std::vector<XY_t> &pts, bool drawDir = false);
+
 void DrawPolygon(const Transform&, CDC* dc, XY_t pts[], int nPt);
+
+void DrawPolygon(const Transform&, CDC* dc, std::vector<XY_t> &pts);
