@@ -604,7 +604,7 @@ TigerDB::MAFTCCodes TigerDB::MapMTFCC(const char* mtfcc)
 	return(code);
 }
 
-TigerDB::TigerDB(CDatabase *rDB, int stateFips) : GeoDB(1 << 11, 400, SEQUENTIAL/*PAGES*/)
+TigerDB::TigerDB(CDatabase *rDB, int stateFips) : GeoDB(1 << 12, 500, SEQUENTIAL/*PAGES*/)
 {
 	this->nLines = 0;
 	this->db = rDB;
